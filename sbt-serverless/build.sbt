@@ -15,6 +15,7 @@ libraryDependencies += "io.circe" %% "circe-yaml" % "0.6.1"
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.16"
 libraryDependencies += "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0"
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.7"
+libraryDependencies += "com.github.mpilquist" %% "simulacrum" % "0.10.0"
 
 scriptedLaunchOpts := {
   scriptedLaunchOpts.value ++
@@ -23,3 +24,6 @@ scriptedLaunchOpts := {
 scriptedBufferLog := false
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.5")
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+

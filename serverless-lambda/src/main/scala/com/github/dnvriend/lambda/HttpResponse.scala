@@ -14,10 +14,10 @@
 
 package com.github.dnvriend.lambda
 
-import play.api.libs.json.{ JsValue, Json }
+import play.api.libs.json.{ Format, JsValue, Json }
 
 object HttpResponse {
-  implicit val format = Json.format[HttpResponse]
+  implicit val format: Format[HttpResponse] = Json.format[HttpResponse]
 }
 
 case class HttpResponse(statusCode: Int, body: JsValue, headers: Map[String, String]) {
