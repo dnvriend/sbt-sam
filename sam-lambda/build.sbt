@@ -1,4 +1,4 @@
-name := "serverless-lambda"
+name := "sam-lambda"
 
 organization := "com.github.dnvriend"
 

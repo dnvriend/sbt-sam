@@ -1,13 +1,13 @@
 
-lazy val root = (project in file("."))
-  .aggregate(ops, sbtServerless, serverlessLambda)
+lazy val sbtSamRoot = (project in file("."))
+  .aggregate(ops, sbtSam, samLambda)
 
-lazy val sbtServerless = (project in file("sbt-serverless"))
-  .dependsOn(ops, serverlessLambda)
+lazy val sbtSam = (project in file("sbt-sam"))
+  .dependsOn(ops)
   .settings(commonSettings)
   .enablePlugins(AutomateHeaderPlugin, SbtScalariform)
 
-lazy val serverlessLambda = (project in file("serverless-lambda"))
+lazy val samLambda = (project in file("sam-lambda"))
   .dependsOn(ops)
   .settings(commonSettings)
   .enablePlugins(AutomateHeaderPlugin, SbtScalariform)

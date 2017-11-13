@@ -1,4 +1,4 @@
-name := "sbt-serverless"
+name := "sbt-sam"
 
 organization := "com.github.dnvriend"
 
