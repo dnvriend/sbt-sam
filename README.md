@@ -1,3 +1,5 @@
+![Logo image](img/sbtscalasamlogo.png)
+
 # sbt-serverless-plugin
 Work in progress...
 
