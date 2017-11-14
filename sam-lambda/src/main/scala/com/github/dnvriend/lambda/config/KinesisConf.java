@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.lambda;
+package com.github.dnvriend.lambda.config;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HttpHandler {
-    String path() default "/";
-    String method() default "get";
-    boolean authorization() default false;
-    String name() default "";
-    int memorySize() default 1024;
-    int timeout() default 300;
-    String description() default "";
+public @interface KinesisConf {
 }

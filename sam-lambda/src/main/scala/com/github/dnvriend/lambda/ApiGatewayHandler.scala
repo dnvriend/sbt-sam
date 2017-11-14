@@ -20,7 +20,7 @@ import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 import com.github.dnvriend.ops.AllOps
 import play.api.libs.json.{ JsValue, Json }
 
-trait LambdaRequestHandler extends RequestStreamHandler with AllOps {
+trait ApiGatewayHandler extends RequestStreamHandler with AllOps {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
     val request: HttpRequest = HttpRequest.parse(input)
     val response: HttpResponse = handle(request, context)
