@@ -3,9 +3,8 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.auth.{AWSCredentialsProvider, AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.regions.Regions
-import org.apache.http.client.CredentialsProvider
 
-import scalaz.{@@, Tag}
+import scalaz.{@@, Show, Tag}
 import scalaz.std.option._
 import scalaz.syntax.all._
 
@@ -37,7 +36,23 @@ final case class AwsCredentialsProfile(profile: String) extends AwsCredentials
 
 final case class AwsCredentialsInformation(accessKeyId: String @@ AwsAccessKeyId, awsSecretKey: String @@ AwsSecretAccessKey) extends AwsCredentials
 
-final case class CredentialsAndRegion(credentialsProvider: AWSCredentialsProvider, region: Regions)
+object CredentialsAndRegion {
+  implicit val show: Show[CredentialsAndRegion] = Show.shows(model => {
+    import model._
+    s"""
+      |=============================================
+      |Credentials And Region:
+      |=============================================
+      |Region: $region
+      |AWSAccessKeyId: ${credentialsProvider.getCredentials.getAWSAccessKeyId}
+      |AWSSecretKey: ${credentialsProvider.getCredentials.getAWSSecretKey}
+    """.stripMargin
+  })
+}
+
+final case class CredentialsAndRegion(credentialsProvider: AWSCredentialsProvider, region: Regions) {
+  override def toString: String = CredentialsAndRegion.show.shows(this)
+}
 
 // tags //
 sealed trait AwsAccessKeyId

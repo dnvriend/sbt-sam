@@ -17,7 +17,8 @@ package com.github.dnvriend.sbt.aws
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task._
 import sbt.Keys._
-import sbt.{AutoPlugin, Def, Defaults, PluginTrigger, State, _}
+import sbt.complete.DefaultParsers._
+import sbt.{AutoPlugin, Def, Defaults, PluginTrigger, _}
 
 object AwsPlugin extends AutoPlugin with AllOps {
 
@@ -25,19 +26,9 @@ object AwsPlugin extends AutoPlugin with AllOps {
 
   val autoImport = AwsPluginKeys
 
-//  lazy val startupTransition: State => State = { s: State =>
-//    "awsCognitoUserPools" :: "awsListTables" :: s
-//  }
-
   import autoImport._
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
-//    onLoad in Global := {
-//      val old = (onLoad in Global).value
-//      startupTransition compose old
-//    },
-
-    // settings
     awsRegion := DEFAULT_REGION,
     awsProfile := DEFAULT_PROFILE,
 
@@ -54,6 +45,27 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientS3 := S3Operations.client(credentialsAndRegion.value),
     clientKinesis := KinesisOperations.client(credentialsAndRegion.value),
     clientSns := SNSOperations.client(credentialsAndRegion.value),
+
+    // lambda operations
+    lambdaListFunctions := AwsLambdaOperations.listFunctions(clientAwsLambda.value),
+    lambdaListFunctions := (lambdaListFunctions keepAs lambdaListFunctions).value,
+    lambdaListFunctions := (lambdaListFunctions triggeredBy (compile in Compile)).value,
+
+    lambdaGetFunction := {
+      val functionName = Defaults.getForParser(lambdaListFunctions)((state, functions) => {
+        val strings = functions.getOrElse(Nil).map(_.getFunctionName)
+        Space ~> StringBasic.examples(strings: _*)
+      }).parsed
+      AwsLambdaOperations.getFunction(functionName, clientAwsLambda.value)
+    },
+
+    lambdaInvoke := {
+      val (functionName, payload) = Defaults.getForParser(lambdaListFunctions)((state, functions) => {
+        val strings = functions.getOrElse(Nil).map(_.getFunctionName)
+        (Space ~> StringBasic.examples(strings: _*)) ~ (Space ~> StringBasic.examples("""{"foo":"bar"}"""))
+      }).parsed
+      AwsLambdaOperations.invoke(functionName, payload, clientAwsLambda.value)
+    },
 
     //    awsCognitoUserPools := {
     //      AwsOperations.getlistOfUserPools(awsRegion.value, awsProfile.value, streams.value.log)

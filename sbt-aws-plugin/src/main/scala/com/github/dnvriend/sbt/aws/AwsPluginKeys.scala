@@ -18,9 +18,10 @@ import com.amazonaws.services.apigateway.AmazonApiGateway
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
+import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
-import com.github.dnvriend.sbt.aws.task.{ CredentialsAndRegion, LambdaFunction }
+import com.github.dnvriend.sbt.aws.task.CredentialsAndRegion
 import sbt._
 
 object AwsPluginKeys {
@@ -62,5 +63,7 @@ object AwsPluginKeys {
   lazy val awsScanTable = inputKey[Unit]("Shows table entries")
 
   // lambda tasks
-  lazy val discoveredDeployedLambdas = taskKey[List[LambdaFunction]]("Returns all AWS deployed lambdas")
+  lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
+  lazy val lambdaGetFunction = inputKey[GetFunctionResult]("Returns the configuration information of the Lambda function")
+  lazy val lambdaInvoke = inputKey[InvokeResult]("Invokes a specific Lambda function")
 }
