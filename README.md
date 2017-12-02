@@ -1,7 +1,11 @@
 ![Logo image](img/sbtscalasamlogo.png)
 
 # sbt-serverless-plugin
-Work in progress...
+[![Build Status](https://travis-ci.org/dnvriend/sbt-sam.svg?branch=master)](https://travis-ci.org/dnvriend/sbt-sam)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5acc1fb43bda40aa8bedb6693875b453)](https://www.codacy.com/app/dnvriend/sbt-sam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dnvriend/sbt-sam&amp;utm_campaign=Badge_Grade)
+[![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+SBT-SAM, its a work in progress...
 
 ## Annotation usage
 - Annotationa are used to configure the Lambda Event Handler type for example, the ApiGatewayHandler must be configured to use a specific path, http method and optionally if it is secured or not.
@@ -64,6 +68,13 @@ You can use AWS CloudFormation to specify, deploy, and configure serverless appl
 
 The AWS Serverless Application Model (AWS SAM) is a model to define serverless applications. AWS SAM is natively supported by AWS CloudFormation and defines simplified syntax for expressing serverless resources. The specification currently covers APIs, Lambda functions and Amazon DynamoDB tables.
 
+## AWS CloudFormation
+AWS CloudFormation is a service that manages AWS resources as a single unit. CloudFormation uses the following concepts:
+
+- __Template__: a `template` describes AWS resources and their properties and dependencies and is input for a stack.
+- __Stack__: a stack is a named entity that manages a group of resources and their dependencies as a single unit and takes as input a `template`.
+
+
 ## AWS SAM Open Source
 The goal of [AWS SAM](https://github.com/awslabs/serverless-application-model) is to define a standard application model for serverless applications.
 
@@ -88,3 +99,9 @@ These models are all supported by CodePipeline.
 - [AWS - Serverless Orchestration with AWS Step Functions](https://www.youtube.com/watch?v=8rmgF-SbcIk)
 - [AWS -  Serverless Architectural Patterns and Best Practices](https://www.youtube.com/watch?v=b7UMoc1iUYw)
 - [AWS - Optimizing the Data Tier for Serverless Web Applications](https://www.youtube.com/watch?v=BG_xi6ACm5I)
+
+## Resources
+- [Github - AWS SAM](https://github.com/awslabs/serverless-application-model)
+- [AWS - Deploying Lambda-based Applications](http://docs.aws.amazon.com/lambda/latest/dg/deploying-lambda-apps.html)
+- [AWS - CloudFormation concepts](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-whatis-concepts.html#d0e3897)
+-

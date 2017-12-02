@@ -1,0 +1,6 @@
+-J-Xms512m
+-J-Xmx1024m
+-J-XX:MaxMetaspaceSize=1024m
+-J-XX:-UseConcMarkSweepGC
+-J-XX:+UseG1GC
+-J-XX:MaxGCPauseMillis=200
