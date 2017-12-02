@@ -1,4 +1,4 @@
-![Logo image](img/sbtscalasamlogo.png)
+![Logo image](img/sbtscalasamlogo_small.png)
 
 # sbt-serverless-plugin
 [![Build Status](https://travis-ci.org/dnvriend/sbt-sam.svg?branch=master)](https://travis-ci.org/dnvriend/sbt-sam)
