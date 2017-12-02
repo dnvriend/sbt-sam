@@ -15,13 +15,14 @@
 package com.github.dnvriend.sbt.aws
 
 import com.amazonaws.services.apigateway.AmazonApiGateway
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
-import com.github.dnvriend.sbt.aws.task.CredentialsAndRegion
+import com.github.dnvriend.sbt.aws.task.{ CredentialsAndRegion, LambdaMetrics }
 import sbt._
 
 object AwsPluginKeys {
@@ -44,6 +45,7 @@ object AwsPluginKeys {
   lazy val clientS3 = TaskKey[AmazonS3]("Returns the s3 client")
   lazy val clientKinesis = TaskKey[AmazonKinesis]("Returns the kinesis client")
   lazy val clientSns = TaskKey[AmazonSNS]("Returns the simple notification service client")
+  lazy val clientCloudWatch = TaskKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
 
   // cognito tasks
   lazy val awsGetCognitoTokens = taskKey[Option[Cognito.AuthTokens]]("Get authentication tokens from AWS Cognito")
@@ -66,4 +68,7 @@ object AwsPluginKeys {
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
   lazy val lambdaGetFunction = inputKey[GetFunctionResult]("Returns the configuration information of the Lambda function")
   lazy val lambdaInvoke = inputKey[InvokeResult]("Invokes a specific Lambda function")
+  lazy val lambdaMetrics = taskKey[LambdaMetrics]("Get metrics for all lambdas")
+
+  lazy val lambdaLog = inputKey[Unit]("Shows log of specific Lambda function")
 }

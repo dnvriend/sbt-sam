@@ -45,6 +45,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientS3 := S3Operations.client(credentialsAndRegion.value),
     clientKinesis := KinesisOperations.client(credentialsAndRegion.value),
     clientSns := SNSOperations.client(credentialsAndRegion.value),
+    clientCloudWatch := CloudWatchOperations.client(credentialsAndRegion.value),
 
     // lambda operations
     lambdaListFunctions := AwsLambdaOperations.listFunctions(clientAwsLambda.value),
@@ -66,6 +67,18 @@ object AwsPlugin extends AutoPlugin with AllOps {
       }).parsed
       AwsLambdaOperations.invoke(functionName, payload, clientAwsLambda.value)
     },
+
+    lambdaMetrics := CloudWatchOperations.lambdaMetrics(clientCloudWatch.value),
+    lambdaMetrics := (lambdaMetrics keepAs lambdaMetrics).value,
+    lambdaMetrics := (lambdaMetrics triggeredBy lambdaListFunctions).value,
+
+    lambdaLog := {
+      val functionName = Defaults.getForParser(lambdaListFunctions)((state, functions) => {
+        val strings = functions.getOrElse(Nil).map(_.getFunctionName)
+        Space ~> StringBasic.examples(strings: _*)
+      }).parsed
+      val metrics = lambdaMetrics.value
+    }
 
     //    awsCognitoUserPools := {
     //      AwsOperations.getlistOfUserPools(awsRegion.value, awsProfile.value, streams.value.log)
