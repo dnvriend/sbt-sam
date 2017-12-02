@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-object SamMacrosSettings extends AutoPlugin with LibraryDependenciesKeys {
+object SamOpsSettings extends AutoPlugin with LibraryDependenciesKeys {
   override def trigger = noTrigger
   override def requires = plugins.JvmPlugin && LibraryDependencies
 
@@ -16,6 +16,8 @@ object SamMacrosSettings extends AutoPlugin with LibraryDependenciesKeys {
     libraryDependencies += libSimulacrum.value,
     libraryDependencies += libCirceYaml.value,
     libraryDependencies += libPlayJson.value,
+    libraryDependencies += libScalajHttp.value,
+    libraryDependencies += libSbtIO.value,
     libraryDependencies += libScalazScalatest.value % Test,
     libraryDependencies += libScalaTest.value % Test,
   )

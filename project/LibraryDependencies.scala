@@ -27,6 +27,12 @@ trait LibraryDependenciesKeys {
   lazy val libCirceYaml = settingKey[ModuleID]("")
   lazy val libPlayJsonVersion = settingKey[String]("")
   lazy val libPlayJson = settingKey[ModuleID]("")
+  lazy val libShapelessVersion = settingKey[String]("")
+  lazy val libShapeless = settingKey[ModuleID]("")
+  lazy val libSbtIOVersion = settingKey[String]("")
+  lazy val libSbtIO = settingKey[ModuleID]("")
+  lazy val libScalajHttpVersion = settingKey[String]("")
+  lazy val libScalajHttp = settingKey[ModuleID]("")
 
   lazy val libScalaMacros: ModuleID = "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
   lazy val libSbtAssembly: ModuleID = "com.eed3si9n" % "sbt-assembly" % "0.14.6"
@@ -52,6 +58,9 @@ object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
     libSimulacrumVersion := "0.11.0",
     libCirceYamlVersion := "0.6.1",
     libPlayJsonVersion := "2.6.7",
+    libShapelessVersion := "2.3.2",
+    libSbtIOVersion := "1.1.1",
+    libScalajHttpVersion := "2.3.0",
   )
 
   lazy val libs = Seq(
@@ -59,8 +68,8 @@ object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
     libAwsJavaSdkDynamoDb := "com.amazonaws" % "aws-java-sdk-dynamodb" % libAwsJavaSdkVersion.value,
     libAwsLambdaJavaCore := "com.amazonaws" % "aws-lambda-java-core" % libAwsLambdaJavaCoreVersion.value,
     libAwsLambdaJavaEvents := "com.amazonaws" % "aws-lambda-java-events" % libAwsLambdaJavaEventsVersion.value,
-    libScalazScalatest := "org.typelevel" %% "scalaz-scalatest" % libScalazScalatestVersion.value % Test,
-    libScalaTest := "org.scalatest" %% "scalatest" % libScalaTestVersion.value % Test,
+    libScalazScalatest := "org.typelevel" %% "scalaz-scalatest" % libScalazScalatestVersion.value,
+    libScalaTest := "org.scalatest" %% "scalatest" % libScalaTestVersion.value,
     libTypesafeConfig := "com.typesafe" % "config" % libTypesafeConfigVersion.value,
     libPureConfig := "com.github.pureconfig" %% "pureconfig" % libPureConfigVersion.value,
     libScalaz := "org.scalaz" %% "scalaz-core" % libScalazVersion.value,
@@ -68,5 +77,8 @@ object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
     libSimulacrum := "com.github.mpilquist" %% "simulacrum" % libSimulacrumVersion.value,
     libCirceYaml := "io.circe" %% "circe-yaml" % libCirceYamlVersion.value,
     libPlayJson := "com.typesafe.play" %% "play-json" % libPlayJsonVersion.value,
+    libShapeless := "com.chuusai" %% "shapeless" % libShapelessVersion.value,
+    libSbtIO := "org.scala-sbt" %% "io" % libSbtIOVersion.value,
+    libScalajHttp := "org.scalaj" %% "scalaj-http" % libScalajHttpVersion.value,
   )
 }
