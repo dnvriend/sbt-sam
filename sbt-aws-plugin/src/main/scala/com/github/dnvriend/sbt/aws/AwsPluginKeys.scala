@@ -51,23 +51,6 @@ object AwsPluginKeys {
   lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
   lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
 
-  // cognito tasks
-  lazy val awsGetCognitoTokens = taskKey[Option[Cognito.AuthTokens]]("Get authentication tokens from AWS Cognito")
-  lazy val awsCognitoUserPools = taskKey[List[Cognito.UserPool]]("Returns the user pools")
-  lazy val awsCognitoUserPoolClients = inputKey[List[Cognito.UserPoolClient]]("Returns the user pools clients")
-  lazy val awsCognitoDeleteUserPoolClient = inputKey[Unit]("Delete a user pool client")
-  lazy val awsCognitoCreateUserPoolClient = inputKey[Unit]("Create a user pool client")
-  lazy val awsCognitoUsersForPool = inputKey[List[Cognito.User]]("Lists the users in the Amazon Cognito user pool")
-  lazy val awsCognitoCreateUser = inputKey[Unit]("Creates and confirms a new cognito user for a given user pool")
-  lazy val awsCognitoConfirmUser = inputKey[Unit]("Confirm a cognito user for a given user pool")
-  lazy val awsCognitoDeleteUser = inputKey[Unit]("Deletes a cognito user from a given user pool")
-
-  // dynamodb tasks
-  lazy val awsListTables = taskKey[List[String]]("Returns a list of table names associated with the current profile")
-  lazy val awsDescribeTable = inputKey[Dynamo.Table]("Returns information about the table")
-  lazy val awsDescribeTables = taskKey[List[Dynamo.Table]]("Returns information about all tables")
-  lazy val awsScanTable = inputKey[Unit]("Shows table entries")
-
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
   lazy val lambdaGetFunction = inputKey[GetFunctionResult]("Returns the configuration information of the Lambda function")

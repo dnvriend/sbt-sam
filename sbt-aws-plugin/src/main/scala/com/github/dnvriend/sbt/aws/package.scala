@@ -14,34 +14,9 @@
 
 package com.github.dnvriend.sbt
 
-import play.api.libs.json.Json
-
 package object aws {
   final val AWS_COGNITO_DEFAULT_USER_PASSWORD = "awsplugindefaultpassword"
   final val DEFAULT_PROFILE = "default"
   final val DEFAULT_REGION = "eu-west-1"
   final val EMPTY = ""
-
-  object Cognito {
-    object UserPool {
-      implicit val format = Json.format[UserPool]
-    }
-    case class UserPool(Id: String, Name: String)
-    object User {
-      implicit val format = Json.format[User]
-    }
-    case class User(Username: String, Enabled: Boolean, UserStatus: String, UserCreateDate: Double, UserLastModifiedDate: Double)
-
-    object UserPoolClient {
-      implicit val format = Json.format[UserPoolClient]
-    }
-    case class UserPoolClient(ClientName: String, UserPoolId: String, ClientId: String)
-
-    case class AuthTokens(accessToken: String, expiresIn: Int, tokenType: String, refreshToken: String, idToken: String)
-  }
-
-  object Dynamo {
-    case class Stream(arn: String, viewType: String, enabled: Boolean)
-    case class Table(arn: String, name: String, status: String, itemCount: Long, sizeInBytes: Long, stream: Option[Stream])
-  }
 }
