@@ -15,12 +15,13 @@
 package com.github.dnvriend.sbt.sam
 
 import sbt.Keys._
-import sbt.{Def, _}
+import sbt.{ Def, _ }
 import sbtassembly.AssemblyKeys._
 import sbtassembly.AssemblyPlugin
 import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
-import com.github.dnvriend.sbt.sam.task.{DiscoverClasses, DiscoverLambdas, DiscoverProjectClasses}
+import com.github.dnvriend.sbt.aws.task.{ CloudFormationOperations, TemplateBody }
+import com.github.dnvriend.sbt.sam.task._
 import sbt.internal.inc.classpath.ClasspathUtilities
 
 object SAMPlugin extends AutoPlugin {
@@ -33,6 +34,7 @@ object SAMPlugin extends AutoPlugin {
   import autoImport._
 
   override def projectSettings = Seq(
+    samStage := SAM_DEFAULT_STAGE,
     samProjectClassLoader := {
       val scalaInstance = Keys.scalaInstance.value
       val fullClasspath: Seq[File] = (Keys.fullClasspath in Compile).value.map(_.data)
@@ -57,5 +59,26 @@ object SAMPlugin extends AutoPlugin {
     discoveredLambdas := DiscoverLambdas.run(discoveredClasses.value),
     discoveredLambdas := (discoveredLambdas triggeredBy discoveredClasses).value,
     discoveredLambdas := (discoveredLambdas keepAs discoveredLambdas).value,
+
+    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStage.value),
+    classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
+    classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
+
+    // generate the sam cloud formation template
+    samGenerateTemplate := {
+      CreateSamTemplate.run(
+        classifiedLambdas.value,
+        iamUserInfo.value,
+        credentialsAndRegion.value,
+        samStage.value,
+        Keys.description.?.value.getOrElse(Keys.name.value))
+    },
+
+    // validate the sam cloud formation template
+    samValidate := {
+      val template = samGenerateTemplate.value
+      val client = clientCloudFormation.value
+      CloudFormationOperations.validateTemplate(template, client)
+    }
   )
 }

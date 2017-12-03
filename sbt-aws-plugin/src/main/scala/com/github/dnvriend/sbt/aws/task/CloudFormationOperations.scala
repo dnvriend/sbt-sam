@@ -68,7 +68,7 @@ final case class DescribeStackSettings(stackName: StackName)
  * update-termination-protection            | validate-template
  * package                                  | deploy
  */
-object CloudFormationOperations {
+object CloudFormationOperations extends AwsProgressListenerOps {
   def client(cr: CredentialsAndRegion): AmazonCloudFormation = {
     AmazonCloudFormationClientBuilder.standard()
       .withRegion(cr.region)
@@ -82,7 +82,7 @@ object CloudFormationOperations {
   def validateTemplate(
     templateBody: TemplateBody,
     client: AmazonCloudFormation)(implicit conv: Converter[TemplateBody, ValidateTemplateRequest]): ValidateTemplateResult = {
-    client.validateTemplate(conv(templateBody))
+    client.validateTemplate(conv(templateBody).addProgressBar)
   }
 
   /**
@@ -91,7 +91,7 @@ object CloudFormationOperations {
   def createStack(
     settings: CreateStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[CreateStackSettings, CreateStackRequest]): CreateStackResult = {
-    client.createStack(conv(settings))
+    client.createStack(conv(settings).addDebuggingProgressBar)
   }
 
   /**

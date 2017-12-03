@@ -78,7 +78,4 @@ object AwsPluginKeys {
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
-
-  // cloud formation tasks
-  lazy val cfValidate = taskKey[Unit]("")
 }

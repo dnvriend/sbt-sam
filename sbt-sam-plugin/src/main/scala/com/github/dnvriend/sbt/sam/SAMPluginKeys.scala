@@ -14,18 +14,21 @@
 
 package com.github.dnvriend.sbt.sam
 
-import com.github.dnvriend.sbt.sam.task.{ ProjectClass, ProjectLambda }
+import com.amazonaws.services.cloudformation.model.ValidateTemplateResult
+import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectLambda }
 import sbt._
 
 object SAMPluginKeys {
   // sam settings
-  lazy val stage = settingKey[String]("The stage to deploy the service to")
+  lazy val samStage = settingKey[String]("The stage to deploy the service to")
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")
   lazy val discoveredClassFiles = taskKey[Set[File]]("")
   lazy val discoveredClasses = taskKey[Set[ProjectClass]]("")
   lazy val discoveredLambdas = taskKey[Set[ProjectLambda]]("")
+  lazy val classifiedLambdas = taskKey[Set[LambdaHandler]]("")
   lazy val discoveredResources = taskKey[Set[Class[_]]]("")
 
   // sam tasks
@@ -33,4 +36,6 @@ object SAMPluginKeys {
   lazy val samDeploy = taskKey[Unit]("Deploy a service")
   lazy val samRemove = taskKey[Unit]("Remove a service")
   lazy val samUpdate = inputKey[Unit]("Update a service")
+  lazy val samGenerateTemplate = taskKey[TemplateBody]("Generate the cloudformation template")
+  lazy val samValidate = taskKey[ValidateTemplateResult]("Validates the cloud formation template")
 }
