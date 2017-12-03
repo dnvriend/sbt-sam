@@ -18,7 +18,7 @@ object SamOpsSettings extends AutoPlugin with LibraryDependenciesKeys {
     libraryDependencies += libPlayJson.value,
     libraryDependencies += libScalajHttp.value,
     libraryDependencies += libSbtIO.value,
-    libraryDependencies += libScalazScalatest.value % Test,
+    libraryDependencies += libScalazScalaTest.value % Test,
     libraryDependencies += libScalaTest.value % Test,
   )
 }

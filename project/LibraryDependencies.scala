@@ -9,8 +9,8 @@ trait LibraryDependenciesKeys {
   lazy val libAwsLambdaJavaCore = settingKey[ModuleID]("")
   lazy val libAwsLambdaJavaEventsVersion = settingKey[String]("")
   lazy val libAwsLambdaJavaEvents = settingKey[ModuleID]("")
-  lazy val libScalazScalatestVersion = settingKey[String]("")
-  lazy val libScalazScalatest = settingKey[ModuleID]("")
+  lazy val libScalazScalaTestVersion = settingKey[String]("")
+  lazy val libScalazScalaTest = settingKey[ModuleID]("")
   lazy val libScalaTestVersion = settingKey[String]("")
   lazy val libScalaTest = settingKey[ModuleID]("")
   lazy val libTypesafeConfigVersion = settingKey[String]("")
@@ -42,14 +42,14 @@ object LibraryDependenciesKeys extends LibraryDependenciesKeys
 object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
   override def trigger = allRequirements
   override def requires = plugins.JvmPlugin
-  
+
   override def projectSettings = libVersions ++ libs
 
   lazy val libVersions = Seq(
     libAwsJavaSdkVersion := "1.11.241",
     libAwsLambdaJavaEventsVersion := "2.0.2",
     libAwsLambdaJavaCoreVersion := "1.2.0",
-    libScalazScalatestVersion := "1.1.2",
+    libScalazScalaTestVersion := "1.1.2",
     libScalaTestVersion := "3.0.4",
     libTypesafeConfigVersion := "1.3.2",
     libPureConfigVersion := "0.8.0",
@@ -68,7 +68,7 @@ object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
     libAwsJavaSdkDynamoDb := "com.amazonaws" % "aws-java-sdk-dynamodb" % libAwsJavaSdkVersion.value,
     libAwsLambdaJavaCore := "com.amazonaws" % "aws-lambda-java-core" % libAwsLambdaJavaCoreVersion.value,
     libAwsLambdaJavaEvents := "com.amazonaws" % "aws-lambda-java-events" % libAwsLambdaJavaEventsVersion.value,
-    libScalazScalatest := "org.typelevel" %% "scalaz-scalatest" % libScalazScalatestVersion.value,
+    libScalazScalaTest := "org.typelevel" %% "scalaz-scalatest" % libScalazScalaTestVersion.value,
     libScalaTest := "org.scalatest" %% "scalatest" % libScalaTestVersion.value,
     libTypesafeConfig := "com.typesafe" % "config" % libTypesafeConfigVersion.value,
     libPureConfig := "com.github.pureconfig" %% "pureconfig" % libPureConfigVersion.value,

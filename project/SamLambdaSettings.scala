@@ -16,7 +16,7 @@ object SamLambdaSettings extends AutoPlugin with LibraryDependenciesKeys {
     libraryDependencies += libSimulacrum.value,
     libraryDependencies += libCirceYaml.value,
     libraryDependencies += libPlayJson.value,
-    libraryDependencies += libScalazScalatest.value % Test,
+    libraryDependencies += libScalazScalaTest.value % Test,
     libraryDependencies += libScalaTest.value % Test,
   )
 }

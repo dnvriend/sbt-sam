@@ -11,6 +11,9 @@ object SbtAwsPluginSettings extends AutoPlugin with LibraryDependenciesKeys {
     libraryDependencies += libCirceYaml.value,
     libraryDependencies += libPlayJson.value,
     libraryDependencies += libAwsJavaSdk.value,
+    libraryDependencies += libScalazScalaTest.value % Test,
+    libraryDependencies += libScalaTest.value % Test,
+
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)

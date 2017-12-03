@@ -16,7 +16,7 @@ package com.github.dnvriend.ops
 
 object AllOps extends AllOps
 
-trait AllOps extends AvroOps
+trait AllOps extends ConverterOps
   with ByteArrayOps
   with ByteBufferOps
   with FileOps

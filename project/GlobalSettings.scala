@@ -12,6 +12,8 @@ object GlobalSettings extends AutoPlugin with LibraryDependenciesKeys {
   override def globalSettings = Seq(
     scalaVersion := "2.12.4",
     organization := "com.github.dnvriend",
+    description := "A plugin for creating enterprise cloud application leveraging serverless compute and managed resources",
+    startYear := Some(2017),
     addCompilerPlugin(libScalaMacros),
   ) ++ headerSettings ++ scalariFormSettings ++ resolverSettings ++ compilerSettings
 

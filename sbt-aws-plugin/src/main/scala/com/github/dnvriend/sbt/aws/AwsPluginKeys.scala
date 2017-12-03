@@ -15,14 +15,16 @@
 package com.github.dnvriend.sbt.aws
 
 import com.amazonaws.services.apigateway.AmazonApiGateway
+import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
-import com.github.dnvriend.sbt.aws.task.{ CredentialsAndRegion, LambdaMetrics }
+import com.github.dnvriend.sbt.aws.task.{ AmazonUser, CredentialsAndRegion, LambdaMetrics }
 import sbt._
 
 object AwsPluginKeys {
@@ -36,16 +38,18 @@ object AwsPluginKeys {
   lazy val awsClientId = settingKey[String]("AWS client Id")
 
   // credentials tasks
-  lazy val credentialsAndRegion = taskKey[CredentialsAndRegion]("Returns the aws credentials provider and region")
+  lazy val credentialsAndRegion = SettingKey[CredentialsAndRegion]("Returns the aws credentials provider and region")
 
   // clients
-  lazy val clientAwsLambda = TaskKey[AWSLambda]("Returns the AwsLambda client")
-  lazy val clientApiGateway = TaskKey[AmazonApiGateway]("Returns the ApiGateway client")
-  lazy val clientDynamoDb = TaskKey[AmazonDynamoDB]("Returns the DynamoDb client")
-  lazy val clientS3 = TaskKey[AmazonS3]("Returns the s3 client")
-  lazy val clientKinesis = TaskKey[AmazonKinesis]("Returns the kinesis client")
-  lazy val clientSns = TaskKey[AmazonSNS]("Returns the simple notification service client")
-  lazy val clientCloudWatch = TaskKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
+  lazy val clientAwsLambda = SettingKey[AWSLambda]("Returns the AwsLambda client")
+  lazy val clientApiGateway = SettingKey[AmazonApiGateway]("Returns the ApiGateway client")
+  lazy val clientDynamoDb = SettingKey[AmazonDynamoDB]("Returns the DynamoDb client")
+  lazy val clientS3 = SettingKey[AmazonS3]("Returns the s3 client")
+  lazy val clientKinesis = SettingKey[AmazonKinesis]("Returns the kinesis client")
+  lazy val clientSns = SettingKey[AmazonSNS]("Returns the simple notification service client")
+  lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
+  lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
+  lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
 
   // cognito tasks
   lazy val awsGetCognitoTokens = taskKey[Option[Cognito.AuthTokens]]("Get authentication tokens from AWS Cognito")
@@ -71,4 +75,10 @@ object AwsPluginKeys {
   lazy val lambdaMetrics = taskKey[LambdaMetrics]("Get metrics for all lambdas")
 
   lazy val lambdaLog = inputKey[Unit]("Shows log of specific Lambda function")
+
+  // iam tasks
+  lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
+
+  // cloud formation tasks
+  lazy val cfValidate = taskKey[Unit]("")
 }
