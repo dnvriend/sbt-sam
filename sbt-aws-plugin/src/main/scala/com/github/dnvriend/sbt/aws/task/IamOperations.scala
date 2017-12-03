@@ -6,7 +6,6 @@ import com.amazonaws.services.identitymanagement.model.User
 import com.github.dnvriend.ops.{ AllOps, AnyOps, Converter }
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 import scala.util.matching.Regex
 import scalaz.{ @@, Disjunction, Show }
 
