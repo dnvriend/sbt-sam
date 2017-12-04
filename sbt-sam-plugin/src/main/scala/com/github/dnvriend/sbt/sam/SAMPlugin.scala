@@ -15,14 +15,13 @@
 package com.github.dnvriend.sbt.sam
 
 import sbt.Keys._
-import sbt.{ Def, _ }
-import sbtassembly.AssemblyKeys._
-import sbtassembly.AssemblyPlugin
+import sbt.{Def, _}
 import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
-import com.github.dnvriend.sbt.aws.task.{ CloudFormationOperations, TemplateBody }
+import com.github.dnvriend.sbt.aws.task.{CloudFormationOperations, TemplateBody}
 import com.github.dnvriend.sbt.sam.task._
 import sbt.internal.inc.classpath.ClasspathUtilities
+import sbtassembly.AssemblyPlugin
 
 object SAMPlugin extends AutoPlugin {
 
@@ -79,6 +78,9 @@ object SAMPlugin extends AutoPlugin {
       val template = samGenerateTemplate.value
       val client = clientCloudFormation.value
       CloudFormationOperations.validateTemplate(template, client)
-    }
+    },
+
   )
+
+
 }

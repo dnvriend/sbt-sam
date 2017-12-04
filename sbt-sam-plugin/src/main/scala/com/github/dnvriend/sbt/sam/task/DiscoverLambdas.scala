@@ -2,16 +2,32 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 
+import scalaz.Show
+
 final case class ProjectLambda(projectClass: ProjectClass)
 
 object DiscoverLambdas {
+  def lambdaPredicate(pc: ProjectClass): Boolean = {
+    interfacesContainsRequestStreamHandlerInterface(pc.interfaces)
+  }
+
+  def interfacesContainsRequestStreamHandlerInterface(interfaces: List[Class[_]]): Boolean = {
+    val reqStreamHandler: Class[_] = classOf[RequestStreamHandler]
+    interfaces.map(_.getName).contains(reqStreamHandler.getName)
+  }
+
+  def debugProjectClass(pc: ProjectClass): ProjectClass = {
+    println(Show[ProjectClass].shows(pc))
+    pc
+  }
+
   /**
    * Only 'com.amazonaws.services.lambda.runtime.RequestStreamHandler', are lambdas in sbt-sam
    */
   def run(projectClasses: Set[ProjectClass]): Set[ProjectLambda] = {
-    val reqStreamHandler: Class[_] = classOf[RequestStreamHandler]
-    projectClasses.filter(projectClass => {
-      projectClass.cl.getInterfaces.toList.map(_.getName).contains(reqStreamHandler.getName)
-    }).map(pc => ProjectLambda(pc))
+    projectClasses
+      //      .map(debugProjectClass)
+      .filter(lambdaPredicate)
+      .map(pc => ProjectLambda(pc))
   }
 }

@@ -55,7 +55,7 @@ object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
     libPureConfigVersion := "0.8.0",
     libScalazVersion := "7.2.17",
     libAvro4sVersion := "1.8.0",
-    libSimulacrumVersion := "0.11.0",
+    libSimulacrumVersion := "0.10.0",
     libCirceYamlVersion := "0.6.1",
     libPlayJsonVersion := "2.6.7",
     libShapelessVersion := "2.3.2",

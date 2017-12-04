@@ -23,6 +23,10 @@ object CreateSamTemplate {
       "AWSTemplateFormatVersion" -> "2010-09-09",
       "Transform" -> "AWS::Serverless-2016-10-31",
       "Description" -> description,
+      "Globals" -> Json.obj(
+        "Runtime" ->"java8",
+        "Timeout" -> 300,
+      ),
       "Resources" -> resources
     ).toString
   }
@@ -35,49 +39,58 @@ object CreateSamTemplate {
         val lambdaName = simpleName + stage.toLowerCase.capitalize
         val userPoolId = ""
         val awsAccountId = user.arn.accountId.value
-        Json.obj(
-          lambdaName -> Json.obj(
-            "handler" -> s"$fqcn::handleRequest",
-            "name" -> name,
-            "description" -> description,
-            "memorySize" -> memorySize,
-            "timeout" -> timeout,
-            "events" -> Json.arr(
-              Json.obj(
-                "http" -> Json.obj(
-                  "path" -> path,
-                  "method" -> method,
-//                  "authorizer" -> Json.obj(
-//                    "arn" -> s"arn:aws:cognito-idp:${credentialsAndRegion.region}:$awsAccountId:userpool/$userPoolId"
-//                  )
-                )
+        functionTemplate(lambdaName, fqcn, name, description, memorySize, timeout) {
+          Json.obj(
+            s"${name}Api" -> Json.obj(
+              "Type" -> "Api",
+              "Properties" -> Json.obj(
+                "Path" -> path,
+                "Method" -> method,
               )
             )
           )
-        )
+        }
+
       case DynamoHandler(fqcn, simpleName, stage, tableName, batchSize, startingPosition, enabled, name, memorySize, timeout, description, streamArn) =>
         val lambdaName = simpleName + stage.toLowerCase.capitalize
         val arn: String = streamArn.getOrElse("No dynamodb streams Arn found")
-        Json.obj(
-          lambdaName -> Json.obj(
-            "handler" -> s"$fqcn::handleRequest",
-            "name" -> name,
-            "description" -> description,
-            "memorySize" -> memorySize,
-            "timeout" -> timeout,
-            "events" -> Json.arr(
-              Json.obj(
-                "stream" -> Json.obj(
-                  "arn" -> arn,
-                  "type" -> "dynamodb",
-                  "batchSize" -> batchSize,
-                  "startingPosition" -> startingPosition,
-                  "enabled" -> enabled
+        functionTemplate(lambdaName, fqcn, name, description, memorySize, timeout) {
+            Json.obj(
+              s"${name}DynamoDB" -> Json.obj(
+                "Type" -> "DynamoDB",
+                "Properties" -> Json.obj(
+                  "Stream" -> arn,
+                  "StartingPosition" -> startingPosition,
+                  "BatchSize" -> batchSize
                 )
               )
             )
-          )
-        )
+        }
     }
+  }
+
+  def functionTemplate(lambdaName: String,
+                       fqcn: String,
+                       name: String,
+                       description: String,
+                       memorySize: Int,
+                       timeout: Int)(event: JsObject): JsObject = {
+    Json.obj(
+      lambdaName -> Json.obj(
+        "Type" -> "AWS::Serverless::Function",
+        "Properties" -> Json.obj(
+          "Handler" -> s"$fqcn::handleRequest",
+          "CodeUri" -> "",
+          "FunctionName" -> name,
+          "Description" -> description,
+          "MemorySize" -> memorySize,
+          "Timeout" -> timeout,
+          "Role" -> "",
+          "Policies" -> Json.arr(),
+          "Tracing" -> name,
+          "Events" -> event
+        )
+      )
+    )
   }
 }

@@ -1,5 +1,5 @@
 import sbt._
-import sbt.Keys._
+import sbt.Keys.{publishArtifact, _}
 
 import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtScalariform
@@ -15,7 +15,7 @@ object GlobalSettings extends AutoPlugin with LibraryDependenciesKeys {
     description := "A plugin for creating enterprise cloud application leveraging serverless compute and managed resources",
     startYear := Some(2017),
     addCompilerPlugin(libScalaMacros),
-  ) ++ headerSettings ++ scalariFormSettings ++ resolverSettings ++ compilerSettings
+  ) ++ headerSettings ++ scalariFormSettings ++ resolverSettings ++ compilerSettings ++ publishSourcesAndDocsSettings
 
   lazy val scalariFormSettings = Seq(
     SbtScalariform.autoImport.scalariformPreferences := {
@@ -46,5 +46,11 @@ object GlobalSettings extends AutoPlugin with LibraryDependenciesKeys {
     scalacOptions += "-language:higherKinds",
     scalacOptions += "-language:implicitConversions",
     scalacOptions += "-feature",
+  )
+
+  lazy val publishSourcesAndDocsSettings = Seq(
+    // disable creating javadoc and scaladoc //
+    sources in (Compile,doc) := Seq.empty,
+    publishArtifact in (Compile, packageDoc) := false
   )
 }
