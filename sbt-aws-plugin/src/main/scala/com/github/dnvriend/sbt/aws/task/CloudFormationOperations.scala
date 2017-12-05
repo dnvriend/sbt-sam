@@ -3,6 +3,7 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+import scalaz.Disjunction
 
 object TemplateBody {
   implicit val toValidateTemplateRequest: Converter[TemplateBody, ValidateTemplateRequest] =
@@ -26,6 +27,16 @@ final case class StackName(value: String) {
 }
 
 final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
+
+object UpdateStackSettings {
+  implicit val toUpdateStackRequest: Converter[UpdateStackSettings, UpdateStackRequest] =
+    Converter.instance(settings => {
+      new UpdateStackRequest()
+        .withStackName(settings.stackName.value)
+        .withTemplateBody(settings.template.value)
+    })
+}
+final case class UpdateStackSettings(template: TemplateBody, stackName: StackName)
 
 object DeleteStackSettings {
   implicit val toDeleteStackRequest: Converter[DeleteStackSettings, DeleteStackRequest] =
@@ -81,17 +92,28 @@ object CloudFormationOperations extends AwsProgressListenerOps {
    */
   def validateTemplate(
     templateBody: TemplateBody,
-    client: AmazonCloudFormation)(implicit conv: Converter[TemplateBody, ValidateTemplateRequest]): ValidateTemplateResult = {
-    client.validateTemplate(conv(templateBody).addProgressBar)
+    client: AmazonCloudFormation)(implicit conv: Converter[TemplateBody, ValidateTemplateRequest]): Disjunction[Throwable, ValidateTemplateResult] = {
+    Disjunction.fromTryCatchNonFatal(client.validateTemplate(conv(templateBody).addPrintlnEventLogger))
   }
 
   /**
-   * Creates a stack as specified in the template. After the call completes successfully, the stack creation starts. You can check the status of the stack via the DescribeStacks API.
+   * Creates a stack as specified in the template. After the call completes successfully, the stack creation starts.
+   * You can check the status of the stack via the DescribeStacks API. Does not work for templates with transforms.
    */
   def createStack(
     settings: CreateStackSettings,
-    client: AmazonCloudFormation)(implicit conv: Converter[CreateStackSettings, CreateStackRequest]): CreateStackResult = {
-    client.createStack(conv(settings).addDebuggingProgressBar)
+    client: AmazonCloudFormation)(implicit conv: Converter[CreateStackSettings, CreateStackRequest]): Disjunction[Throwable, CreateStackResult] = {
+    Disjunction.fromTryCatchNonFatal(client.createStack(conv(settings).addPrintlnEventLogger))
+  }
+
+  /**
+   * Updates a stack as specified in the template. After the call completes successfully, the stack update starts.
+   * You can check the status of the stack via the DescribeStacks action.
+   */
+  def updateStack(
+    settings: UpdateStackSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[UpdateStackSettings, UpdateStackRequest]): Disjunction[Throwable, UpdateStackResult] = {
+    Disjunction.fromTryCatchNonFatal(client.updateStack(conv(settings).addPrintlnEventLogger))
   }
 
   /**
@@ -99,8 +121,8 @@ object CloudFormationOperations extends AwsProgressListenerOps {
    */
   def deleteStack(
     settings: DeleteStackSettings,
-    client: AmazonCloudFormation)(implicit conv: Converter[DeleteStackSettings, DeleteStackRequest]): DeleteStackResult = {
-    client.deleteStack(conv(settings))
+    client: AmazonCloudFormation)(implicit conv: Converter[DeleteStackSettings, DeleteStackRequest]): Disjunction[Throwable, DeleteStackResult] = {
+    Disjunction.fromTryCatchNonFatal(client.deleteStack(conv(settings).addPrintlnEventLogger))
   }
 
   /**
@@ -108,7 +130,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
    */
   def describeStack(
     settings: DescribeStackSettings,
-    client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackSettings, DescribeStacksRequest]): DescribeStacksResult = {
-    client.describeStacks(conv(settings))
+    client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackSettings, DescribeStacksRequest]): Disjunction[Throwable, DescribeStacksResult] = {
+    Disjunction.fromTryCatchNonFatal(client.describeStacks(conv(settings).addPrintlnEventLogger))
   }
 }

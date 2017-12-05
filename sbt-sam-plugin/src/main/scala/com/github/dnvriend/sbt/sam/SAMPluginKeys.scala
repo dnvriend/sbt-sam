@@ -16,12 +16,19 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.ValidateTemplateResult
 import com.github.dnvriend.sbt.aws.task.TemplateBody
-import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectLambda }
+import com.github.dnvriend.sbt.sam.state.ProjectState
+import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
 object SAMPluginKeys {
+  // sam attributes
+  lazy val samAttributeProjectState = SettingKey[ProjectState]("The state of the sam project")
+
   // sam settings
   lazy val samStage = settingKey[String]("The stage to deploy the service to")
+  lazy val samS3BucketName = settingKey[String]("The S3 deployment bucket name for the sam project")
+  lazy val samCFTemplateName = settingKey[String]("The cloudformation template name for the sam project")
+  lazy val samResourcePrefixName = settingKey[String]("The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on")
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")
@@ -30,6 +37,7 @@ object SAMPluginKeys {
   lazy val discoveredLambdas = taskKey[Set[ProjectLambda]]("")
   lazy val classifiedLambdas = taskKey[Set[LambdaHandler]]("")
   lazy val discoveredResources = taskKey[Set[Class[_]]]("")
+  lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")
@@ -37,5 +45,5 @@ object SAMPluginKeys {
   lazy val samRemove = taskKey[Unit]("Remove a service")
   lazy val samUpdate = inputKey[Unit]("Update a service")
   lazy val samGenerateTemplate = taskKey[TemplateBody]("Generate the cloudformation template")
-  lazy val samValidate = taskKey[ValidateTemplateResult]("Validates the cloud formation template")
+  lazy val samValidate = taskKey[Unit]("Validates the cloud formation template")
 }

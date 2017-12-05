@@ -1,6 +1,37 @@
 package com.github.dnvriend.sbt.sam.task
 
-//case class ProjectConfiguration(name: String)
+import com.github.dnvriend.sbt.aws.task.{ AmazonUser, CredentialsAndRegion }
+
+case class SamCFTemplateName(value: String)
+case class SamS3BucketName(value: String)
+case class SamResourcePrefixName(value: String)
+case class SamStage(value: String)
+object ProjectConfiguration {
+  def fromConfig(
+    samS3BucketName: String,
+    samCFTemplateName: String,
+    samResourcePrefixName: String,
+    samStage: String,
+    credentialsAndRegion: CredentialsAndRegion,
+    amazonUser: AmazonUser): ProjectConfiguration = {
+    ProjectConfiguration(
+      SamS3BucketName(samS3BucketName),
+      SamCFTemplateName(samCFTemplateName),
+      SamStage(samStage),
+      SamResourcePrefixName(samResourcePrefixName),
+      credentialsAndRegion,
+      amazonUser
+    )
+  }
+}
+case class ProjectConfiguration(
+    samS3BucketName: SamS3BucketName,
+    samCFTemplateName: SamCFTemplateName,
+    samStage: SamStage,
+    samResourcePrefixName: SamResourcePrefixName,
+    credentialsAndRegion: CredentialsAndRegion,
+    amazonUser: AmazonUser
+)
 
 //object ProjectConfiguration {
 //  // s3 dir structure:

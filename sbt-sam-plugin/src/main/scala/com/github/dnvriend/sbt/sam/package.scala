@@ -16,5 +16,4 @@ package com.github.dnvriend.sbt
 
 package object sam {
   final val SAM_PLUGIN_WORK_DIR = ".sam"
-  final val SAM_DEFAULT_STAGE = "dev"
 }

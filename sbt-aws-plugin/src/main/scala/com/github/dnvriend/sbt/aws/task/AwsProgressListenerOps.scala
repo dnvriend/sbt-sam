@@ -16,6 +16,9 @@ class ToProgressListenerOps[A <: AmazonWebServiceRequest](that: A) {
     that
   }
 
+  def addPrintlnEventLogger: A = {
+    addProgressListener(AwsProgressListener.printlnEventListener)
+  }
   def addProgressBar: A = {
     addProgressListener(AwsProgressListener.genericProgressBar)
   }
@@ -46,6 +49,10 @@ object AwsProgressListener {
   def debuggingProgressBar(event: ProgressEvent): Unit = {
     println(event)
     genericProgressBar(event)
+  }
+
+  def printlnEventListener(event: ProgressEvent): Unit = {
+    println(event)
   }
 }
 

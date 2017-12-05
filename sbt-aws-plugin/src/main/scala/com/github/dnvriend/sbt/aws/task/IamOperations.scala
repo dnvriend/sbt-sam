@@ -14,17 +14,33 @@ object Arn extends AnyOps {
   implicit val fromArnString: Converter[String @@ Arn, Arn] =
     Converter.instance(arn => {
       arn.unwrap match {
-        case ArnRegex(partition, service, region, accountId, resourceType, resource) =>
+        case arn @ ArnRegex(partition, service, region, accountId, resourceType, resource) =>
           Arn(
             Partition(partition),
             Service(service),
             Region(region),
             AccountId(accountId),
             ResourceType(resourceType),
-            Resource(resource)
+            Resource(resource),
+            arn
           )
       }
     })
+
+  implicit val show: Show[Arn] = Show.shows(model => {
+    import model._
+    s"""
+       |===================================================
+       |Arn: $arnString
+       |===================================================
+       |Partition: ${partition.value}
+       |Service: ${service.value}
+       |Region: ${region.value}
+       |AccountId: ${accountId.value}
+       |ResourceType: ${resourceType.value}
+       |Resource: ${resource.value}
+     """.stripMargin
+  })
 }
 
 final case class Arn(
@@ -33,7 +49,8 @@ final case class Arn(
     region: Region,
     accountId: AccountId,
     resourceType: ResourceType,
-    resource: Resource)
+    resource: Resource,
+    arnString: String)
 
 final case class Partition(value: String)
 final case class Service(value: String)

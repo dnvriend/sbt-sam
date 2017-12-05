@@ -18,7 +18,8 @@ import sbt.Keys._
 import sbt.{Def, _}
 import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
-import com.github.dnvriend.sbt.aws.task.{CloudFormationOperations, TemplateBody}
+import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.state.{CreateCloudFormationStack, SamState}
 import com.github.dnvriend.sbt.sam.task._
 import sbt.internal.inc.classpath.ClasspathUtilities
 import sbtassembly.AssemblyPlugin
@@ -33,7 +34,11 @@ object SAMPlugin extends AutoPlugin {
   import autoImport._
 
   override def projectSettings = Seq(
-    samStage := SAM_DEFAULT_STAGE,
+    samStage := "dev",
+    samS3BucketName := s"${organization.value}-${name.value}",
+    samCFTemplateName := s"${name.value}-${samStage.value}",
+    samResourcePrefixName := s"${name.value}-${samStage.value}",
+
     samProjectClassLoader := {
       val scalaInstance = Keys.scalaInstance.value
       val fullClasspath: Seq[File] = (Keys.fullClasspath in Compile).value.map(_.data)
@@ -75,12 +80,80 @@ object SAMPlugin extends AutoPlugin {
 
     // validate the sam cloud formation template
     samValidate := {
+      val log = streams.value.log
       val template = samGenerateTemplate.value
       val client = clientCloudFormation.value
-      CloudFormationOperations.validateTemplate(template, client)
+      log.info(CloudFormationOperations.validateTemplate(template, client).bimap(t => t.getMessage, _.toString).merge)
     },
 
+    samProjectConfiguration := {
+      ProjectConfiguration.fromConfig(
+        samS3BucketName.value,
+        samCFTemplateName.value,
+        samResourcePrefixName.value,
+        samStage.value,
+        credentialsAndRegion.value,
+        iamUserInfo.value
+      )
+    },
+
+    samInfo := {
+      val projectState = Keys.state.value.get(samAttributeProjectState.key)
+      val log = streams.value.log
+      log.info(projectState.map(state => {
+        val nextState = SamState.nextState(state)
+        s"""
+           |SamInfo:
+           |=============
+           |$state
+           |NextState: $nextState
+         """.stripMargin
+      }).getOrElse("Unknown, please run 'determineSamState' first"))
+
+    },
+
+    commands += determineSamState,
+    commands += createCloudFormationStack,
+    commands += deleteCloudFormationStack,
   )
 
+  val determineSamState = Command.command("determineSamState") { state =>
+    val extracted = Project.extract(state)
+    val stackName = extracted.get(samCFTemplateName)
+    val describeStackResult = CloudFormationOperations.describeStack(
+      DescribeStackSettings(StackName(stackName)),
+      extracted.get(clientCloudFormation)
+    )
+    val projectState = SamState.determineState(
+      stackName,
+      describeStackResult
+    )
+    println(projectState)
+    state.put(samAttributeProjectState.key, projectState)
+  }
 
+  val createCloudFormationStack = Command.command("createCloudFormationStack") { state =>
+    val extracted = Project.extract(state)
+    val stackName = extracted.get(samCFTemplateName)
+    val (_, config) = extracted.runTask(samProjectConfiguration, state)
+    println(config)
+    val result = CloudFormationOperations.createStack(CreateStackSettings(
+      CreateSamTemplate.fromProjectConfiguration(config),
+      StackName(stackName)),
+      extracted.get(clientCloudFormation)
+    )
+    println(result)
+    state
+  }
+
+  val deleteCloudFormationStack = Command.command("deleteCloudFormationStack") { state =>
+    val extracted = Project.extract(state)
+    val stackName = extracted.get(samCFTemplateName)
+    val result = CloudFormationOperations.deleteStack(
+      DeleteStackSettings(StackName(stackName)),
+      extracted.get(clientCloudFormation)
+    )
+    println(result)
+    state
+  }
 }
