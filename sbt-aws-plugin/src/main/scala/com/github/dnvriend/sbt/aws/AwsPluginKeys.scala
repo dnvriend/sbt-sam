@@ -24,7 +24,7 @@ import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
-import com.github.dnvriend.sbt.aws.task.{ AmazonUser, CredentialsAndRegion, LambdaMetrics }
+import com.github.dnvriend.sbt.aws.task._
 import sbt._
 
 object AwsPluginKeys {
@@ -58,6 +58,11 @@ object AwsPluginKeys {
   lazy val lambdaMetrics = taskKey[LambdaMetrics]("Get metrics for all lambdas")
 
   lazy val lambdaLog = inputKey[Unit]("Shows log of specific Lambda function")
+
+  // cloud formation tasks
+  lazy val cfDescribeStack = inputKey[DescribeStackResponse]("Returns the description for the specified stack; if no stack name was specified, then it returns the description for all the stacks created")
+  lazy val cfDescribeStackEvents = inputKey[DescribeStackEventsResponse]("Returns all stack related events for a specified stack in reverse chronological order")
+  lazy val cfDeleteStack = inputKey[DeleteStackResponse]("Deletes a specified stack. Once the call completes successfully, stack deletion starts. Deleted stacks do not show up in the DescribeStacks API if the deletion has been completed successfully")
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")

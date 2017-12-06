@@ -2,14 +2,40 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.{AmazonUser, CredentialsAndRegion, TemplateBody}
 import com.github.dnvriend.sbt.sam.state.ProjectState
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json, OWrites}
 
 import scalaz.Monoid
 import scalaz._
 import scalaz.Scalaz._
+import JsonMonoid._
+
+object JsonMonoid {
+  implicit val monoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
+}
 
 sealed trait Resource
-case class S3Bucket(name: String) extends Resource
+object S3BucketResource {
+  implicit val writes: OWrites[S3BucketResource] = OWrites(resource => {
+    Json.obj(
+      "SbtSamDeploymentBucket" -> Json.obj(
+        "Type" -> "AWS::S3::Bucket",
+        "Properties" -> ""//resource.properties.foldMap(Json.toJsObject)
+      )
+    )
+  })
+}
+
+sealed trait ResourceProperty
+object AccessControl {
+  val writes: OWrites[AccessControl] = OWrites(prop => Json.obj("AccessControl" -> prop.value))
+}
+case class AccessControl(value: String) extends ResourceProperty
+object BucketName {
+  val writes: OWrites[AccessControl] = OWrites(prop => Json.obj("BucketName" -> prop.value))
+}
+case class BucketName(value: String) extends ResourceProperty
+case class S3BucketResource(name: String,
+                            properties: List[ResourceProperty]) extends Resource
 
 sealed trait S3BucketPolicy
 case object AuthenticatedRead extends S3BucketPolicy
@@ -22,8 +48,6 @@ case object PublicRead extends S3BucketPolicy
 case object PublicReadWrite extends S3BucketPolicy
 
 object CreateSamTemplate {
-  implicit val JsObjMonoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
-
   def run(lambdas: Set[LambdaHandler],
           user: AmazonUser,
           credentialsAndRegion: CredentialsAndRegion,

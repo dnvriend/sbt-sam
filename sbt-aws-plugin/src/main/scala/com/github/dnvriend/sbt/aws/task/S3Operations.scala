@@ -23,12 +23,16 @@ object PutObjectSettings {
 }
 final case class PutObjectSettings(s3BucketId: S3BucketId, s3ObjectKey: S3ObjectKey, s3Object: S3Object)
 
+final case class PutObjectResponse(response: Option[PutObjectResult], failure: Option[Throwable])
+
 object DeleteObjectSettings {
   implicit val toDeleteObjectRequest: Converter[DeleteObjectSettings, DeleteObjectRequest] = Converter.instance(settings => {
     new DeleteObjectRequest(settings.s3BucketId.value, settings.s3ObjectKey.value)
   })
 }
 final case class DeleteObjectSettings(s3BucketId: S3BucketId, s3ObjectKey: S3ObjectKey)
+
+final case class DeleteObjectResponse(failure: Option[Throwable])
 
 // inspired by https://github.com/quaich-project/quartercask/blob/master/util/src/main/scala/codes/bytes/quartercask/s3/AWSS3.scala
 object S3Operations extends AwsProgressListenerOps {
@@ -84,8 +88,7 @@ object S3Operations extends AwsProgressListenerOps {
   def deleteObject(
     settings: DeleteObjectSettings,
     client: AmazonS3)(implicit conv: Converter[DeleteObjectSettings, DeleteObjectRequest]): Disjunction[Throwable, Unit] = {
-    println(conv(settings))
-    Disjunction.fromTryCatchNonFatal(client.deleteObject(conv(settings).addPrintlnEventLogger))
+    Disjunction.fromTryCatchNonFatal(client.deleteObject(conv(settings)))
   }
 
   private def addProgressListener(

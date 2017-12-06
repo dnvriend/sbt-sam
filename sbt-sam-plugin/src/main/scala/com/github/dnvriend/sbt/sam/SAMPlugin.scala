@@ -14,16 +14,16 @@
 
 package com.github.dnvriend.sbt.sam
 
-import sbt.Keys._
-import sbt.{Def, _}
 import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.state.{CreateCloudFormationStack, SamState}
+import com.github.dnvriend.sbt.sam.state.SamState
 import com.github.dnvriend.sbt.sam.task._
+import sbt.Keys._
+import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
-import sbtassembly.{Assembly, AssemblyPlugin}
 import sbtassembly.AssemblyKeys._
+import sbtassembly.AssemblyPlugin
 
 object SAMPlugin extends AutoPlugin {
 
@@ -105,90 +105,60 @@ object SAMPlugin extends AutoPlugin {
       log.info(projectState.map(state => {
         val nextState = SamState.nextState(state)
         s"""
+           |=============
            |SamInfo:
            |=============
            |$state
            |NextState: $nextState
          """.stripMargin
       }).getOrElse("Unknown, please run 'determineSamState' first"))
-
     },
 
-    commands += determineSamState,
-    commands += createCloudFormationStack,
-    commands += deleteCloudFormationStack,
-    commands += uploadJar,
-    commands += deleteJar,
+    samUploadArtifact := {
+      ArtifactUpload.run(
+        samProjectConfiguration.value,
+        assembly.value,
+        clientS3.value,
+        streams.value.log
+      )
+    },
+
+    samDeleteArtifact := {
+      ArtifactDelete.run(
+        samProjectConfiguration.value,
+        (assemblyOutputPath in assembly).value,
+        clientS3.value,
+        streams.value.log
+      )
+    },
+
+    samDeleteCloudFormationStack := {
+      CloudFormationStackDelete.run(
+        samProjectConfiguration.value,
+        samDescribeCloudFormationStack.value,
+        clientCloudFormation.value,
+        streams.value.log
+      )
+    },
+
+    samCreateCloudFormationStack := {
+      CloudFormationStackCreate.run(
+        samProjectConfiguration.value,
+        samDescribeCloudFormationStack.value,
+        clientCloudFormation.value,
+        streams.value.log
+      )
+    },
+
+    samDescribeCloudFormationStack := {
+      val config: ProjectConfiguration = samProjectConfiguration.value
+      CloudFormationOperations.describeStack(
+        DescribeStackSettings(StackName(config.samCFTemplateName.value)),
+        clientCloudFormation.value
+      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None)).merge
+    },
+
+    samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,
+    samDeploy := Def.sequential(samCreateCloudFormationStack, samUploadArtifact).value,
   )
-
-  lazy val determineSamState = Command.command("determineSamState") { state =>
-    val extracted = Project.extract(state)
-    val stackName = extracted.get(samCFTemplateName)
-    val describeStackResult = CloudFormationOperations.describeStack(
-      DescribeStackSettings(StackName(stackName)),
-      extracted.get(clientCloudFormation)
-    )
-    val projectState = SamState.determineState(
-      stackName,
-      describeStackResult
-    )
-    println(projectState)
-    state.put(samAttributeProjectState.key, projectState)
-  }
-
-  lazy val createCloudFormationStack = Command.command("createCloudFormationStack") { state =>
-    val extracted = Project.extract(state)
-    val stackName = extracted.get(samCFTemplateName)
-    val (_, config) = extracted.runTask(samProjectConfiguration, state)
-    println(config)
-    val result = CloudFormationOperations.createStack(CreateStackSettings(
-      CreateSamTemplate.fromProjectConfiguration(config),
-      StackName(stackName)),
-      extracted.get(clientCloudFormation)
-    )
-    println(result)
-    state
-  }
-
-  lazy val deleteCloudFormationStack = Command.command("deleteCloudFormationStack") { state =>
-    val extracted = Project.extract(state)
-    val stackName = extracted.get(samCFTemplateName)
-    val result = CloudFormationOperations.deleteStack(
-      DeleteStackSettings(StackName(stackName)),
-      extracted.get(clientCloudFormation)
-    )
-    println(result)
-    state
-  }
-
-  lazy val uploadJar = Command.command("uploadJar") { state =>
-    val extracted = Project.extract(state)
-    val (_, jarFile) = extracted.runTask((assembly), state)
-    val (_, config) = extracted.runTask(samProjectConfiguration, state)
-    val result = S3Operations.putObject(
-      PutObjectSettings(
-        S3BucketId(config.samS3BucketName.value),
-        S3ObjectKey(jarFile.getName),
-        S3Object(jarFile)
-      ),
-      extracted.get(clientS3)
-    )
-    println(result)
-    state
-  }
-
-  lazy val deleteJar = Command.command("deleteJar") { state =>
-    val extracted = Project.extract(state)
-    val (_, config) = extracted.runTask(samProjectConfiguration, state)
-    val (_, jarFile) = extracted.runTask(assemblyOutputPath in assembly, state)
-    val result = S3Operations.deleteObject(
-      DeleteObjectSettings(
-        S3BucketId(config.samS3BucketName.value),
-        S3ObjectKey(jarFile.getName)
-      ),
-      extracted.get(clientS3)
-    )
-    println(result)
-    state
-  }
 }

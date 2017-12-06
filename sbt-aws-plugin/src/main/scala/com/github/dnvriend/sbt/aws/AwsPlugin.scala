@@ -77,11 +77,38 @@ object AwsPlugin extends AutoPlugin with AllOps {
     lambdaMetrics := (lambdaMetrics triggeredBy lambdaListFunctions).value,
 
     lambdaLog := {
-      val functionName = Defaults.getForParser(lambdaListFunctions)((state, functions) => {
+      val functionName = Defaults.getForParser(lambdaListFunctions)((_, functions) => {
         val strings = functions.getOrElse(Nil).map(_.getFunctionName)
         Space ~> StringBasic.examples(strings: _*)
       }).parsed
       val metrics = lambdaMetrics.value
+    },
+
+    cfDescribeStack := {
+      val stackName = Def.spaceDelimited("stack-name").parsed
+      CloudFormationOperations.describeStack(
+        DescribeStackSettings.fromStackName(stackName.head),
+        clientCloudFormation.value
+      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None))
+       .merge
+    },
+
+    cfDescribeStackEvents := {
+      val stackName = Def.spaceDelimited("stack-name").parsed
+      CloudFormationOperations.describeStackEvents(
+        DescribeStackEventsSettings.fromStackName(stackName.head),
+        clientCloudFormation.value
+      ).bimap(t => DescribeStackEventsResponse(None, Option(t)), result => DescribeStackEventsResponse(Option(result), None))
+        .merge
+    },
+
+    cfDeleteStack := {
+      val stackName = Def.spaceDelimited("stack-name").parsed
+      CloudFormationOperations.deleteStack(
+        DeleteStackSettings.fromStackName(stackName.head),
+        clientCloudFormation.value
+      ).bimap(t => DeleteStackResponse(None, Option(t)), result => DeleteStackResponse(Option(result), None))
+        .merge
     },
   )
 }

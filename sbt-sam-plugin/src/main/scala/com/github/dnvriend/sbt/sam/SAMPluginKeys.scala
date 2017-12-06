@@ -14,8 +14,7 @@
 
 package com.github.dnvriend.sbt.sam
 
-import com.amazonaws.services.cloudformation.model.ValidateTemplateResult
-import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.state.ProjectState
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
@@ -39,6 +38,11 @@ object SAMPluginKeys {
   lazy val classifiedLambdas = taskKey[Set[LambdaHandler]]("")
   lazy val discoveredResources = taskKey[Set[Class[_]]]("")
   lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
+  lazy val samUploadArtifact = taskKey[PutObjectResponse]("Upload deployment artifact to the S3 deployment bucket")
+  lazy val samDeleteArtifact = taskKey[DeleteObjectResponse]("Delete deployment artifact from the S3 deployment bucket")
+  lazy val samDeleteCloudFormationStack = taskKey[Unit]("Deletes the cloud formation stack")
+  lazy val samCreateCloudFormationStack = taskKey[Unit]("Create the cloud formation stack")
+  lazy val samDescribeCloudFormationStack = taskKey[DescribeStackResponse]("Determine the state of the cloud")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")
