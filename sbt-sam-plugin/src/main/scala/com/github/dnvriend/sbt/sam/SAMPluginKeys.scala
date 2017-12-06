@@ -29,6 +29,7 @@ object SAMPluginKeys {
   lazy val samS3BucketName = settingKey[String]("The S3 deployment bucket name for the sam project")
   lazy val samCFTemplateName = settingKey[String]("The cloudformation template name for the sam project")
   lazy val samResourcePrefixName = settingKey[String]("The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on")
+  lazy val samJar = taskKey[File]("The location of the jar containing all the lambdas")
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")

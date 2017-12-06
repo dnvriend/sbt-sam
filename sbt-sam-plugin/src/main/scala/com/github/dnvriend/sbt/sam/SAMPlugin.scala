@@ -22,7 +22,8 @@ import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.state.{CreateCloudFormationStack, SamState}
 import com.github.dnvriend.sbt.sam.task._
 import sbt.internal.inc.classpath.ClasspathUtilities
-import sbtassembly.AssemblyPlugin
+import sbtassembly.{Assembly, AssemblyPlugin}
+import sbtassembly.AssemblyKeys._
 
 object SAMPlugin extends AutoPlugin {
 
@@ -35,9 +36,10 @@ object SAMPlugin extends AutoPlugin {
 
   override def projectSettings = Seq(
     samStage := "dev",
-    samS3BucketName := s"${organization.value}-${name.value}",
+    samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
+    samJar := (assemblyOutputPath in assembly).value,
 
     samProjectClassLoader := {
       val scalaInstance = Keys.scalaInstance.value
@@ -115,9 +117,11 @@ object SAMPlugin extends AutoPlugin {
     commands += determineSamState,
     commands += createCloudFormationStack,
     commands += deleteCloudFormationStack,
+    commands += uploadJar,
+    commands += deleteJar,
   )
 
-  val determineSamState = Command.command("determineSamState") { state =>
+  lazy val determineSamState = Command.command("determineSamState") { state =>
     val extracted = Project.extract(state)
     val stackName = extracted.get(samCFTemplateName)
     val describeStackResult = CloudFormationOperations.describeStack(
@@ -132,7 +136,7 @@ object SAMPlugin extends AutoPlugin {
     state.put(samAttributeProjectState.key, projectState)
   }
 
-  val createCloudFormationStack = Command.command("createCloudFormationStack") { state =>
+  lazy val createCloudFormationStack = Command.command("createCloudFormationStack") { state =>
     val extracted = Project.extract(state)
     val stackName = extracted.get(samCFTemplateName)
     val (_, config) = extracted.runTask(samProjectConfiguration, state)
@@ -146,12 +150,43 @@ object SAMPlugin extends AutoPlugin {
     state
   }
 
-  val deleteCloudFormationStack = Command.command("deleteCloudFormationStack") { state =>
+  lazy val deleteCloudFormationStack = Command.command("deleteCloudFormationStack") { state =>
     val extracted = Project.extract(state)
     val stackName = extracted.get(samCFTemplateName)
     val result = CloudFormationOperations.deleteStack(
       DeleteStackSettings(StackName(stackName)),
       extracted.get(clientCloudFormation)
+    )
+    println(result)
+    state
+  }
+
+  lazy val uploadJar = Command.command("uploadJar") { state =>
+    val extracted = Project.extract(state)
+    val (_, jarFile) = extracted.runTask((assembly), state)
+    val (_, config) = extracted.runTask(samProjectConfiguration, state)
+    val result = S3Operations.putObject(
+      PutObjectSettings(
+        S3BucketId(config.samS3BucketName.value),
+        S3ObjectKey(jarFile.getName),
+        S3Object(jarFile)
+      ),
+      extracted.get(clientS3)
+    )
+    println(result)
+    state
+  }
+
+  lazy val deleteJar = Command.command("deleteJar") { state =>
+    val extracted = Project.extract(state)
+    val (_, config) = extracted.runTask(samProjectConfiguration, state)
+    val (_, jarFile) = extracted.runTask(assemblyOutputPath in assembly, state)
+    val result = S3Operations.deleteObject(
+      DeleteObjectSettings(
+        S3BucketId(config.samS3BucketName.value),
+        S3ObjectKey(jarFile.getName)
+      ),
+      extracted.get(clientS3)
     )
     println(result)
     state
