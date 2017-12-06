@@ -15,14 +15,10 @@
 package com.github.dnvriend.sbt.sam
 
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.state.ProjectState
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
 object SAMPluginKeys {
-  // sam attributes
-  lazy val samAttributeProjectState = SettingKey[ProjectState]("The state of the sam project")
-
   // sam settings
   lazy val samStage = settingKey[String]("The stage to deploy the service to")
   lazy val samS3BucketName = settingKey[String]("The S3 deployment bucket name for the sam project")
@@ -42,6 +38,7 @@ object SAMPluginKeys {
   lazy val samDeleteArtifact = taskKey[DeleteObjectResponse]("Delete deployment artifact from the S3 deployment bucket")
   lazy val samDeleteCloudFormationStack = taskKey[Unit]("Deletes the cloud formation stack")
   lazy val samCreateCloudFormationStack = taskKey[Unit]("Create the cloud formation stack")
+  lazy val samUpdateCloudFormationStack = taskKey[Unit]("Update the cloud formation stack")
   lazy val samDescribeCloudFormationStack = taskKey[DescribeStackResponse]("Determine the state of the cloud")
 
   // sam tasks
@@ -49,6 +46,5 @@ object SAMPluginKeys {
   lazy val samDeploy = taskKey[Unit]("Deploy a service")
   lazy val samRemove = taskKey[Unit]("Remove a service")
   lazy val samUpdate = inputKey[Unit]("Update a service")
-  lazy val samGenerateTemplate = taskKey[TemplateBody]("Generate the cloudformation template")
   lazy val samValidate = taskKey[Unit]("Validates the cloud formation template")
 }

@@ -17,7 +17,6 @@ package com.github.dnvriend.sbt.sam
 import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.state.SamState
 import com.github.dnvriend.sbt.sam.task._
 import sbt.Keys._
 import sbt._
@@ -70,22 +69,14 @@ object SAMPlugin extends AutoPlugin {
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
-    // generate the sam cloud formation template
-    samGenerateTemplate := {
-      CreateSamTemplate.run(
-        classifiedLambdas.value,
-        iamUserInfo.value,
-        credentialsAndRegion.value,
-        samStage.value,
-        Keys.description.?.value.getOrElse(Keys.name.value))
-    },
-
     // validate the sam cloud formation template
     samValidate := {
       val log = streams.value.log
-      val template = samGenerateTemplate.value
+      val config = samProjectConfiguration.value
+      val template = CloudFormationTemplates.updateTemplate(config)
       val client = clientCloudFormation.value
-      log.info(CloudFormationOperations.validateTemplate(template, client).bimap(t => t.getMessage, _.toString).merge)
+      log.info(CloudFormationOperations.validateTemplate(template, client)
+        .bimap(t => t.getMessage, _.toString).merge)
     },
 
     samProjectConfiguration := {
@@ -95,23 +86,18 @@ object SAMPlugin extends AutoPlugin {
         samResourcePrefixName.value,
         samStage.value,
         credentialsAndRegion.value,
-        iamUserInfo.value
+        iamUserInfo.value,
+        classifiedLambdas.value,
       )
     },
 
     samInfo := {
-      val projectState = Keys.state.value.get(samAttributeProjectState.key)
-      val log = streams.value.log
-      log.info(projectState.map(state => {
-        val nextState = SamState.nextState(state)
-        s"""
-           |=============
-           |SamInfo:
-           |=============
-           |$state
-           |NextState: $nextState
-         """.stripMargin
-      }).getOrElse("Unknown, please run 'determineSamState' first"))
+      CloudFormationStackInfo.run(
+        samProjectConfiguration.value,
+        samDescribeCloudFormationStack.value,
+        clientCloudFormation.value,
+        streams.value.log
+      )
     },
 
     samUploadArtifact := {
@@ -150,6 +136,15 @@ object SAMPlugin extends AutoPlugin {
       )
     },
 
+    samUpdateCloudFormationStack := {
+      CloudFormationStackUpdate.run(
+        samProjectConfiguration.value,
+        samDescribeCloudFormationStack.value,
+        clientCloudFormation.value,
+        streams.value.log
+      )
+    },
+
     samDescribeCloudFormationStack := {
       val config: ProjectConfiguration = samProjectConfiguration.value
       CloudFormationOperations.describeStack(
@@ -159,6 +154,6 @@ object SAMPlugin extends AutoPlugin {
     },
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,
-    samDeploy := Def.sequential(samCreateCloudFormationStack, samUploadArtifact).value,
+    samDeploy := Def.sequential(samCreateCloudFormationStack, samUploadArtifact, samUpdateCloudFormationStack).value,
   )
 }

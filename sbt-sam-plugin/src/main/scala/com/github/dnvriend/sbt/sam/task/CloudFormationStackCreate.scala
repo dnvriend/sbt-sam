@@ -17,7 +17,7 @@ object CloudFormationStackCreate {
       log.info("Creating cloud formation stack")
       CloudFormationOperations.createStack(
         CreateStackSettings(
-          CreateSamTemplate.fromProjectConfiguration(config),
+          CloudFormationTemplates.deploymentBucketTemplate(config),
           StackName(config.samCFTemplateName.value)),
         client
       )

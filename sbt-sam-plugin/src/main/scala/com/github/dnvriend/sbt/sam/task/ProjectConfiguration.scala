@@ -13,14 +13,16 @@ object ProjectConfiguration {
     samResourcePrefixName: String,
     samStage: String,
     credentialsAndRegion: CredentialsAndRegion,
-    amazonUser: AmazonUser): ProjectConfiguration = {
+    amazonUser: AmazonUser,
+    lambdas: Set[LambdaHandler]): ProjectConfiguration = {
     ProjectConfiguration(
       SamS3BucketName(samS3BucketName),
       SamCFTemplateName(samCFTemplateName),
       SamStage(samStage),
       SamResourcePrefixName(samResourcePrefixName),
       credentialsAndRegion,
-      amazonUser
+      amazonUser,
+      lambdas
     )
   }
 }
@@ -30,7 +32,8 @@ case class ProjectConfiguration(
     samStage: SamStage,
     samResourcePrefixName: SamResourcePrefixName,
     credentialsAndRegion: CredentialsAndRegion,
-    amazonUser: AmazonUser
+    amazonUser: AmazonUser,
+    lambdas: Set[LambdaHandler]
 )
 
 //object ProjectConfiguration {

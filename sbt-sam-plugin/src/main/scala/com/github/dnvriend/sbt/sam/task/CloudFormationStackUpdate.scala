@@ -17,7 +17,7 @@ object CloudFormationStackUpdate {
       log.info("Updating cloud formation stack")
       CloudFormationOperations.updateStack(
         UpdateStackSettings(
-          CreateSamTemplate.fromProjectConfiguration(config),
+          CloudFormationTemplates.updateTemplate(config),
           StackName(config.samCFTemplateName.value)),
         client
       )

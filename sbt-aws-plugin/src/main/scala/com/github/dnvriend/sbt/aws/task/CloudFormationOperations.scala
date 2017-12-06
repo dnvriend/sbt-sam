@@ -3,12 +3,16 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+import play.api.libs.json.JsValue
 
 import scalaz.Disjunction
 
 object TemplateBody {
   implicit val toValidateTemplateRequest: Converter[TemplateBody, ValidateTemplateRequest] =
     Converter.instance(template => new ValidateTemplateRequest().withTemplateBody(template.value))
+  def fromJson(json: JsValue): TemplateBody = {
+    TemplateBody(json.toString)
+  }
 }
 
 final case class TemplateBody(value: String) {
@@ -99,6 +103,17 @@ final case class DescribeStackEventsSettings(stackName: StackName)
 
 final case class DescribeStackEventsResponse(response: Option[DescribeStackEventsResult], failure: Option[Throwable])
 
+object DescribeStackResourcesSettings {
+  implicit val toDescribeStackResourcesRequest: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest] =
+    Converter.instance(settings => {
+      new DescribeStackResourcesRequest()
+        .withStackName(settings.stackName.value)
+    })
+}
+final case class DescribeStackResourcesSettings(stackName: StackName)
+
+final case class DescribeStackResourcesResponse(result: Option[DescribeStackResourcesResult], failure: Option[Throwable])
+
 object CloudFormationOperations extends AwsProgressListenerOps {
   def client(cr: CredentialsAndRegion): AmazonCloudFormation = {
     AmazonCloudFormationClientBuilder.standard()
@@ -163,6 +178,16 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     settings: DescribeStackEventsSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackEventsSettings, DescribeStackEventsRequest]): Disjunction[Throwable, DescribeStackEventsResult] = {
     Disjunction.fromTryCatchNonFatal(client.describeStackEvents(conv(settings)))
+  }
+
+  /**
+   * Returns AWS resource descriptions for running and deleted stacks. If StackName is specified, all the associated
+   * resources that are part of the stack are returned.
+   */
+  def describeStackResources(
+    settings: DescribeStackResourcesSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest]): Disjunction[Throwable, DescribeStackResourcesResult] = {
+    Disjunction.fromTryCatchNonFatal(client.describeStackResources(conv(settings)))
   }
 
   def createStackEventGenerator(
