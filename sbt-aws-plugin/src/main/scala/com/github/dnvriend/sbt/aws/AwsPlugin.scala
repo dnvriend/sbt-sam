@@ -47,6 +47,8 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientCloudWatch := CloudWatchOperations.client(credentialsAndRegion.value),
     clientIam := IamOperations.client(credentialsAndRegion.value),
     clientCloudFormation := CloudFormationOperations.client(credentialsAndRegion.value),
+    clientCodeBuild := CodeBuildOperations.client(credentialsAndRegion.value),
+    clientXRay := XRayOperations.client(credentialsAndRegion.value),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),
