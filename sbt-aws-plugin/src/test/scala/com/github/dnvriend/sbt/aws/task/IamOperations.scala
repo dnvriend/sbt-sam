@@ -4,15 +4,17 @@ import com.amazonaws.regions.Regions
 import com.github.dnvriend.sbt.aws.TestSpec
 
 class IamOperations extends TestSpec {
+  val arnString = "arn:aws:iam::0123456789:user/dnvriend-git"
   it should "parse an arn" in {
-    Arn.fromArnString("arn:aws:iam::0123456789:user/dnvriend-git".wrap[Arn]) shouldBe
+    Arn.fromArnString(arnString.wrap[Arn]) shouldBe
       Arn(
         Partition("aws"),
         Service("iam"),
         Region(""),
         AccountId("0123456789"),
         ResourceType("user"),
-        Resource("dnvriend-git")
+        Resource("dnvriend-git"),
+        arnString
       )
   }
 
