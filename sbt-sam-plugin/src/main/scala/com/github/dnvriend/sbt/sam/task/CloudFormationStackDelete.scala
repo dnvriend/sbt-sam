@@ -17,8 +17,11 @@ object CloudFormationStackDelete {
         DeleteStackSettings(StackName(config.samCFTemplateName.value)),
         client
       )
-      CloudFormationOperations.createStackEventGenerator(StackName(config.samCFTemplateName.value), client) { event =>
-        log.info(s"${event.status} - ${event.event.resourceType} - ${event.event.resourceStatus}")
+      CloudFormationOperations.createStackEventGenerator(StackName(config.samCFTemplateName.value), client) {
+        case CloudFormationEvent(stackStatus, Some(Event(_, _, _, resourceType, status, _, _, _, _, _, _))) =>
+          log.info(s"$stackStatus - $resourceType - $status")
+        case CloudFormationEvent(stackStatus, None) =>
+          log.info(s"$stackStatus - no event")
       }
     } else {
       log.info("Skipping deleting cloud formation stack, it does not exist")

@@ -3,9 +3,12 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+
+import scala.collection.JavaConverters._
 import play.api.libs.json.JsValue
 
-import scalaz.Disjunction
+import scala.compat.Platform
+import scalaz.{ Disjunction, NonEmptyList }
 
 object TemplateBody {
   implicit val toValidateTemplateRequest: Converter[TemplateBody, ValidateTemplateRequest] =
@@ -193,23 +196,31 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def createStackEventGenerator(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
-    import scala.collection.JavaConverters._
-    var events: Seq[Event] = Nil
+    import scalaz._
+    import scalaz.Scalaz._
 
+    val now: Long = Platform.currentTime
+    var events: Set[Event] = Set.empty
+    def publishEvents(stackStatus: String, newEvents: Set[Event]): Unit = {
+      val event = CloudFormationEvent.apply _ curried stackStatus
+      val ys = ((newEvents diff events) map Option.apply map event).toList.toNel
+      ys.getOrElse(event(None).wrapNel) foreach { cloudFormationEvent =>
+        f(cloudFormationEvent)
+      }
+    }
     def loop: Unit = {
       val stackStatus: String = describeStack(DescribeStackSettings(stackName), client)
         .bimap(_ => "STACK_DOES_NOT_EXIST", _.getStacks.get(0).getStackStatus).merge
       val stackEvents = describeStackEvents(DescribeStackEventsSettings(stackName), client)
         .bimap(t => DescribeStackEventsResponse(None, Option(t)), resp => DescribeStackEventsResponse(Option(resp), None)).merge
-      val newEvents: Seq[Event] = stackEvents.response.map(_.getStackEvents.asScala.map(Event.fromStackEvent).reverse).getOrElse(Nil)
+      val newEvents: Set[Event] = {
+        stackEvents.response.map(_.getStackEvents.asScala.filter(_.getTimestamp.getTime >= now).map(Event.fromStackEvent).toSet)
+          .getOrElse(Set.empty)
+      }
       if (List("FAILED", "COMPLETE", "STACK_DOES_NOT_EXIST").exists(state => stackStatus.contains(state))) {
-        (newEvents diff events).foreach { event =>
-          f(CloudFormationEvent(stackStatus, event))
-        }
+        publishEvents(stackStatus, newEvents)
       } else {
-        (newEvents diff events).foreach { event =>
-          f(CloudFormationEvent(stackStatus, event))
-        }
+        publishEvents(stackStatus, newEvents)
         events = newEvents
         Thread.sleep(500)
         loop
@@ -227,12 +238,13 @@ object Event {
       event.getLogicalResourceId,
       event.getPhysicalResourceId,
       event.getResourceType,
-      event.getTimestamp.toString,
       event.getResourceStatus,
       event.getResourceStatusReason,
       event.getResourceProperties,
       event.getStackId,
-      event.getStackName
+      event.getStackName,
+      event.getTimestamp.toString,
+      event.getTimestamp.getTime
     )
   }
 }
@@ -242,11 +254,12 @@ final case class Event(
     logicalResourceId: String,
     physicalResourceId: String,
     resourceType: String,
-    timestamp: String,
     resourceStatus: String,
     resourceStatusReason: String,
     resourceProperties: String,
     stackId: String,
-    stackName: String)
+    stackName: String,
+    timestampAsString: String,
+    timestampAsLong: Long)
 
-final case class CloudFormationEvent(status: String, event: Event)
+final case class CloudFormationEvent(status: String, event: Option[Event])
