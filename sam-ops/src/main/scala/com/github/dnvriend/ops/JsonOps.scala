@@ -48,6 +48,17 @@ class JsonOpsImpl(that: JsValue) extends StringOps {
     that.toString.arr
   }
 
+  def toYaml: String = {
+    val jsonAST = {
+      io.circe.parser.parse(that.toString)
+        .disjunction.valueOr(throw _)
+    }
+    io.circe.yaml.Printer(
+      dropNullKeys = true,
+      mappingStyle = io.circe.yaml.Printer.FlowStyle.Block
+    ).pretty(jsonAST)
+  }
+
   def validate[A: Reads]: Disjunction[Seq[(JsPath, Seq[JsonValidationError])], A] = {
     that.validate[A].asEither.disjunction
   }

@@ -1,22 +1,21 @@
 import sbt._
 import sbt.Keys._
+import LibraryDependencies._
 
-object SamLambdaSettings extends AutoPlugin with LibraryDependenciesKeys {
+object SamLambdaSettings extends AutoPlugin {
   override def trigger = noTrigger
-  override def requires = plugins.JvmPlugin && LibraryDependencies
+  override def requires = plugins.JvmPlugin
 
   override def projectSettings = Seq(
-    libraryDependencies += libAwsLambdaJavaCore.value,
-    libraryDependencies += libAwsLambdaJavaEvents.value,
-    libraryDependencies += libAwsJavaSdkDynamoDb.value,
-    libraryDependencies += libTypesafeConfig.value,
-    libraryDependencies += libPureConfig.value,
-    libraryDependencies += libScalaz.value,
-    libraryDependencies += libAvro4s.value,
-    libraryDependencies += libSimulacrum.value,
-    libraryDependencies += libCirceYaml.value,
-    libraryDependencies += libPlayJson.value,
-    libraryDependencies += libScalazScalaTest.value % Test,
-    libraryDependencies += libScalaTest.value % Test,
+    libraryDependencies += libAwsLambdaJavaCore,
+    libraryDependencies += libAwsLambdaJavaEvents,
+    libraryDependencies += libTypesafeConfig,
+    libraryDependencies += libPureConfig,
+    libraryDependencies += libScalaz,
+    libraryDependencies += libAvro4s,
+    libraryDependencies += libCirceYaml,
+    libraryDependencies += libPlayJson,
+    libraryDependencies += libScalazScalaTest % Test,
+    libraryDependencies += libScalaTest % Test
   )
 }

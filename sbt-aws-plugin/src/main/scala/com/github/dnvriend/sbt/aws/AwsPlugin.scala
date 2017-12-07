@@ -53,6 +53,9 @@ object AwsPlugin extends AutoPlugin with AllOps {
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),
 
+    // code build tasks
+    cbGenerateBuildSpec := CodeBuildOperations.generateBuildSpec(BuildSpecSettings(baseDirectory.value)),
+
     // lambda operations
     lambdaListFunctions := AwsLambdaOperations.listFunctions(clientAwsLambda.value),
     lambdaListFunctions := (lambdaListFunctions keepAs lambdaListFunctions).value,

@@ -70,4 +70,7 @@ object AwsPluginKeys {
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
+
+  // code build tasks
+  lazy val cbGenerateBuildSpec = taskKey[File]("Generates a buildspec.yaml file in the root project directory")
 }
