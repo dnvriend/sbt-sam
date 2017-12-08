@@ -1,18 +1,19 @@
 import sbt.Keys._
 import sbt.ScriptedPlugin.autoImport.{scriptedBufferLog, scriptedLaunchOpts}
 import sbt._
+import LibraryDependencies._
 
-object SbtAwsPluginSettings extends AutoPlugin with LibraryDependenciesKeys {
+object SbtAwsPluginSettings extends AutoPlugin {
   override def trigger = noTrigger
-  override def requires = plugins.JvmPlugin && ScriptedPlugin && LibraryDependencies
+  override def requires = plugins.JvmPlugin && ScriptedPlugin
 
   override def projectSettings = Seq(
     sbtPlugin := true,
-    libraryDependencies += libCirceYaml.value,
-    libraryDependencies += libPlayJson.value,
-    libraryDependencies += libAwsJavaSdk.value,
-    libraryDependencies += libScalazScalaTest.value % Test,
-    libraryDependencies += libScalaTest.value % Test,
+    libraryDependencies += libCirceYaml,
+    libraryDependencies += libPlayJson,
+    libraryDependencies += libAwsJavaSdk,
+    libraryDependencies += libScalazScalaTest % Test,
+    libraryDependencies += libScalaTest % Test,
 
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++

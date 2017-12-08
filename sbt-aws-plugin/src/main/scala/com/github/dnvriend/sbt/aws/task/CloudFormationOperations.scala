@@ -11,7 +11,7 @@ import scala.compat.Platform
 import scalaz.{ Disjunction, NonEmptyList }
 
 object TemplateBody {
-  implicit val toValidateTemplateRequest: Converter[TemplateBody, ValidateTemplateRequest] =
+  implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
     Converter.instance(template => new ValidateTemplateRequest().withTemplateBody(template.value))
   def fromJson(json: JsValue): TemplateBody = {
     TemplateBody(json.toString)
@@ -23,7 +23,7 @@ final case class TemplateBody(value: String) {
 }
 
 object CreateStackSettings {
-  implicit val toCreateStackRequest: Converter[CreateStackSettings, CreateStackRequest] =
+  implicit val toRequest: Converter[CreateStackSettings, CreateStackRequest] =
     Converter.instance(settings => {
       new CreateStackRequest()
         .withStackName(settings.stackName.value)
@@ -44,7 +44,7 @@ object CreateStackResponse {
 final case class CreateStackResponse(response: Option[CreateStackResult], failure: Option[Throwable])
 
 object UpdateStackSettings {
-  implicit val toUpdateStackRequest: Converter[UpdateStackSettings, UpdateStackRequest] =
+  implicit val toRequest: Converter[UpdateStackSettings, UpdateStackRequest] =
     Converter.instance(settings => {
       new UpdateStackRequest()
         .withStackName(settings.stackName.value)
@@ -55,7 +55,7 @@ object UpdateStackSettings {
 final case class UpdateStackSettings(template: TemplateBody, stackName: StackName)
 
 object DeleteStackSettings {
-  implicit val toDeleteStackRequest: Converter[DeleteStackSettings, DeleteStackRequest] =
+  implicit val toRequest: Converter[DeleteStackSettings, DeleteStackRequest] =
     Converter.instance(settings => {
       new DeleteStackRequest()
         .withStackName(settings.stackName.value)
@@ -75,7 +75,7 @@ object DeleteStackResponse {
 final case class DeleteStackResponse(response: Option[DeleteStackResult], failure: Option[Throwable])
 
 object DescribeStackSettings {
-  implicit val toDescribeStacksRequest: Converter[DescribeStackSettings, DescribeStacksRequest] =
+  implicit val toRequest: Converter[DescribeStackSettings, DescribeStacksRequest] =
     Converter.instance(settings => {
       new DescribeStacksRequest()
         .withStackName(settings.stackName.value)
@@ -91,7 +91,7 @@ final case class DescribeStackSettings(stackName: StackName)
 final case class DescribeStackResponse(response: Option[DescribeStacksResult], failure: Option[Throwable])
 
 object DescribeStackEventsSettings {
-  implicit val toDescribeStackEventsSettings: Converter[DescribeStackEventsSettings, DescribeStackEventsRequest] =
+  implicit val toRequest: Converter[DescribeStackEventsSettings, DescribeStackEventsRequest] =
     Converter.instance(settings => {
       new DescribeStackEventsRequest()
         .withStackName(settings.stackName.value)
@@ -107,7 +107,7 @@ final case class DescribeStackEventsSettings(stackName: StackName)
 final case class DescribeStackEventsResponse(response: Option[DescribeStackEventsResult], failure: Option[Throwable])
 
 object DescribeStackResourcesSettings {
-  implicit val toDescribeStackResourcesRequest: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest] =
+  implicit val toRequest: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest] =
     Converter.instance(settings => {
       new DescribeStackResourcesRequest()
         .withStackName(settings.stackName.value)

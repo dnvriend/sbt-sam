@@ -47,9 +47,14 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientCloudWatch := CloudWatchOperations.client(credentialsAndRegion.value),
     clientIam := IamOperations.client(credentialsAndRegion.value),
     clientCloudFormation := CloudFormationOperations.client(credentialsAndRegion.value),
+    clientCodeBuild := CodeBuildOperations.client(credentialsAndRegion.value),
+    clientXRay := XRayOperations.client(credentialsAndRegion.value),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),
+
+    // code build tasks
+    cbGenerateBuildSpec := CodeBuildOperations.generateBuildSpec(BuildSpecSettings(baseDirectory.value)),
 
     // lambda operations
     lambdaListFunctions := AwsLambdaOperations.listFunctions(clientAwsLambda.value),

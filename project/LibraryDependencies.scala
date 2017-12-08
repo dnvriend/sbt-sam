@@ -1,84 +1,40 @@
 import sbt._
-import Keys._
 
-trait LibraryDependenciesKeys {
-  lazy val libAwsJavaSdkVersion = settingKey[String]("")
-  lazy val libAwsJavaSdk = settingKey[ModuleID]("AWS SDK for Java")
-  lazy val libAwsJavaSdkDynamoDb = settingKey[ModuleID]("")
-  lazy val libAwsLambdaJavaCoreVersion = settingKey[String]("")
-  lazy val libAwsLambdaJavaCore = settingKey[ModuleID]("")
-  lazy val libAwsLambdaJavaEventsVersion = settingKey[String]("")
-  lazy val libAwsLambdaJavaEvents = settingKey[ModuleID]("")
-  lazy val libScalazScalaTestVersion = settingKey[String]("")
-  lazy val libScalazScalaTest = settingKey[ModuleID]("")
-  lazy val libScalaTestVersion = settingKey[String]("")
-  lazy val libScalaTest = settingKey[ModuleID]("")
-  lazy val libTypesafeConfigVersion = settingKey[String]("")
-  lazy val libTypesafeConfig = settingKey[ModuleID]("")
-  lazy val libPureConfigVersion = settingKey[String]("")
-  lazy val libPureConfig = settingKey[ModuleID]("")
-  lazy val libScalazVersion = settingKey[String]("")
-  lazy val libScalaz = settingKey[ModuleID]("An extension to the core Scala library for functional programming")
-  lazy val libAvro4sVersion = settingKey[String]("")
-  lazy val libAvro4s = settingKey[ModuleID]("")
-  lazy val libSimulacrumVersion = settingKey[String]("")
-  lazy val libSimulacrum = settingKey[ModuleID]("")
-  lazy val libCirceYamlVersion = settingKey[String]("")
-  lazy val libCirceYaml = settingKey[ModuleID]("")
-  lazy val libPlayJsonVersion = settingKey[String]("")
-  lazy val libPlayJson = settingKey[ModuleID]("")
-  lazy val libShapelessVersion = settingKey[String]("")
-  lazy val libShapeless = settingKey[ModuleID]("")
-  lazy val libSbtIOVersion = settingKey[String]("")
-  lazy val libSbtIO = settingKey[ModuleID]("")
-  lazy val libScalajHttpVersion = settingKey[String]("")
-  lazy val libScalajHttp = settingKey[ModuleID]("")
+object LibraryDependencies {
+  // versions //
+  val libAwsJavaSdkVersion: String = "1.11.245"
+  val libAwsLambdaJavaEventsVersion: String = "2.0.2"
+  val libAwsLambdaJavaCoreVersion: String = "1.2.0"
+  val libTypesafeConfigVersion: String = "1.3.2"
+  val libPureConfigVersion: String = "0.8.0"
+  val libScalazVersion: String = "7.2.17"
+  val libAvro4sVersion: String = "1.8.0"
+  val libCirceYamlVersion: String = "0.6.1"
+  val libPlayJsonVersion: String = "2.6.7"
+  val libShapelessVersion: String = "2.3.2"
+  val libSbtIOVersion: String = "1.1.1"
+  val libScalajHttpVersion: String = "2.3.0"
+  val libScalazScalaTestVersion: String = "1.1.2"
+  val libScalaTestVersion: String = "3.0.4"
 
-  lazy val libScalaMacros: ModuleID = "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
-  lazy val libSbtAssembly: ModuleID = "com.eed3si9n" % "sbt-assembly" % "0.14.6"
-}
-object LibraryDependenciesKeys extends LibraryDependenciesKeys
+  // libraries //
+  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % libAwsJavaSdkVersion
+  val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % libAwsLambdaJavaCoreVersion
+  val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % libAwsLambdaJavaEventsVersion
+  val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % libTypesafeConfigVersion
+  val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % libPureConfigVersion
+  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % libScalazVersion
+  val libAvro4s: ModuleID = "com.sksamuel.avro4s" %% "avro4s-core" % libAvro4sVersion
+  val libCirceYaml: ModuleID = "io.circe" %% "circe-yaml" % libCirceYamlVersion
+  val libPlayJson: ModuleID = "com.typesafe.play" %% "play-json" % libPlayJsonVersion
+  val libShapeless: ModuleID = "com.chuusai" %% "shapeless" % libShapelessVersion
+  val libSbtIO: ModuleID = "org.scala-sbt" %% "io" % libSbtIOVersion
+  val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % libScalajHttpVersion
 
-object LibraryDependencies extends AutoPlugin with LibraryDependenciesKeys {
-  override def trigger = allRequirements
-  override def requires = plugins.JvmPlugin
+  // testing libs //
+  val libScalazScalaTest: ModuleID = "org.typelevel" %% "scalaz-scalatest" % libScalazScalaTestVersion
+  val libScalaTest: ModuleID = "org.scalatest" %% "scalatest" % libScalaTestVersion
 
-  override def projectSettings = libVersions ++ libs
-
-  lazy val libVersions = Seq(
-    libAwsJavaSdkVersion := "1.11.241",
-    libAwsLambdaJavaEventsVersion := "2.0.2",
-    libAwsLambdaJavaCoreVersion := "1.2.0",
-    libScalazScalaTestVersion := "1.1.2",
-    libScalaTestVersion := "3.0.4",
-    libTypesafeConfigVersion := "1.3.2",
-    libPureConfigVersion := "0.8.0",
-    libScalazVersion := "7.2.17",
-    libAvro4sVersion := "1.8.0",
-    libSimulacrumVersion := "0.10.0",
-    libCirceYamlVersion := "0.6.1",
-    libPlayJsonVersion := "2.6.7",
-    libShapelessVersion := "2.3.2",
-    libSbtIOVersion := "1.1.1",
-    libScalajHttpVersion := "2.3.0",
-  )
-
-  lazy val libs = Seq(
-    libAwsJavaSdk := "com.amazonaws" % "aws-java-sdk" % libAwsJavaSdkVersion.value,
-    libAwsJavaSdkDynamoDb := "com.amazonaws" % "aws-java-sdk-dynamodb" % libAwsJavaSdkVersion.value,
-    libAwsLambdaJavaCore := "com.amazonaws" % "aws-lambda-java-core" % libAwsLambdaJavaCoreVersion.value,
-    libAwsLambdaJavaEvents := "com.amazonaws" % "aws-lambda-java-events" % libAwsLambdaJavaEventsVersion.value,
-    libScalazScalaTest := "org.typelevel" %% "scalaz-scalatest" % libScalazScalaTestVersion.value,
-    libScalaTest := "org.scalatest" %% "scalatest" % libScalaTestVersion.value,
-    libTypesafeConfig := "com.typesafe" % "config" % libTypesafeConfigVersion.value,
-    libPureConfig := "com.github.pureconfig" %% "pureconfig" % libPureConfigVersion.value,
-    libScalaz := "org.scalaz" %% "scalaz-core" % libScalazVersion.value,
-    libAvro4s := "com.sksamuel.avro4s" %% "avro4s-core" % libAvro4sVersion.value,
-    libSimulacrum := "com.github.mpilquist" %% "simulacrum" % libSimulacrumVersion.value,
-    libCirceYaml := "io.circe" %% "circe-yaml" % libCirceYamlVersion.value,
-    libPlayJson := "com.typesafe.play" %% "play-json" % libPlayJsonVersion.value,
-    libShapeless := "com.chuusai" %% "shapeless" % libShapelessVersion.value,
-    libSbtIO := "org.scala-sbt" %% "io" % libSbtIOVersion.value,
-    libScalajHttp := "org.scalaj" %% "scalaj-http" % libScalajHttpVersion.value,
-  )
+  // sbt plugins //
+  val libSbtAssembly: ModuleID = "com.eed3si9n" % "sbt-assembly" % "0.14.6"
 }

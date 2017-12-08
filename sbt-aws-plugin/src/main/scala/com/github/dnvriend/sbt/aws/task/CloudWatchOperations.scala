@@ -22,6 +22,11 @@ final case class LambdaMetrics(errors: List[Metric],
                                throttles: List[Metric],
                               )
 
+/**
+  * Amazon CloudWatch monitors your Amazon Web Services (AWS) resources and the applications you run on AWS
+  * in real time. You can use CloudWatch to collect  and track metrics, which are the variables you want to
+  * measure for your resources and applications.
+  */
 object CloudWatchOperations {
   final val Namespacelambda = "AWS/Lambda"
   final val MetricDuration = "Duration"
