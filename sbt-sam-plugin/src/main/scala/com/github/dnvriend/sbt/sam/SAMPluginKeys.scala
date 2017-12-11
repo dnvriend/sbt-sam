@@ -15,7 +15,7 @@
 package com.github.dnvriend.sbt.sam
 
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
+import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda, SamUserDetails }
 import sbt._
 
 object SAMPluginKeys {
@@ -25,6 +25,7 @@ object SAMPluginKeys {
   lazy val samCFTemplateName = settingKey[String]("The cloudformation template name for the sam project")
   lazy val samResourcePrefixName = settingKey[String]("The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on")
   lazy val samJar = taskKey[File]("The location of the jar containing all the lambdas")
+  lazy val samUsers = settingKey[List[SamUserDetails]]("List of username and password for user accounts to create")
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")
@@ -47,4 +48,5 @@ object SAMPluginKeys {
   lazy val samRemove = taskKey[Unit]("Remove a service")
   lazy val samUpdate = inputKey[Unit]("Update a service")
   lazy val samValidate = taskKey[Unit]("Validates the cloud formation template")
+  lazy val samCreateAuthUser = inputKey[Unit]("Creates and authenticates user specified in samUsers")
 }

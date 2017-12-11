@@ -17,6 +17,7 @@ package com.github.dnvriend.sbt.aws
 import com.amazonaws.services.apigateway.AmazonApiGateway
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
 import com.amazonaws.services.kinesis.AmazonKinesis
@@ -50,6 +51,7 @@ object AwsPluginKeys {
   lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
   lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
   lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
+  lazy val clientCognito = SettingKey[AWSCognitoIdentityProvider]("Returns the cognito identity provider client")
 
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")

@@ -39,6 +39,7 @@ object SAMPlugin extends AutoPlugin {
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
     samJar := (assemblyOutputPath in assembly).value,
+    samUsers := List(SamUserDetails("test-user", "test-password")),
 
     samProjectClassLoader := {
       val scalaInstance = Keys.scalaInstance.value
@@ -155,5 +156,16 @@ object SAMPlugin extends AutoPlugin {
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,
     samDeploy := Def.sequential(samCreateCloudFormationStack, samUploadArtifact, samUpdateCloudFormationStack).value,
+
+    // cognito user/password to create list - get from martijn's config task
+    //userpool id and client id - where to get from?
+    samCreateAuthUser := {
+      val input: Seq[String] = Def.spaceDelimited("user-pool-id client-id").parsed
+      val userList: List[SamUserDetails] = samUsers.value
+
+      userList.foreach { user ⇒
+        println(AwsCognitoIdpOperations.adminCreateAndAuthUser(clientCognito.value, user.username, user.password, input.head, input.tail.head))
+      }
+    }
   )
 }

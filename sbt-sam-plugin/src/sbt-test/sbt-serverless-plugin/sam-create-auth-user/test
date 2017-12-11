@@ -1,0 +1,11 @@
+# see: http://www.scala-sbt.org/1.x/docs/Testing-sbt-plugins.html#step+4%3A+write+a+script
+
+######### Legend #############
+## # starts a one-line comment
+## > name sends a task to sbt (and tests if it succeeds)
+## $ name arg* performs a file command (and tests if it succeeds)
+## -> name sends a task to sbt, but expects it to fail
+## -$ name arg* performs a file command, but expects it to fail
+
+# check if we can successfully acquire auth results
+> samCreateAuthUser eu-west-1_x28EYOMHi 3ukfqda2irnbckj1qifbqeb44t
