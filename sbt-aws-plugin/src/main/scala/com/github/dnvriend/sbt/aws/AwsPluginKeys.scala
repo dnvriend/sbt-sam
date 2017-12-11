@@ -68,4 +68,8 @@ object AwsPluginKeys {
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
+
+  // cognito tasks
+  lazy val usersToCreate = settingKey[List[CognitoUserDetails]]("List of username and password for user accounts to create")
+  lazy val createValidUsers = taskKey[List[ValidUser]]("Creates and authenticates all users specified in usersToCreate and returns the successfully validated users, , if no users are specified does nothing,")
 }

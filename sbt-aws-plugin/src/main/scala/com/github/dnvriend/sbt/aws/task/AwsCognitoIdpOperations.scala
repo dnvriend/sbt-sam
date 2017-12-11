@@ -126,3 +126,13 @@ object AwsCognitoIdpOperations {
     )
   }
 }
+
+case class CognitoUserDetails(userName: String, password: String, userPoolId: String, clientId: String)
+
+
+object ValidUser {
+  def getNewToken(client: AWSCognitoIdentityProvider) = {
+    client.
+  }
+}
+case class ValidUser(userName: String, idToken: String)

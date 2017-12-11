@@ -8,4 +8,4 @@
 ## -$ name arg* performs a file command, but expects it to fail
 
 # check if we can successfully acquire auth results
-> samCreateAuthUser eu-west-1_x28EYOMHi 3ukfqda2irnbckj1qifbqeb44t
+> show createValidUsers

@@ -14,11 +14,14 @@
 
 package com.github.dnvriend.sbt.aws
 
+import com.amazonaws.services.cognitoidp.model.AdminRespondToAuthChallengeResult
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task._
 import sbt.complete.DefaultParsers._
 import sbt._
 import sbt.Keys._
+
+import scalaz.Disjunction
 
 object AwsPlugin extends AutoPlugin with AllOps {
 
@@ -110,6 +113,17 @@ object AwsPlugin extends AutoPlugin with AllOps {
         clientCloudFormation.value
       ).bimap(t => DeleteStackResponse(None, Option(t)), result => DeleteStackResponse(Option(result), None))
         .merge
+    },
+
+    createValidUsers := {
+      val userList: List[CognitoUserDetails] = usersToCreate.value
+
+      val users: List[Disjunction[String, ValidUser]] = userList.map { user ⇒
+        AwsCognitoIdpOperations.adminCreateAndAuthUser(clientCognito.value, user.userName, user.password, user.userPoolId, user.clientId)
+          .map(response ⇒ ValidUser(user.userName, user.password, response.getAuthenticationResult.getIdToken))
+      }
+
+      users.filter(_.isRight).flatMap(_.toList)
     },
   )
 }
