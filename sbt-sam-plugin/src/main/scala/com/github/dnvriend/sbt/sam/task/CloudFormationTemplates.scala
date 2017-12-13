@@ -2,10 +2,11 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
-import play.api.libs.json.{JsArray, JsObject, Json}
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import play.api.libs.json.{ JsArray, JsObject, Json }
 
-import scalaz.Monoid
+import scalaz._
+import scalaz.Scalaz._
 
 object CloudFormationTemplates {
   implicit val monoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
@@ -13,8 +14,8 @@ object CloudFormationTemplates {
   val samTransform: JsObject = Json.obj("Transform" -> "AWS::Serverless-2016-10-31")
 
   /**
-    * Returns the basic cloud formation template to create the stack and deployment bucket
-    */
+   * Returns the basic cloud formation template to create the stack and deployment bucket
+   */
   def deploymentBucketTemplate(config: ProjectConfiguration): TemplateBody = {
     TemplateBody.fromJson(
       templateFormatVersion ++
@@ -36,8 +37,8 @@ object CloudFormationTemplates {
   }
 
   /**
-    * Merges a sequence of JsObjects into one,
-    */
+   * Merges a sequence of JsObjects into one,
+   */
   private def resources(resources: JsObject*): JsObject =
     Json.obj("Resources" -> resources.reduce(_ ++ _))
 
@@ -54,7 +55,7 @@ object CloudFormationTemplates {
   }
 
   private def parseLambdaHandlers(bucketName: SamS3BucketName, handlers: Set[LambdaHandler]): JsObject = {
-    handlers.map {
+    handlers.foldMap {
       case HttpHandler(lambdaConf, httpConf) ⇒
         parseLambdaHandler(
           bucketName,
@@ -67,7 +68,7 @@ object CloudFormationTemplates {
           lambdaConf,
           dynamoDbStreamEvent(lambdaConf.simpleClassName, dynamoConf)
         )
-    }.reduce(_ ++ _)
+    }
   }
 
   private def parseLambdaHandler(samS3BucketName: SamS3BucketName, config: LambdaConfig, event: JsObject): JsObject = {
@@ -113,7 +114,6 @@ object CloudFormationTemplates {
       ))
   }
 
-
   private def parseDynamoDBResource(tables: Set[DynamoDb.TableWithIndex], projectName: String, stage: SamStage): JsObject = {
     def streamJson(table: TableWithIndex) = table.stream match {
       case Some(s) ⇒ Json.obj(
@@ -139,8 +139,7 @@ object CloudFormationTemplates {
       case Nil ⇒ JsObject(Nil)
     }
 
-    //todo: replace with foldmap!
-    tables.map { table ⇒
+    tables.foldMap { table ⇒
       Json.obj(
         table.configName → Json.obj(
           "Type" → "AWS::DynamoDB::Table",
@@ -155,13 +154,11 @@ object CloudFormationTemplates {
           )
         )
       ) deepMerge streamJson(table) deepMerge indicesJson(table)
-    }.reduce(_ ++ _)
+    }
   }
 
-
-  //todo: replace with foldmap!
   private def parsePolicies(policies: Set[Policies.Policy]): JsObject = {
-    policies.map { policy ⇒
+    policies.foldMap { policy ⇒
       Json.obj(
         policy.configName → Json.obj(
           "Type" → "AWS::IAM::Policy",
@@ -175,7 +172,7 @@ object CloudFormationTemplates {
           )
         )
       )
-    }.reduce(_ ++ _)
+    }
   }
 
   private def attributeDefinitions(table: DynamoDb.TableWithIndex): JsArray = {
@@ -188,14 +185,14 @@ object CloudFormationTemplates {
       val indexHashKey = toJson(index.hashKey.name, index.hashKey.`type`)
       val rangeKey = index.rangeKey match {
         case Some(key) ⇒ toJson(key.name, key.`type`)
-        case None ⇒ JsObject(Nil)
+        case None      ⇒ JsObject(Nil)
       }
       indexHashKey ++ rangeKey
     }
 
     val rangeKey = table.rangeKey match {
       case Some(key) ⇒ toJson(key.name, key.`type`)
-      case None ⇒ JsObject(Nil)
+      case None      ⇒ JsObject(Nil)
     }
 
     val hashKey = toJson(table.hashKey.name, table.hashKey.`type`)

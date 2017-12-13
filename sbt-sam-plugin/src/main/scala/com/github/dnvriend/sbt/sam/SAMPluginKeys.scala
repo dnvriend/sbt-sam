@@ -15,8 +15,8 @@
 package com.github.dnvriend.sbt.sam
 
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
-import com.github.dnvriend.sbt.sam.task.{LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda}
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
 object SAMPluginKeys {

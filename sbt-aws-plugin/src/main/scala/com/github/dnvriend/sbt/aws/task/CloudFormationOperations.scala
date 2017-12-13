@@ -3,7 +3,7 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{ JsValue, Json }
 
 import scala.collection.JavaConverters._
 import scala.compat.Platform
@@ -150,6 +150,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def updateStack(
     settings: UpdateStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[UpdateStackSettings, UpdateStackRequest]): Disjunction[Throwable, UpdateStackResult] = {
+    println("====> Cloudformation stack string: " + settings.template.value)
     Disjunction.fromTryCatchNonFatal(client.updateStack(conv(settings)))
   }
 

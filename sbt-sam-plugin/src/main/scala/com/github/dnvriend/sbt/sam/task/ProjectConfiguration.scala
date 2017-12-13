@@ -1,7 +1,7 @@
 package com.github.dnvriend.sbt.sam.task
 
-import com.github.dnvriend.sbt.aws.task.{AmazonUser, CredentialsAndRegion}
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
+import com.github.dnvriend.sbt.aws.task.{ AmazonUser, CredentialsAndRegion }
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
 
 case class SamCFTemplateName(value: String)
 case class SamS3BucketName(value: String)
