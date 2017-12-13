@@ -3,18 +3,17 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+import play.api.libs.json.{JsValue, Json}
 
 import scala.collection.JavaConverters._
-import play.api.libs.json.JsValue
-
 import scala.compat.Platform
-import scalaz.{ Disjunction, NonEmptyList }
+import scalaz.Disjunction
 
 object TemplateBody {
   implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
     Converter.instance(template => new ValidateTemplateRequest().withTemplateBody(template.value))
   def fromJson(json: JsValue): TemplateBody = {
-    TemplateBody(json.toString)
+    TemplateBody(Json.prettyPrint(json))
   }
 }
 
@@ -196,7 +195,6 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def createStackEventGenerator(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
-    import scalaz._
     import scalaz.Scalaz._
 
     val now: Long = Platform.currentTime

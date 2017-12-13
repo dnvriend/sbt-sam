@@ -4,31 +4,38 @@ import java.lang.annotation.Annotation
 
 sealed trait LambdaHandler
 
-case class HttpHandler(fqcn: String,
-                       simpleClassName: String,
-                       stage: String = "",
-                       path: String = "/",
-                       method: String = "get",
-                       authorization: Boolean = false,
-                       name: String = "",
-                       memorySize: Int = 1024,
-                       timeout: Int = 300,
-                       description: String = "",
-                      ) extends LambdaHandler
-
-case class DynamoHandler(fqcn: String = "",
-                         simpleClassName: String = "",
-                         stage: String = "",
-                         tableName: String = "",
-                         batchSize: Int = 100,
-                         startingPosition: String = "LATEST",
-                         enabled: Boolean = true,
-                         name: String = "",
+case class LambdaConfig(
+                         fqcn: String,
+                         simpleClassName: String,
                          memorySize: Int = 1024,
                          timeout: Int = 300,
-                         description: String = "",
-                         streamArn: Option[String] = None,
+                         description: String = ""
+                       )
+
+case class HttpConf(
+                     path: String = "/",
+                     method: String = "get",
+                     authorization: Boolean = false,
+                   )
+
+case class DynamoConf(
+                       tableName: String = "",
+                       batchSize: Int = 100,
+                       startingPosition: String = "LATEST",
+                       enabled: Boolean = true,
+                       streamArn: Option[String] = None,
+                     )
+
+case class HttpHandler(
+                        lambdaConfig: LambdaConfig,
+                        httpConf: HttpConf
+                      ) extends LambdaHandler
+
+case class DynamoHandler(
+                          config: LambdaConfig,
+                          dynamoConf: DynamoConf
                         ) extends LambdaHandler
+
 
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
@@ -58,21 +65,27 @@ object ClassifyLambdas {
     val batchSize = anno.annotationType().getMethod("batchSize").invoke(anno).asInstanceOf[Int]
     val startingPosition = anno.annotationType().getMethod("startingPosition").invoke(anno).asInstanceOf[String]
     val enabled = anno.annotationType().getMethod("enabled").invoke(anno).asInstanceOf[Boolean]
-    val name = anno.annotationType().getMethod("name").invoke(anno).asInstanceOf[String]
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
-    DynamoHandler(fqcn, simpleName, stage, tableName, batchSize, startingPosition, enabled, name, memorySize, timeout, description)
+
+    DynamoHandler(
+      LambdaConfig(fqcn, simpleName, memorySize, timeout, description),
+      DynamoConf(tableName, batchSize, startingPosition, enabled)
+    )
   }
 
   def mapAnnoToHttpHandler(className: String, simpleName: String, anno: Annotation, stage: String): HttpHandler = {
     val path = anno.annotationType().getMethod("path").invoke(anno).asInstanceOf[String]
     val method = anno.annotationType().getMethod("method").invoke(anno).asInstanceOf[String]
     val authorization = anno.annotationType().getMethod("authorization").invoke(anno).asInstanceOf[Boolean]
-    val name = anno.annotationType().getMethod("name").invoke(anno).asInstanceOf[String]
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
-    HttpHandler(className, simpleName, stage, path, method, authorization, name, memorySize, timeout, description)
+
+    HttpHandler(
+      LambdaConfig(className, simpleName, memorySize, timeout, description),
+      HttpConf(path, method, authorization)
+    )
   }
 }
