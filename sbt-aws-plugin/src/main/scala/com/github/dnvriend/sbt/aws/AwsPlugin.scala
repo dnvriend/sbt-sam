@@ -120,7 +120,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
 
       val users: List[Disjunction[String, ValidUser]] = userList.map { user ⇒
         AwsCognitoIdpOperations.adminCreateAndAuthUser(clientCognito.value, user.userName, user.password, user.userPoolId, user.clientId)
-          .map(response ⇒ ValidUser(user.userName, user.password, response.getAuthenticationResult.getIdToken))
+          .map(response ⇒ ValidUser(user.userName, response.getAuthenticationResult.getIdToken))
       }
 
       users.filter(_.isRight).flatMap(_.toList)
