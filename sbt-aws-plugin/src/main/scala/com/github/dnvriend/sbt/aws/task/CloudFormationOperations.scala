@@ -34,6 +34,10 @@ final case class StackName(value: String) {
   require(value.nonEmpty, "Stack name should not be empty")
 }
 
+final case class ChangeSetName(value: String) {
+  require(value.nonEmpty, "change set name should not be empty")
+}
+
 final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
 
 object CreateStackResponse {
@@ -50,6 +54,19 @@ object UpdateStackSettings {
         .withTemplateBody(settings.template.value)
     })
 }
+
+object CreateChangeSetSettings {
+  implicit val toRequest: Converter[CreateChangeSetSettings, CreateChangeSetRequest] =
+    Converter.instance(settings ⇒ {
+      new CreateChangeSetRequest()
+        .withStackName(settings.stackName.value)
+        .withTemplateBody(settings.template.value)
+        .withChangeSetName(settings.changeSetName.value)
+        .withCapabilities(settings.capability)
+    })
+}
+
+final case class CreateChangeSetSettings(template: TemplateBody, stackName: StackName, changeSetName: ChangeSetName, capability: Capability)
 
 final case class UpdateStackSettings(template: TemplateBody, stackName: StackName)
 
@@ -162,6 +179,17 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     settings: DeleteStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[DeleteStackSettings, DeleteStackRequest]): Disjunction[Throwable, DeleteStackResult] = {
     Disjunction.fromTryCatchNonFatal(client.deleteStack(conv(settings)))
+  }
+
+  /**
+   * Creates a list of changes that will be applied to a stack so that you can review the changes
+   * before executing them. You can create a change set for a stack that doesn't exist or an existing
+   * stack.
+   */
+  def createChangeSet(
+    settings: CreateChangeSetSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[CreateChangeSetSettings, CreateChangeSetRequest]): Disjunction[Throwable, CreateChangeSetResult] = {
+    Disjunction.fromTryCatchNonFatal(client.createChangeSet(conv(settings)))
   }
 
   /**

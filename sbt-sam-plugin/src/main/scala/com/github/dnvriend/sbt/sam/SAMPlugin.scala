@@ -39,6 +39,7 @@ object SAMPlugin extends AutoPlugin {
     samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
+    (assemblyJarName in assembly) := "codepackage.jar",
     samJar := (assemblyOutputPath in assembly).value,
 
     samProjectClassLoader := {
@@ -126,7 +127,7 @@ object SAMPlugin extends AutoPlugin {
     },
 
     samUploadArtifact := {
-      ArtifactUpload.run(
+     ArtifactUpload.run(
         samProjectConfiguration.value,
         assembly.value,
         clientS3.value,

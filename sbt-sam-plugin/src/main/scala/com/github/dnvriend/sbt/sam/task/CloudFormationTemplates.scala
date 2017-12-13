@@ -30,8 +30,8 @@ object CloudFormationTemplates {
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
           parseLambdaHandlers(config.samS3BucketName, config.lambdas),
-          parseDynamoDBResource(config.tables, config.projectName, config.samStage),
-          parsePolicies(config.policies)
+          parseDynamoDBResource(config.tables, config.projectName, config.samStage)
+        //          ,parsePolicies(config.policies)
         )
     )
   }
@@ -78,8 +78,8 @@ object CloudFormationTemplates {
         "Properties" → Json.obj(
           "Handler" → s"${config.fqcn}::handleRequest",
           "Runtime" → "java8",
-          "CodeUri" → s"s3://${samS3BucketName.value}/codepackage.zip",
-          "Policies" → "DynamoDBCrudPolicy",
+          "CodeUri" → s"s3://${samS3BucketName.value}/codepackage.jar",
+          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess"),
           "Description" → config.description,
           "MemorySize" → config.memorySize,
           "Timeout" → config.timeout,
