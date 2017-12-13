@@ -40,6 +40,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
     ),
     awsRegion := DEFAULT_REGION,
     awsProfile := DEFAULT_PROFILE,
+    usersToCreate := List(),
 
     clientAwsLambda := AwsLambdaOperations.client(credentialsAndRegion.value),
     clientApiGateway := ApiGatewayOperations.client(credentialsAndRegion.value),
