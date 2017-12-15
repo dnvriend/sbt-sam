@@ -18,6 +18,7 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
+import com.github.dnvriend.sbt.util.ResourceOperations
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
@@ -38,6 +39,7 @@ object SAMPlugin extends AutoPlugin {
     samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
+    (assemblyJarName in assembly) := "codepackage.jar",
     samJar := (assemblyOutputPath in assembly).value,
 
     samProjectClassLoader := {
@@ -75,12 +77,34 @@ object SAMPlugin extends AutoPlugin {
       val config = samProjectConfiguration.value
       val template = CloudFormationTemplates.updateTemplate(config)
       val client = clientCloudFormation.value
+
+      log.info(
+        s"""
+          |=========
+          |Template:
+          |=========
+          |${template.value}
+        """.stripMargin)
+
+
+
       log.info(CloudFormationOperations.validateTemplate(template, client)
         .bimap(t => t.getMessage, _.toString).merge)
     },
 
+    dynamoDbTableResources := {
+      val baseDir: File = baseDirectory.value
+      ResourceOperations.retrieveDynamoDbTables(baseDir)
+    },
+
+    policyResources := {
+      val baseDir: File = baseDirectory.value
+      ResourceOperations.retrievePolicies(baseDir)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
+        name.value,
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
@@ -88,6 +112,8 @@ object SAMPlugin extends AutoPlugin {
         credentialsAndRegion.value,
         iamUserInfo.value,
         classifiedLambdas.value,
+        dynamoDbTableResources.value,
+        policyResources.value
       )
     },
 
@@ -101,7 +127,7 @@ object SAMPlugin extends AutoPlugin {
     },
 
     samUploadArtifact := {
-      ArtifactUpload.run(
+     ArtifactUpload.run(
         samProjectConfiguration.value,
         assembly.value,
         clientS3.value,

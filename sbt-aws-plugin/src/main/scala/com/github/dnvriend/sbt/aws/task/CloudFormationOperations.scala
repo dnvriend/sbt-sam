@@ -3,18 +3,17 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+import play.api.libs.json.{ JsValue, Json }
 
 import scala.collection.JavaConverters._
-import play.api.libs.json.JsValue
-
 import scala.compat.Platform
-import scalaz.{ Disjunction, NonEmptyList }
+import scalaz.Disjunction
 
 object TemplateBody {
   implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
     Converter.instance(template => new ValidateTemplateRequest().withTemplateBody(template.value))
   def fromJson(json: JsValue): TemplateBody = {
-    TemplateBody(json.toString)
+    TemplateBody(Json.prettyPrint(json))
   }
 }
 
@@ -35,6 +34,10 @@ final case class StackName(value: String) {
   require(value.nonEmpty, "Stack name should not be empty")
 }
 
+final case class ChangeSetName(value: String) {
+  require(value.nonEmpty, "change set name should not be empty")
+}
+
 final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
 
 object CreateStackResponse {
@@ -51,6 +54,19 @@ object UpdateStackSettings {
         .withTemplateBody(settings.template.value)
     })
 }
+
+object CreateChangeSetSettings {
+  implicit val toRequest: Converter[CreateChangeSetSettings, CreateChangeSetRequest] =
+    Converter.instance(settings ⇒ {
+      new CreateChangeSetRequest()
+        .withStackName(settings.stackName.value)
+        .withTemplateBody(settings.template.value)
+        .withChangeSetName(settings.changeSetName.value)
+        .withCapabilities(settings.capability)
+    })
+}
+
+final case class CreateChangeSetSettings(template: TemplateBody, stackName: StackName, changeSetName: ChangeSetName, capability: Capability)
 
 final case class UpdateStackSettings(template: TemplateBody, stackName: StackName)
 
@@ -151,6 +167,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def updateStack(
     settings: UpdateStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[UpdateStackSettings, UpdateStackRequest]): Disjunction[Throwable, UpdateStackResult] = {
+    println("====> Cloudformation stack string: " + settings.template.value)
     Disjunction.fromTryCatchNonFatal(client.updateStack(conv(settings)))
   }
 
@@ -162,6 +179,17 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     settings: DeleteStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[DeleteStackSettings, DeleteStackRequest]): Disjunction[Throwable, DeleteStackResult] = {
     Disjunction.fromTryCatchNonFatal(client.deleteStack(conv(settings)))
+  }
+
+  /**
+   * Creates a list of changes that will be applied to a stack so that you can review the changes
+   * before executing them. You can create a change set for a stack that doesn't exist or an existing
+   * stack.
+   */
+  def createChangeSet(
+    settings: CreateChangeSetSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[CreateChangeSetSettings, CreateChangeSetRequest]): Disjunction[Throwable, CreateChangeSetResult] = {
+    Disjunction.fromTryCatchNonFatal(client.createChangeSet(conv(settings)))
   }
 
   /**
@@ -196,7 +224,6 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def createStackEventGenerator(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
-    import scalaz._
     import scalaz.Scalaz._
 
     val now: Long = Platform.currentTime

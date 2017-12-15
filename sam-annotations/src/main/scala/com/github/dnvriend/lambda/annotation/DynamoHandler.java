@@ -9,7 +9,6 @@ public @interface DynamoHandler {
     int batchSize() default 100;
     String startingPosition() default "LATEST";
     boolean enabled() default true;
-    String name() default "";
     int memorySize() default 1024;
     int timeout() default 300;
     String description() default "";

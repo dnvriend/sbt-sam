@@ -15,6 +15,7 @@
 package com.github.dnvriend.sbt.sam
 
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -40,6 +41,10 @@ object SAMPluginKeys {
   lazy val samCreateCloudFormationStack = taskKey[Unit]("Create the cloud formation stack")
   lazy val samUpdateCloudFormationStack = taskKey[Unit]("Update the cloud formation stack")
   lazy val samDescribeCloudFormationStack = taskKey[DescribeStackResponse]("Determine the state of the cloud")
+
+  // resource tasks
+  lazy val dynamoDbTableResources = taskKey[Set[DynamoDb.TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
+  lazy val policyResources = taskKey[Set[Policies.Policy]]("Retrives a set of policies, which are configured in the Lightbend Config.")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")
