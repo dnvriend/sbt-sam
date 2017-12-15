@@ -19,7 +19,6 @@ object ResourceOperations extends FunctionalOps {
     val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
     val dynamoDbConfig = conf.getConfig("dynamodb").safe
 
-
     dynamoDbConfig.map { dynamoDb ⇒
 
       val result = dynamoDb.root().keySet().asScala.toList.map(name => (name, dynamoDb.getConfig(name))).map {
