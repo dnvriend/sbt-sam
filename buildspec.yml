@@ -1,4 +1,4 @@
-version 0.2
+version: 0.2
 
 phases:
   install:
@@ -11,3 +11,4 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
+
