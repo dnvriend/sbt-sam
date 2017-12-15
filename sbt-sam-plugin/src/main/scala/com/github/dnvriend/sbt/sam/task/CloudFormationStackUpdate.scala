@@ -29,6 +29,7 @@ object CloudFormationStackUpdate {
       )
 
       val changeSetResult = CloudFormationOperations.createChangeSet(settings, client)
+
       Thread.sleep(5000)
 
       val csdescribe = client.describeChangeSet(
