@@ -23,13 +23,13 @@ object CloudFormationTemplates {
     )
   }
 
-  def updateTemplate(config: ProjectConfiguration): TemplateBody = {
+  def updateTemplate(config: ProjectConfiguration, latestVersion: String): TemplateBody = {
     TemplateBody.fromJson(
       templateFormatVersion ++
         samTransform ++
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
-          parseLambdaHandlers(config.samS3BucketName, config.lambdas),
+          parseLambdaHandlers(config.samS3BucketName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage)
         //          ,parsePolicies(config.policies)
         )
@@ -48,37 +48,44 @@ object CloudFormationTemplates {
         "Type" -> "AWS::S3::Bucket",
         "Properties" -> Json.obj(
           "AccessControl" -> "BucketOwnerFullControl",
-          "BucketName" -> bucketName
+          "BucketName" -> bucketName,
+          "VersioningConfiguration" -> Json.obj("Status" -> "Enabled")
         )
       )
     )
   }
 
-  private def parseLambdaHandlers(bucketName: SamS3BucketName, handlers: Set[LambdaHandler]): JsObject = {
+  private def parseLambdaHandlers(bucketName: SamS3BucketName, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
     handlers.foldMap {
       case HttpHandler(lambdaConf, httpConf) ⇒
         parseLambdaHandler(
           bucketName,
+          latestVersion,
           lambdaConf,
           apiGatewayEvent(lambdaConf.simpleClassName, httpConf)
         )
       case DynamoHandler(lambdaConf, dynamoConf) ⇒
         parseLambdaHandler(
           bucketName,
+          latestVersion,
           lambdaConf,
           dynamoDbStreamEvent(lambdaConf.simpleClassName, dynamoConf)
         )
     }
   }
 
-  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, config: LambdaConfig, event: JsObject): JsObject = {
+  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
     Json.obj(
       config.simpleClassName → Json.obj(
         "Type" → "AWS::Serverless::Function",
         "Properties" → Json.obj(
           "Handler" → s"${config.fqcn}::handleRequest",
           "Runtime" → "java8",
-          "CodeUri" → s"s3://${samS3BucketName.value}/codepackage.jar",
+          "CodeUri" → Json.obj(
+            "Bucket" -> samS3BucketName.value,
+            "Key" -> "codepackage.jar",
+            "Version" -> latestVersion
+          ),
           "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess"),
           "Description" → config.description,
           "MemorySize" → config.memorySize,
