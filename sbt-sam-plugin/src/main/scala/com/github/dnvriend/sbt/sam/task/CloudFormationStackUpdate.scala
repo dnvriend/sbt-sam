@@ -46,10 +46,6 @@ object CloudFormationStackUpdate {
 
       )
 
-      println("====> changesetresult" + changeSetResult)
-      println("describe ===>" + csdescribe)
-      println("execute result ===>" + executeResult)
-
       //      CloudFormationOperations.updateStack(
       //        UpdateStackSettings(
       //          CloudFormationTemplates.updateTemplate(config),

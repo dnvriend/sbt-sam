@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 
 import scalaz.Show
 
+case class HandlerName(value: String)
 final case class ProjectLambda(projectClass: ProjectClass)
 
 object DiscoverLambdas {
