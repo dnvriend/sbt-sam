@@ -58,10 +58,10 @@ object DiscoverProjectClasses {
     }
   }
 
-  def fileSyntaxToPackageSyntax(fileSyntax: String): String = {
-    fileSyntax.replace("/", ".")
-  }
-  def createRelativizer(baseDir: File): sbt.File => Option[String] = {
+  private def createRelativizer(baseDir: File): sbt.File => Option[String] = {
     IO.relativize(baseDir, _: File)
   }
+
+  private val fileSyntaxToPackageSyntax: String ⇒ String = (fileSyntax: String) ⇒ fileSyntax.replace("/", ".")
+
 }
