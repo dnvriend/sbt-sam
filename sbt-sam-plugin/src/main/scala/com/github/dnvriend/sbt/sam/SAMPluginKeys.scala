@@ -36,10 +36,11 @@ object SAMPluginKeys {
   lazy val discoveredResources = taskKey[Set[Class[_]]]("")
   lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
   lazy val samUploadArtifact = taskKey[PutObjectResponse]("Upload deployment artifact to the S3 deployment bucket")
-  lazy val samDeleteArtifact = taskKey[DeleteObjectResponse]("Delete deployment artifact from the S3 deployment bucket")
+  lazy val samDeleteArtifact = taskKey[Unit]("Delete deployment artifact from the S3 deployment bucket")
   lazy val samDeleteCloudFormationStack = taskKey[Unit]("Deletes the cloud formation stack")
   lazy val samCreateCloudFormationStack = taskKey[Unit]("Create the cloud formation stack")
   lazy val samUpdateCloudFormationStack = taskKey[Unit]("Update the cloud formation stack")
+  lazy val samDescribeCloudFormationStackForCreate = taskKey[DescribeStackResponse]("Determine the state of the cloud")
   lazy val samDescribeCloudFormationStack = taskKey[DescribeStackResponse]("Determine the state of the cloud")
 
   // resource tasks

@@ -27,6 +27,8 @@ import sbtassembly.AssemblyPlugin
 
 object SAMPlugin extends AutoPlugin {
 
+  final val CODE_PACKAGE_NAME = "codepackage.jar"
+
   override def trigger: PluginTrigger = allRequirements
 
   override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin && AwsPlugin
@@ -39,7 +41,7 @@ object SAMPlugin extends AutoPlugin {
     samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
-    (assemblyJarName in assembly) := "codepackage.jar",
+    (assemblyJarName in assembly) := CODE_PACKAGE_NAME,
     samJar := (assemblyOutputPath in assembly).value,
 
     samProjectClassLoader := {
@@ -75,8 +77,14 @@ object SAMPlugin extends AutoPlugin {
     samValidate := {
       val log = streams.value.log
       val config = samProjectConfiguration.value
-      val template = CloudFormationTemplates.updateTemplate(config)
       val client = clientCloudFormation.value
+      val s3client = clientS3.value
+      val latestVersion: Option[S3ObjectVersionId] = S3Operations.latestVersion(
+        ListVersionsSettings(
+          BucketName(config.samS3BucketName.value),
+          S3ObjectKey(SAMPlugin.CODE_PACKAGE_NAME)
+        ), s3client)
+      val template = CloudFormationTemplates.updateTemplate(config, latestVersion.map(_.value).getOrElse("NO_ARTIFACT_AVAILABLE_YET"))
 
       log.info(
         s"""
@@ -85,8 +93,6 @@ object SAMPlugin extends AutoPlugin {
           |=========
           |${template.value}
         """.stripMargin)
-
-
 
       log.info(CloudFormationOperations.validateTemplate(template, client)
         .bimap(t => t.getMessage, _.toString).merge)
@@ -156,7 +162,7 @@ object SAMPlugin extends AutoPlugin {
     samCreateCloudFormationStack := {
       CloudFormationStackCreate.run(
         samProjectConfiguration.value,
-        samDescribeCloudFormationStack.value,
+        samDescribeCloudFormationStackForCreate.value,
         clientCloudFormation.value,
         streams.value.log
       )
@@ -167,8 +173,17 @@ object SAMPlugin extends AutoPlugin {
         samProjectConfiguration.value,
         samDescribeCloudFormationStack.value,
         clientCloudFormation.value,
+        clientS3.value,
         streams.value.log
       )
+    },
+
+    samDescribeCloudFormationStackForCreate := {
+      val config: ProjectConfiguration = samProjectConfiguration.value
+      CloudFormationOperations.describeStack(
+        DescribeStackSettings(StackName(config.samCFTemplateName.value)),
+        clientCloudFormation.value
+      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None)).merge
     },
 
     samDescribeCloudFormationStack := {

@@ -133,6 +133,16 @@ final case class DescribeStackResourcesSettings(stackName: StackName)
 
 final case class DescribeStackResourcesResponse(result: Option[DescribeStackResourcesResult], failure: Option[Throwable])
 
+object DescribeChangeSetSettings {
+  implicit val toRequest: Converter[DescribeChangeSetSettings, DescribeChangeSetRequest] =
+    Converter.instance(settings => {
+      new DescribeChangeSetRequest()
+        .withStackName(settings.stackName.value)
+        .withChangeSetName(settings.changeSetName.value)
+    })
+}
+final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: ChangeSetName)
+
 object CloudFormationOperations extends AwsProgressListenerOps {
   def client(cr: CredentialsAndRegion): AmazonCloudFormation = {
     AmazonCloudFormationClientBuilder.standard()
@@ -193,6 +203,15 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   }
 
   /**
+   * Returns the inputs for the change set and a list of changes that AWS CloudFormation will make if you execute the change set.
+   */
+  def describeChangeSet(
+    settings: DescribeChangeSetSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[DescribeChangeSetSettings, DescribeChangeSetRequest]): Disjunction[Throwable, DescribeChangeSetResult] = {
+    Disjunction.fromTryCatchNonFatal(client.describeChangeSet(conv(settings)))
+  }
+
+  /**
    * Returns the description for the specified stack; if no stack name was specified, then it returns the description
    * for all the stacks created.
    */
@@ -221,7 +240,10 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     Disjunction.fromTryCatchNonFatal(client.describeStackResources(conv(settings)))
   }
 
-  def createStackEventGenerator(
+  /**
+   * Continuously polls cloud formation and publishes events until finished
+   */
+  def waitForCloudFormation(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
     import scalaz.Scalaz._
@@ -249,6 +271,35 @@ object CloudFormationOperations extends AwsProgressListenerOps {
       } else {
         publishEvents(stackStatus, newEvents)
         events = newEvents
+        Thread.sleep(500)
+        loop
+      }
+    }
+
+    loop
+  }
+
+  /**
+   * Continuously polls cloud formation until the change set becomes available
+   */
+  def waitForChangeSetAvailable(
+    stackName: StackName,
+    changeSetName: ChangeSetName,
+    client: AmazonCloudFormation)(f: ChangeSetEvent => Unit): ChangeSetEvent = {
+    def publishEvent(event: ChangeSetEvent): ChangeSetEvent = {
+      f(event)
+      event
+    }
+    def loop: ChangeSetEvent = {
+      val event = describeChangeSet(DescribeChangeSetSettings(stackName, changeSetName), client)
+        .bimap(
+          error => ChangeSetEvent.failed(stackName.value, changeSetName.value, error),
+          result => ChangeSetEvent(stackName.value, changeSetName.value, result.getStatus, result.getExecutionStatus, result.getStatusReason)).merge
+
+      if (List("FAILED", "COMPLETE").exists(state => event.status.contains(state))) {
+        publishEvent(event)
+      } else {
+        publishEvent(event)
         Thread.sleep(500)
         loop
       }
@@ -290,3 +341,15 @@ final case class Event(
     timestampAsLong: Long)
 
 final case class CloudFormationEvent(status: String, event: Option[Event])
+
+object ChangeSetEvent {
+  def failed(stackName: String, changeSetName: String, throwable: Throwable): ChangeSetEvent = {
+    ChangeSetEvent(stackName, changeSetName, "FAILED", "FAILED", throwable.getMessage)
+  }
+}
+final case class ChangeSetEvent(
+    stackName: String,
+    changeSetName: String,
+    status: String,
+    executionStatus: String,
+    statusReason: String)

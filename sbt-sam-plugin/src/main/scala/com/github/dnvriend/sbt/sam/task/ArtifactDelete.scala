@@ -11,13 +11,13 @@ object ArtifactDelete {
     artifact: File,
     client: AmazonS3,
     log: Logger
-  ): DeleteObjectResponse = {
-    S3Operations.deleteObject(
+  ): Unit = {
+    S3Operations.deleteAllVersioned(
       DeleteObjectSettings(
-        S3BucketId(config.samS3BucketName.value),
+        BucketName(config.samS3BucketName.value),
         S3ObjectKey(artifact.getName)
       ),
       client
-    ).bimap(t => DeleteObjectResponse(Option(t)), _ => DeleteObjectResponse(None)).merge
+    )
   }
 }
