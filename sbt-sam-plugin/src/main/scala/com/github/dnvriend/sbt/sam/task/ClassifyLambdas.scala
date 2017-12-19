@@ -23,7 +23,6 @@ case class DynamoConf(
                        batchSize: Int = 100,
                        startingPosition: String = "LATEST",
                        enabled: Boolean = true,
-                       streamArn: Option[String] = None,
                      )
 
 case class HttpHandler(

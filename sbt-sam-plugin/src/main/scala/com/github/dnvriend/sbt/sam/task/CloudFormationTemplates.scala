@@ -111,14 +111,15 @@ object CloudFormationTemplates {
   }
 
   private def dynamoDbStreamEvent(eventName: String, dynamoConf: DynamoConf): JsObject = {
-    val arn: String = dynamoConf.streamArn.getOrElse("No ARN provided")
     Json.obj(
-      eventName -> Json.obj(
-        "Type" -> "DynamoDB",
-        "Properties" -> Json.obj(
-          "Stream" -> arn,
-          "BatchSize" -> dynamoConf.batchSize,
-          "StartingPosition" -> dynamoConf.startingPosition
+      eventName → Json.obj(
+        "Type" → "DynamoDB",
+        "Properties" → Json.obj(
+          "Stream" → Json.obj(
+            "Fn::GetAtt" → Json.arr(dynamoConf.tableName, "StreamArn")
+          ),
+          "BatchSize" → dynamoConf.batchSize,
+          "StartingPosition" → dynamoConf.startingPosition
         )
       ))
   }
