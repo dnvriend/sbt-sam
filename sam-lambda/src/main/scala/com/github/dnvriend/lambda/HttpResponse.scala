@@ -14,14 +14,21 @@
 
 package com.github.dnvriend.lambda
 
-import play.api.libs.json.{ Format, JsValue, Json }
+import play.api.libs.json.{ Format, JsNull, JsValue, Json }
 
 object HttpResponse {
   implicit val format: Format[HttpResponse] = Json.format[HttpResponse]
+
+  val ok: HttpResponse = HttpResponse(200, JsNull, Map.empty[String, String])
+  val validationError: HttpResponse = ok.copy(statusCode = 400)
+  val notFound: HttpResponse = ok.copy(statusCode = 404)
+  val serverError: HttpResponse = ok.copy(statusCode = 500)
 }
 
 case class HttpResponse(statusCode: Int, body: JsValue, headers: Map[String, String]) {
   def withBody(data: JsValue): HttpResponse = copy(body = data)
+
+  def withHeader(name: String, value: String): HttpResponse = copy(headers = headers + (name -> value))
 
   def ok: HttpResponse = copy(statusCode = 200)
 
