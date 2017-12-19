@@ -39,7 +39,7 @@ object CloudFormationStackUpdate {
       val changeSetResult = CloudFormationOperations.createChangeSet(settings, client)
 
       val latestEvent: ChangeSetEvent = CloudFormationOperations.waitForChangeSetAvailable(settings.stackName, settings.changeSetName, client) { event =>
-        log.info(s"Change set status: ${event.status} - execution status: ${event.executionStatus} - " + event.statusReason)
+        log.info(s"Change set status: ${event.status} - execution status: ${event.executionStatus} - " + Option(event.statusReason).filter(_ != "null").getOrElse(""))
       }
 
       if (latestEvent.executionStatus != "UNAVAILABLE") {

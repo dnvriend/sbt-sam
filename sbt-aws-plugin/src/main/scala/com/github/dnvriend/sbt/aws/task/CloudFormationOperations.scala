@@ -152,9 +152,9 @@ object SamStack {
        |Sam's State:
        |====================
        |Name: ${stack.getStackName}
-       |Description: ${stack.getDescription}
+       |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
        |Status: ${stack.getStackStatus}
-       |Status reason: ${stack.getStackStatusReason}
+       |Status reason: ${Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")}
        |Last updated: ${stack.getLastUpdatedTime}
        |===================
        |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
