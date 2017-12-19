@@ -130,6 +130,12 @@ object SAMPlugin extends AutoPlugin {
       )
     },
 
+    samServiceEndpoint := {
+      val logger = streams.value.log
+      val stack = samDescribeCloudFormationStack.value
+      stack.map(SamStack.fromStack).flatMap(_.serviceEndpoint)
+    },
+
     samUploadArtifact := {
      ArtifactUpload.run(
         samProjectConfiguration.value,
@@ -179,18 +185,18 @@ object SAMPlugin extends AutoPlugin {
 
     samDescribeCloudFormationStackForCreate := {
       val config: ProjectConfiguration = samProjectConfiguration.value
-      CloudFormationOperations.describeStack(
+      CloudFormationOperations.getStack(
         DescribeStackSettings(StackName(config.samCFTemplateName.value)),
         clientCloudFormation.value
-      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None)).merge
+      )
     },
 
     samDescribeCloudFormationStack := {
       val config: ProjectConfiguration = samProjectConfiguration.value
-      CloudFormationOperations.describeStack(
+      CloudFormationOperations.getStack(
         DescribeStackSettings(StackName(config.samCFTemplateName.value)),
         clientCloudFormation.value
-      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None)).merge
+      )
     },
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,

@@ -7,7 +7,7 @@ import play.api.libs.json.{ JsValue, Json }
 
 import scala.collection.JavaConverters._
 import scala.compat.Platform
-import scalaz.Disjunction
+import scalaz.{ Show, Disjunction }
 
 object TemplateBody {
   implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
@@ -143,6 +143,35 @@ object DescribeChangeSetSettings {
 }
 final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: ChangeSetName)
 
+final case class ServiceEndpoint(value: String)
+object SamStack {
+  implicit val show: Show[SamStack] = Show.shows(model => {
+    import model._
+    s"""
+       |====================
+       |Sam's State:
+       |====================
+       |Name: ${stack.getStackName}
+       |Description: ${stack.getDescription}
+       |Status: ${stack.getStackStatus}
+       |Status reason: ${stack.getStackStatusReason}
+       |Last updated: ${stack.getLastUpdatedTime}
+       |===================
+       |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
+       |===================
+     """.stripMargin
+  })
+  def fromStack(stack: Stack): SamStack = {
+    val outputs = stack.getOutputs.asScala.toList
+    val serviceEndpoint: Option[ServiceEndpoint] =
+      outputs.find(_.getOutputKey == "ServiceEndpoint").map(o => ServiceEndpoint(o.getOutputValue))
+    SamStack(
+      serviceEndpoint,
+      stack)
+  }
+}
+final case class SamStack(serviceEndpoint: Option[ServiceEndpoint], stack: Stack)
+
 object CloudFormationOperations extends AwsProgressListenerOps {
   def client(): AmazonCloudFormation = {
     AmazonCloudFormationClientBuilder.defaultClient()
@@ -216,6 +245,15 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     settings: DescribeStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackSettings, DescribeStacksRequest]): Disjunction[Throwable, DescribeStacksResult] = {
     Disjunction.fromTryCatchNonFatal(client.describeStacks(conv(settings)))
+  }
+
+  /**
+   * Returns the CloudFormation Stack
+   */
+  def getStack(
+    settings: DescribeStackSettings,
+    client: AmazonCloudFormation): Option[Stack] = {
+    describeStack(settings, client).toOption.flatMap(_.getStacks.asScala.headOption)
   }
 
   /**

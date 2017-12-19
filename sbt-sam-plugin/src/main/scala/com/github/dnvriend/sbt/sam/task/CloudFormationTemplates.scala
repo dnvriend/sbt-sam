@@ -2,14 +2,20 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
-import play.api.libs.json.{ JsArray, JsObject, Json }
+import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
+import play.api.libs.json._
 
 import scalaz._
 import scalaz.Scalaz._
 
 object CloudFormationTemplates {
   implicit val monoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
+  val jsObjectMerge: Monoid[JsValue] = Monoid.instance({
+    case (l, JsNull) => l
+    case (JsNull, r) => r
+    case (l: JsObject, r: JsObject) => l ++ r
+    case (l, _) => l
+  }, JsNull)
   val templateFormatVersion: JsObject = Json.obj("AWSTemplateFormatVersion" -> "2010-09-09")
   val samTransform: JsObject = Json.obj("Transform" -> "AWS::Serverless-2016-10-31")
 
@@ -32,12 +38,47 @@ object CloudFormationTemplates {
           parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage)
         //          ,parsePolicies(config.policies)
-        )
+        ) ++
+        outputs(config)
     )
   }
 
   /**
-   * Merges a sequence of JsObjects into one,
+    * Merges a sequence of Outputs. Please note, CloudFormation templates support
+    * a maximum of 60 outputs
+    * see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
+    */
+  private def outputs(config: ProjectConfiguration): JsObject = {
+    val outputs: List[JsValue] = List(
+      outputApiGateway(config),
+    )
+    Json.obj("Outputs" -> outputs.foldMap(identity)(jsObjectMerge))
+  }
+
+  private def outputApiGateway(config: ProjectConfiguration): JsValue = {
+    val regionName: String = config.credentialsRegionAndUser.credentialsAndRegion.region.getName
+    val stage: String = "Prod"
+    if(config.lambdas.exists(_.isInstanceOf[HttpHandler])) {
+      Json.obj(
+        "ServiceEndpoint" -> Json.obj(
+          "Description" -> "URL of the service endpoint",
+          "Value" -> Json.obj(
+            "Fn::Join" -> Json.arr(
+              "",
+              Json.arr(
+                "https://",
+                Json.obj("Ref" -> "ServerlessRestApi"),
+                s".execute-api.$regionName.amazonaws.com/$stage"
+              )
+            )
+          )
+        )
+      )
+    } else JsNull
+  }
+
+  /**
+   * Merges a sequence of Resources
    */
   private def resources(resources: JsObject*): JsObject =
     Json.obj("Resources" -> resources.reduce(_ ++ _))
