@@ -17,6 +17,7 @@ object CloudFormationStackUpdate {
     config: ProjectConfiguration,
     describeStackResponse: DescribeStackResponse,
     client: AmazonCloudFormation,
+    jarName: String,
     s3Client: AmazonS3,
     log: Logger): Unit = {
     if (describeStackResponse.response.isDefined) {
@@ -26,11 +27,11 @@ object CloudFormationStackUpdate {
       val latestVersion: Option[S3ObjectVersionId] = S3Operations.latestVersion(
         ListVersionsSettings(
           BucketName(config.samS3BucketName.value),
-          S3ObjectKey(SAMPlugin.CODE_PACKAGE_NAME)
+          S3ObjectKey(jarName)
         ), s3Client)
 
       val settings = CreateChangeSetSettings(
-        CloudFormationTemplates.updateTemplate(config, latestVersion.get.value),
+        CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.get.value),
         StackName(config.samCFTemplateName.value),
         ChangeSetName(changeSetName),
         Capability.CAPABILITY_IAM

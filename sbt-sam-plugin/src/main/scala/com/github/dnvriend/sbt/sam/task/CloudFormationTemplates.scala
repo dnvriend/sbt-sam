@@ -23,13 +23,13 @@ object CloudFormationTemplates {
     )
   }
 
-  def updateTemplate(config: ProjectConfiguration, latestVersion: String): TemplateBody = {
+  def updateTemplate(config: ProjectConfiguration, jarName: String, latestVersion: String): TemplateBody = {
     TemplateBody.fromJson(
       templateFormatVersion ++
         samTransform ++
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
-          parseLambdaHandlers(config.samS3BucketName, latestVersion, config.lambdas),
+          parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage)
         //          ,parsePolicies(config.policies)
         )
@@ -55,11 +55,12 @@ object CloudFormationTemplates {
     )
   }
 
-  private def parseLambdaHandlers(bucketName: SamS3BucketName, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
+  private def parseLambdaHandlers(bucketName: SamS3BucketName, jarName: String, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
     handlers.foldMap {
       case HttpHandler(lambdaConf, httpConf) ⇒
         parseLambdaHandler(
           bucketName,
+          jarName,
           latestVersion,
           lambdaConf,
           apiGatewayEvent(lambdaConf.simpleClassName, httpConf)
@@ -67,6 +68,7 @@ object CloudFormationTemplates {
       case DynamoHandler(lambdaConf, dynamoConf) ⇒
         parseLambdaHandler(
           bucketName,
+          jarName,
           latestVersion,
           lambdaConf,
           dynamoDbStreamEvent(lambdaConf.simpleClassName, dynamoConf)
@@ -74,7 +76,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
+  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
     Json.obj(
       config.simpleClassName → Json.obj(
         "Type" → "AWS::Serverless::Function",
@@ -83,7 +85,7 @@ object CloudFormationTemplates {
           "Runtime" → "java8",
           "CodeUri" → Json.obj(
             "Bucket" -> samS3BucketName.value,
-            "Key" -> "codepackage.jar",
+            "Key" -> jarName,
             "Version" -> latestVersion
           ),
           "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess"),
