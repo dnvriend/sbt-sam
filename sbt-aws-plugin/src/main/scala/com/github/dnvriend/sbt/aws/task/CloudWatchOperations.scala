@@ -40,11 +40,8 @@ object CloudWatchOperations {
   val throttles = (m: Metric) => base(m) && m.getMetricName == MetricThrottles
   val errors = (m: Metric) => base(m) && m.getMetricName == MetricErrors
 
-  def client(cr: CredentialsAndRegion): AmazonCloudWatch = {
-    AmazonCloudWatchClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonCloudWatch = {
+    AmazonCloudWatchClientBuilder.defaultClient()
   }
 
   def listMetrics(client: AmazonCloudWatch): List[Metric] = {

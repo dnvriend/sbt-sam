@@ -5,7 +5,6 @@ import com.amazonaws.services.codebuild.model._
 import com.github.dnvriend.ops.Converter
 import sbt._
 
-import scala.collection.JavaConverters._
 import scalaz.{ Disjunction, Show }
 
 //batch-delete-builds                      | batch-get-builds
@@ -92,7 +91,6 @@ final case class DeleteWebhookSettings(name: BuildProjectName)
 
 object BuildSpec {
   implicit val show: Show[BuildSpec] = Show.shows(model => {
-    import model._
     s"""
       |version: 0.2
       |
@@ -135,11 +133,8 @@ final case class BuildSpecSettings(basePath: File)
 
 object CodeBuildOperations {
   final val DocsUrl: String = "http://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html"
-  def client(cr: CredentialsAndRegion): AWSCodeBuild = {
-    AWSCodeBuildClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AWSCodeBuild = {
+    AWSCodeBuildClientBuilder.defaultClient()
   }
 
   /**

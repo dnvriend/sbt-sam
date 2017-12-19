@@ -18,11 +18,8 @@ import scala.collection.JavaConverters._
  * update-time-to-live                      | wait
  */
 object DynamoDbOperations {
-  def client(cr: CredentialsAndRegion): AmazonDynamoDB = {
-    AmazonDynamoDBClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonDynamoDB = {
+    AmazonDynamoDBClientBuilder.defaultClient()
   }
 
 }

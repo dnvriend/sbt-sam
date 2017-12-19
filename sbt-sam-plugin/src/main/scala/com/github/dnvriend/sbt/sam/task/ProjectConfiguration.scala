@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.task
 
-import com.github.dnvriend.sbt.aws.task.{ AmazonUser, CredentialsAndRegion }
+import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
+import com.github.dnvriend.sbt.aws.task.AmazonUser
 import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
 
 case class SamCFTemplateName(value: String)
@@ -14,7 +15,7 @@ object ProjectConfiguration {
     samCFTemplateName: String,
     samResourcePrefixName: String,
     samStage: String,
-    credentialsAndRegion: CredentialsAndRegion,
+    credentialsAndRegion: CredentialsRegionAndUser,
     amazonUser: AmazonUser,
     lambdas: Set[LambdaHandler],
     tables: Set[DynamoDb.TableWithIndex],
@@ -39,23 +40,9 @@ case class ProjectConfiguration(
     samCFTemplateName: SamCFTemplateName,
     samStage: SamStage,
     samResourcePrefixName: SamResourcePrefixName,
-    credentialsAndRegion: CredentialsAndRegion,
+    credentialsAndRegion: CredentialsRegionAndUser,
     amazonUser: AmazonUser,
     lambdas: Set[LambdaHandler],
     tables: Set[DynamoDb.TableWithIndex],
     policies: Set[Policies.Policy]
 )
-
-//object ProjectConfiguration {
-//  // s3 dir structure:
-//  // person-repository-dev-sbtsamdeploymentbucket-hex-md5
-//  //   |-- sbtsam/person-repository/dev/longmillis-2017-10-23T15:22:16.044Z/compiled-cloudformation-template.json
-//  //   |-- sbtsam/person-repository/dev/longmillis-2017-10-23T15:22:16.044Z/person-repository.zip
-//
-//  // lambda name:
-//  // person-repository-dev-post-person
-//
-//  // cloudformation:
-//  // person-repository-dev
-//
-//}

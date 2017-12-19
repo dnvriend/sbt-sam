@@ -1,9 +1,6 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.services.apigateway._
-import com.github.dnvriend.ops.Converter
-
-import scala.collection.JavaConverters._
 
 /**
  * create-api-key                           | create-authorizer
@@ -65,10 +62,7 @@ import scala.collection.JavaConverters._
  */
 
 object ApiGatewayOperations {
-  def client(cr: CredentialsAndRegion): AmazonApiGateway = {
-    AmazonApiGatewayClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonApiGateway = {
+    AmazonApiGatewayClientBuilder.defaultClient()
   }
 }

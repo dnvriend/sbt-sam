@@ -144,11 +144,8 @@ object DescribeChangeSetSettings {
 final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: ChangeSetName)
 
 object CloudFormationOperations extends AwsProgressListenerOps {
-  def client(cr: CredentialsAndRegion): AmazonCloudFormation = {
-    AmazonCloudFormationClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonCloudFormation = {
+    AmazonCloudFormationClientBuilder.defaultClient()
   }
 
   /**
