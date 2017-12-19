@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
+import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
 import sbt.util.Logger
 
@@ -10,10 +11,10 @@ import sbt.util.Logger
 object CloudFormationStackCreate {
   def run(
     config: ProjectConfiguration,
-    describeStackResponse: DescribeStackResponse,
+    describeStackResponse: Option[Stack],
     client: AmazonCloudFormation,
     log: Logger): Unit = {
-    if (describeStackResponse.failure.isDefined) {
+    if (describeStackResponse.isEmpty) {
       log.info("Creating cloud formation stack")
       CloudFormationOperations.createStack(
         CreateStackSettings(
@@ -22,8 +23,8 @@ object CloudFormationStackCreate {
         client
       )
       CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client) {
-        case CloudFormationEvent(stackStatus, Some(Event(_, _, _, resourceType, status, _, _, _, _, _, _))) =>
-          log.info(s"$stackStatus - $resourceType - $status")
+        case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, _, _, _, _, _, _))) =>
+          log.info(s"$stackStatus - $resourceType - $logicalId - $status")
         case _ =>
       }
     } else {
