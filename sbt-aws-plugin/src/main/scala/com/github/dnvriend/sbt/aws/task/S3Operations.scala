@@ -1,9 +1,9 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.event.{ ProgressEvent, ProgressEventType, SyncProgressListener }
-import com.amazonaws.{ AmazonClientException, AmazonServiceException, AmazonWebServiceRequest }
 import com.amazonaws.services.s3._
 import com.amazonaws.services.s3.model._
+import com.amazonaws.{ AmazonClientException, AmazonServiceException, AmazonWebServiceRequest }
 import com.github.dnvriend.ops.Converter
 import sbt._
 
@@ -46,11 +46,8 @@ final case class S3ObjectVersionId(value: String)
 
 // inspired by https://github.com/quaich-project/quartercask/blob/master/util/src/main/scala/codes/bytes/quartercask/s3/AWSS3.scala
 object S3Operations extends AwsProgressListenerOps {
-  def client(cr: CredentialsAndRegion): AmazonS3 = {
-    AmazonS3ClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonS3 = {
+    AmazonS3ClientBuilder.defaultClient()
   }
 
   /**
@@ -135,9 +132,10 @@ object S3Operations extends AwsProgressListenerOps {
    */
   def latestVersion(
     settings: ListVersionsSettings,
-    client: AmazonS3)(implicit conv: Converter[ListVersionsSettings, ListVersionsRequest]): Option[S3ObjectVersionId] = {
-    client.listVersions(conv(settings)).getVersionSummaries.asScala.find(_.isLatest).map(_.getVersionId).map(S3ObjectVersionId.apply)
-  }
+    client: AmazonS3)(implicit conv: Converter[ListVersionsSettings, ListVersionsRequest]): Option[S3ObjectVersionId] = for {
+    summaries <- Try(client.listVersions(conv(settings)).getVersionSummaries.asScala).toOption
+    latestVersion <- summaries.find(_.isLatest).map(_.getVersionId).map(S3ObjectVersionId.apply)
+  } yield latestVersion
 
   private def addProgressListener(
     request: AmazonWebServiceRequest,

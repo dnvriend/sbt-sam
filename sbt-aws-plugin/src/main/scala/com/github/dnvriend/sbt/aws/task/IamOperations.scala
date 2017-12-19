@@ -1,13 +1,18 @@
 package com.github.dnvriend.sbt.aws.task
 
-import com.amazonaws.regions.Regions
+import com.amazonaws.auth.{ AWSCredentials, DefaultAWSCredentialsProviderChain }
+import com.amazonaws.profile.path.cred.CredentialsDefaultLocationProvider
+import com.amazonaws.regions.{ DefaultAwsRegionProviderChain, Regions }
 import com.amazonaws.services.identitymanagement._
 import com.amazonaws.services.identitymanagement.model.User
 import com.github.dnvriend.ops.{ AllOps, AnyOps, Converter }
+import com.github.dnvriend.sbt.aws.domain.IAMDomain.{ AwsCredentials, CredentialsProfileAndRegion, CredentialsRegionAndUser, ProfileLocation }
+import sbt._
 
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
-import scalaz.{ @@, Disjunction, Show }
+import scalaz.{ Show, _ }
+import scalaz.Scalaz._
 
 object Arn extends AnyOps {
   final val ArnRegex: Regex = """arn:(.*):(.*):(.*):(.*):(.*)/(.*)""".r
@@ -82,9 +87,7 @@ object AmazonUser {
   })
 }
 
-final case class AmazonUser(user: User, arn: Arn, regions: Disjunction[Throwable, Regions]) {
-  override def toString: String = AmazonUser.show.shows(this)
-}
+final case class AmazonUser(user: User, arn: Arn, regions: Disjunction[Throwable, Regions])
 
 /**
  * add-client-id-to-open-id-connect-provider | add-role-to-instance-profile
@@ -150,11 +153,8 @@ final case class AmazonUser(user: User, arn: Arn, regions: Disjunction[Throwable
  * upload-server-certificate                | upload-signing-certificate
  */
 object IamOperations extends AllOps {
-  def client(cr: CredentialsAndRegion): AmazonIdentityManagement = {
-    AmazonIdentityManagementClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonIdentityManagement = {
+    AmazonIdentityManagementClientBuilder.defaultClient()
   }
 
   /**
@@ -175,4 +175,32 @@ object IamOperations extends AllOps {
     val regions: Disjunction[Throwable, Regions] = regionConv(arn.region).safe
     AmazonUser(user, arn, regions)
   }
+
+  /**
+   * Returns the inferred AWS Credentials and users using the DefaultAWSCredentialsProviderChain
+   * and DefaultAwsRegionProviderChain used by the default AWS clients.
+   */
+  def getAwsCredentials(): Disjunction[Throwable, CredentialsProfileAndRegion] = Disjunction.fromTryCatchNonFatal {
+    val profileLocation: File = new CredentialsDefaultLocationProvider().getLocation()
+    val defaultCredsProvider = new DefaultAWSCredentialsProviderChain()
+    val defaultRegionProvider = new DefaultAwsRegionProviderChain()
+    val region: Regions = Regions.fromName(defaultRegionProvider.getRegion)
+    val credentials: AWSCredentials = defaultCredsProvider.getCredentials
+    CredentialsProfileAndRegion(
+      AwsCredentials.fromAWSCredentials(credentials),
+      ProfileLocation.fromFile(profileLocation),
+      region
+    )
+  }
+
+  /**
+   * Returns the inferred AWS Credentials and users using the DefaultAWSCredentialsProviderChain
+   * and DefaultAwsRegionProviderChain used by the default AWS clients.
+   */
+  def getAwsCredentialsAndUser(client: AmazonIdentityManagement): Disjunction[String, CredentialsRegionAndUser] = {
+    val creds = getAwsCredentials.leftMap(_.getMessage).validationNel
+    val user = Disjunction.fromTryCatchNonFatal(getUser(client)).leftMap(_.getMessage).validationNel
+    (creds |@| user)((cred, user) => CredentialsRegionAndUser(cred, user.user)).leftMap(_.intercalate1(",")).disjunction
+  }
+
 }

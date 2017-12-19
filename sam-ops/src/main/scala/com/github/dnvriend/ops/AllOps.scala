@@ -27,4 +27,5 @@ trait AllOps extends ConverterOps
   with OutputStreamOps
   with StringOps
   with CryptoOps
+  with BuildFail
   with AnyOps

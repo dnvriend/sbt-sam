@@ -19,10 +19,7 @@ import scala.collection.JavaConverters._
  * stop-stream-encryption                   | update-shard-count
  */
 object KinesisOperations {
-  def client(cr: CredentialsAndRegion): AmazonKinesis = {
-    AmazonKinesisClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonKinesis = {
+    AmazonKinesisClientBuilder.defaultClient()
   }
 }

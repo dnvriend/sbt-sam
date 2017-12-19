@@ -23,11 +23,8 @@ import scala.collection.JavaConverters._
  */
 
 object AwsLambdaOperations {
-  def client(cr: CredentialsAndRegion): AWSLambda = {
-    AWSLambdaClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AWSLambda = {
+    AWSLambdaClientBuilder.defaultClient()
   }
 
   def listFunctions(client: AWSLambda): List[FunctionConfiguration] = {

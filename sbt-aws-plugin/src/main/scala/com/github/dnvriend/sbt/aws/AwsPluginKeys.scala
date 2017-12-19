@@ -26,22 +26,11 @@ import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionR
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.xray.AWSXRay
+import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task._
 import sbt._
 
 object AwsPluginKeys {
-  // aim account
-  lazy val awsAccountId = settingKey[String]("The AWS numeric account ID")
-  // profile and region
-  lazy val awsProfile = settingKey[String]("The AWS profile to use")
-  lazy val awsRegion = settingKey[String]("The region to deploy the service to")
-  lazy val awsAccessKeyId = settingKey[String]("The AWS access key to use")
-  lazy val awsSecretAccessKey = settingKey[String]("The AWS secret access key to use")
-  lazy val awsClientId = settingKey[String]("AWS client Id")
-
-  // credentials tasks
-  lazy val credentialsAndRegion = SettingKey[CredentialsAndRegion]("Returns the aws credentials provider and region")
-
   // clients
   lazy val clientAwsLambda = SettingKey[AWSLambda]("Returns the AwsLambda client")
   lazy val clientApiGateway = SettingKey[AmazonApiGateway]("Returns the ApiGateway client")
@@ -70,6 +59,8 @@ object AwsPluginKeys {
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
+  lazy val iamCredentialsRegionAndUser = taskKey[CredentialsRegionAndUser]("Returns the current user")
+  lazy val whoAmI = taskKey[Unit]("")
 
   // code build tasks
   lazy val cbGenerateBuildSpec = taskKey[File]("Generates a buildspec.yaml file in the root project directory")

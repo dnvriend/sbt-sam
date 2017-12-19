@@ -113,7 +113,7 @@ object SAMPlugin extends AutoPlugin {
         samCFTemplateName.value,
         samResourcePrefixName.value,
         samStage.value,
-        credentialsAndRegion.value,
+        iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
         classifiedLambdas.value,
         dynamoDbTableResources.value,

@@ -1,9 +1,6 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.services.sns._
-import com.github.dnvriend.ops.Converter
-
-import scala.collection.JavaConverters._
 
 /**
  * add-permission                           | check-if-phone-number-is-opted-out
@@ -23,10 +20,7 @@ import scala.collection.JavaConverters._
  * subscribe                                | unsubscribe
  */
 object SNSOperations {
-  def client(cr: CredentialsAndRegion): AmazonSNS = {
-    AmazonSNSClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonSNS = {
+    AmazonSNSClientBuilder.defaultClient()
   }
 }

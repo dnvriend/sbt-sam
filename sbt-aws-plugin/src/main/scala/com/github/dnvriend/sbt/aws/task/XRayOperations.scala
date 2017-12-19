@@ -1,9 +1,6 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.services.xray._
-import com.github.dnvriend.ops.Converter
-
-import scala.collection.JavaConverters._
 
 ///**
 //  * batch-get-traces                         | get-service-graph
@@ -17,10 +14,7 @@ import scala.collection.JavaConverters._
  * created by processing those traces.
  */
 object XRayOperations {
-  def client(cr: CredentialsAndRegion): AWSXRay = {
-    AWSXRayClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AWSXRay = {
+    AWSXRayClientBuilder.defaultClient()
   }
 }
