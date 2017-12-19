@@ -9,6 +9,4 @@ abstract class TestSpec extends FlatSpec
   with DisjunctionMatchers
   with DisjunctionValues
   with OptionValues
-  with TryValues {
-
-}
+  with TryValues
