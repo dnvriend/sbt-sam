@@ -58,10 +58,9 @@ object AwsProgressListener {
 
 object ProgressBar {
   implicit val show: Show[ProgressBar] = Show.shows(model => {
-    import model._
     val b = "=================================================="
     val s = "                                                  "
-    val p = percent / 2
+    val p = model.percent / 2
     val z: StringBuilder = new StringBuilder(80)
     z.append("\r[")
     z.append(b.substring(0, p))
@@ -69,7 +68,7 @@ object ProgressBar {
     z.append("]   ")
     if (p < 5) z.append(" ")
     if (p < 50) z.append(" ")
-    z.append(percent)
+    z.append(model.percent)
     z.append("%   ")
     z.mkString
   })

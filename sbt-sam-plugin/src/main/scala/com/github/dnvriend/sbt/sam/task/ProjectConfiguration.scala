@@ -8,6 +8,7 @@ case class SamCFTemplateName(value: String)
 case class SamS3BucketName(value: String)
 case class SamResourcePrefixName(value: String)
 case class SamStage(value: String)
+case class SamResources(lambdas: Set[LambdaHandler], tables: Set[DynamoDb.TableWithIndex], policies: Set[Policies.Policy])
 object ProjectConfiguration {
   def fromConfig(
     projectName: String,
@@ -17,9 +18,8 @@ object ProjectConfiguration {
     samStage: String,
     credentialsRegionAndUser: CredentialsRegionAndUser,
     amazonUser: AmazonUser,
-    lambdas: Set[LambdaHandler],
-    tables: Set[DynamoDb.TableWithIndex],
-    policies: Set[Policies.Policy]): ProjectConfiguration = {
+    samResources: SamResources,
+    ): ProjectConfiguration = {
     ProjectConfiguration(
       projectName,
       SamS3BucketName(samS3BucketName),
@@ -28,9 +28,9 @@ object ProjectConfiguration {
       SamResourcePrefixName(samResourcePrefixName),
       credentialsRegionAndUser,
       amazonUser,
-      lambdas,
-      tables,
-      policies
+      samResources.lambdas,
+      samResources.tables,
+      samResources.policies
     )
   }
 }

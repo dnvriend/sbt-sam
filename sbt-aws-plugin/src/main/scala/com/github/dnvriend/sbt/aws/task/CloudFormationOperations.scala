@@ -8,6 +8,7 @@ import play.api.libs.json.{ JsValue, Json }
 import scala.collection.JavaConverters._
 import scala.compat.Platform
 import scalaz.{ Show, Disjunction }
+import scalaz.Scalaz._
 
 object TemplateBody {
   implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
@@ -57,7 +58,7 @@ object UpdateStackSettings {
 
 object CreateChangeSetSettings {
   implicit val toRequest: Converter[CreateChangeSetSettings, CreateChangeSetRequest] =
-    Converter.instance(settings ⇒ {
+    Converter.instance(settings => {
       new CreateChangeSetRequest()
         .withStackName(settings.stackName.value)
         .withTemplateBody(settings.template.value)
@@ -281,7 +282,6 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def waitForCloudFormation(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
-    import scalaz.Scalaz._
 
     val now: Long = Platform.currentTime
     var events: Set[Event] = Set.empty

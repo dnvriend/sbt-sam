@@ -32,6 +32,7 @@ object SAMPlugin extends AutoPlugin {
   override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin && AwsPlugin
 
   val autoImport = SAMPluginKeys
+
   import autoImport._
 
   override def projectSettings = Seq(
@@ -86,10 +87,10 @@ object SAMPlugin extends AutoPlugin {
 
       log.info(
         s"""
-          |=========
-          |Template:
-          |=========
-          |${template.value}
+           |=========
+           |Template:
+           |=========
+           |${template.value}
         """.stripMargin)
 
       log.info(CloudFormationOperations.validateTemplate(template, client)
@@ -115,9 +116,11 @@ object SAMPlugin extends AutoPlugin {
         samStage.value,
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
-        classifiedLambdas.value,
-        dynamoDbTableResources.value,
-        policyResources.value
+        SamResources(
+          classifiedLambdas.value,
+          dynamoDbTableResources.value,
+          policyResources.value
+        )
       )
     },
 
@@ -137,7 +140,7 @@ object SAMPlugin extends AutoPlugin {
     },
 
     samUploadArtifact := {
-     ArtifactUpload.run(
+      ArtifactUpload.run(
         samProjectConfiguration.value,
         assembly.value,
         clientS3.value,

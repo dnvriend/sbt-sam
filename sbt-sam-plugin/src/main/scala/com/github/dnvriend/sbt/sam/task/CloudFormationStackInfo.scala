@@ -8,9 +8,8 @@ import sbt.util.Logger
 import scalaz.Show
 
 object CloudFormationStackResource {
-  implicit val show: Show[CloudFormationStackResource] = Show.shows(model => {
-    import model._
-    s"$logicalResourceId - $resourceType - $resourceStatus - $timestamp"
+  implicit val show: Show[CloudFormationStackResource] = Show.shows(m => {
+    s"${m.logicalResourceId}- ${m.resourceType}- ${m.resourceStatus}- ${m.timestamp}"
   })
   def fromStackResource(resource: StackResource): CloudFormationStackResource = {
     CloudFormationStackResource(
