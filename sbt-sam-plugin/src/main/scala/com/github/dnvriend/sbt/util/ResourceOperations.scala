@@ -19,7 +19,7 @@ object ResourceOperations extends FunctionalOps {
     val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
     val dynamoDbConfig = conf.getConfig("dynamodb").safe
 
-    dynamoDbConfig.map { dynamoDb ⇒
+    dynamoDbConfig.map { dynamoDb =>
 
       val result = dynamoDb.root().keySet().asScala.toList.map(name => (name, dynamoDb.getConfig(name))).map {
         case (cName, conf) =>
@@ -30,11 +30,11 @@ object ResourceOperations extends FunctionalOps {
             Nil
           } else {
             loadConfig[Map[String, DynamoDb.GlobalSecondaryIndex]](indicesConf.getConfig("global-secondary-indexes")) match {
-              case Left(_)  ⇒ Nil
-              case Right(m) ⇒ m.toList.map { case (indexName, index) ⇒ index.copy(indexName = indexName) }
+              case Left(_)  => Nil
+              case Right(m) => m.toList.map { case (indexName, index) => index.copy(indexName = indexName) }
             }
           }
-          table.map(t ⇒ DynamoDb.TableWithIndex(t.name, t.hashKey, t.rangeKey, indices, t.stream, t.rcu, t.wcu, t.configName))
+          table.map(t => DynamoDb.TableWithIndex(t.name, t.hashKey, t.rangeKey, indices, t.stream, t.rcu, t.wcu, t.configName))
       }
 
       result.sequenceU.getOrElse(Nil)
@@ -46,8 +46,8 @@ object ResourceOperations extends FunctionalOps {
     val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
     val policiesConfigAttempt: Disjunction[Throwable, Config] = conf.getConfig("policies").safe
 
-    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policies.Policy]] = policies.root().keySet().asScala.toList.map(name ⇒ (name, policies.getConfig(name))).map {
-      case (cName, conf) ⇒
+    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policies.Policy]] = policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
+      case (cName, conf) =>
         loadConfig[Policies.Policy](conf).map(_.copy(configName = cName)).disjunction
     }.sequenceU
 
