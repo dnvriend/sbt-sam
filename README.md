@@ -65,3 +65,8 @@ The 'default cli config' file:
 - http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
 - http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-region-selection.html
 - http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys
+
+## Changelog
+
+## 1.0.0 (2017-12-20)
+- Initial release at Bintray jcenter
