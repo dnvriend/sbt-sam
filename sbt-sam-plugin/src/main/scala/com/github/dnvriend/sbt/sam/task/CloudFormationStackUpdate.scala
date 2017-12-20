@@ -49,11 +49,7 @@ object CloudFormationStackUpdate {
           .withStackName(settings.stackName.value)
         )
 
-        CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client) {
-          case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, _, _, _, _, _, _))) =>
-            log.info(s"$stackStatus - $resourceType - $logicalId - $status")
-          case _ =>
-        }
+        CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)
       }
     } else {
       log.info("Skipping updating cloud formation stack, it does not exist")

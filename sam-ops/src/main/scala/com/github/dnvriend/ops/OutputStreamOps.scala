@@ -21,7 +21,7 @@ import play.api.libs.json.{ Json, Writes }
 object OutputStreamOps extends OutputStreamOps
 
 trait OutputStreamOps {
-  implicit def ToOutputStreamOps(that: OutputStream): ToOutputStreamOps = new ToOutputStreamOps(that)
+  implicit def ConvertToOSOps(that: OutputStream): ToOutputStreamOps = new ToOutputStreamOps(that)
 
   def withStringWriter(f: StringWriter => Unit): String = {
     val sw = new StringWriter()
