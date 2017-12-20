@@ -8,20 +8,23 @@ import play.api.libs.json._
 import scalaz._
 import scalaz.Scalaz._
 
-object CloudFormationTemplates {
-  implicit val monoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
+object JsMonoids {
   val jsObjectMerge: Monoid[JsValue] = Monoid.instance({
     case (l, JsNull) => l
     case (JsNull, r) => r
     case (l: JsObject, r: JsObject) => l ++ r
     case (l, _) => l
   }, JsNull)
+}
+
+object CloudFormationTemplates {
+  implicit val monoid: Monoid[JsObject] = Monoid.instance(_ ++ _, Json.obj())
   val templateFormatVersion: JsObject = Json.obj("AWSTemplateFormatVersion" -> "2010-09-09")
   val samTransform: JsObject = Json.obj("Transform" -> "AWS::Serverless-2016-10-31")
 
   /**
-   * Returns the basic cloud formation template to create the stack and deployment bucket
-   */
+    * Returns the basic cloud formation template to create the stack and deployment bucket
+    */
   def deploymentBucketTemplate(config: ProjectConfiguration): TemplateBody = {
     TemplateBody.fromJson(
       templateFormatVersion ++
@@ -37,7 +40,7 @@ object CloudFormationTemplates {
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
           parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage)
-        //          ,parsePolicies(config.policies)
+          //          ,parsePolicies(config.policies)
         ) ++
         outputs(config)
     )
@@ -52,7 +55,7 @@ object CloudFormationTemplates {
     val outputs: List[JsValue] = List(
       outputServiceEndpoint(config),
     )
-    Json.obj("Outputs" -> outputs.foldMap(identity)(jsObjectMerge))
+    Json.obj("Outputs" -> outputs.foldMap(identity)(JsMonoids.jsObjectMerge))
   }
 
   /**
@@ -60,7 +63,7 @@ object CloudFormationTemplates {
     * 'https://gm3vkzgx9b.execute-api.eu-west-1.amazonaws.com/Prod'
     */
   private def outputServiceEndpoint(config: ProjectConfiguration): JsValue = {
-    if(config.lambdas.exists(_.isInstanceOf[HttpHandler])) {
+    if (config.lambdas.exists(_.isInstanceOf[HttpHandler])) {
       Json.obj(
         "ServiceEndpoint" -> Json.obj(
           "Description" -> "URL of the service endpoint",
@@ -85,8 +88,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Merges a sequence of Resources
-   */
+    * Merges a sequence of Resources
+    */
   private def resources(resources: JsObject*): JsObject =
     Json.obj("Resources" -> resources.reduce(_ ++ _))
 
@@ -243,14 +246,14 @@ object CloudFormationTemplates {
       val indexHashKey = toJson(index.hashKey.name, index.hashKey.`type`)
       val rangeKey = index.rangeKey match {
         case Some(key) ⇒ toJson(key.name, key.`type`)
-        case None      ⇒ JsObject(Nil)
+        case None ⇒ JsObject(Nil)
       }
       indexHashKey ++ rangeKey
     }
 
     val rangeKey = table.rangeKey match {
       case Some(key) ⇒ toJson(key.name, key.`type`)
-      case None      ⇒ JsObject(Nil)
+      case None ⇒ JsObject(Nil)
     }
 
     val hashKey = toJson(table.hashKey.name, table.hashKey.`type`)
@@ -348,6 +351,7 @@ object PseudoParameters {
     * Returns a string representing the AWS Region in which the encompassing resource is being created, such as us-west-2.
     */
   case object Region extends PseudoParameter
+
   /**
     * Returns the AWS account ID of the account in which the stack is being created
     */
@@ -377,4 +381,158 @@ object PseudoParameters {
   case object URLSuffix extends PseudoParameter
 }
 
+object CloudFormation {
+  def properties(props: JsValue*): JsObject = {
+    Json.obj("Properties" -> props.toList.foldMap(identity)(JsMonoids.jsObjectMerge))
+  }
 
+  /**
+    * The intrinsic function Ref returns the value of the specified parameter or resource.
+    *
+    * - When you specify a parameter's logical name, it returns the value of the parameter.
+    * - When you specify a resource's logical name, it returns a value that you can typically
+    *   use to refer to that resource, such as a physical ID.
+    *
+    * see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-ref.html
+    */
+  def ref(logicalName: String): JsObject = {
+    Json.obj("Ref" -> logicalName)
+  }
+
+  /**
+    * The 'Fn::GetAtt' intrinsic function returns the value of an attribute from a resource in the template.
+    *
+    * see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html
+    */
+  def getAtt(logicalName: String, attributeName: String): JsObject = {
+    Json.obj("Fn::GetAtt" -> Json.arr(logicalName, attributeName))
+  }
+}
+
+object Cognito {
+  object UserPool {
+    /**
+      * Returns a CloudFormation configuration based on the ProjectConfiguration
+      */
+    def resource(config: ProjectConfiguration): JsObject = {
+      val logicalResourceId = "" //todo: set resource id name
+      Json.obj(
+        logicalResourceId -> (Json.obj(
+          "Type" -> "AWS::Cognito::UserPool"
+        ) ++ CloudFormation.properties(
+          propUserPoolName(config),
+          propAdminCreateUserConfig(config),
+          propPolicies(config),
+        ))
+      )
+    }
+
+    /**
+      * A string used to name the user pool.
+      */
+    def propUserPoolName(config: ProjectConfiguration): JsValue = {
+      Json.obj("UserPoolName" -> "auth_pool") //todo: set userpool name
+    }
+
+    /**
+      * The type of configuration for creating a new user profile.
+      */
+    def propAdminCreateUserConfig(config: ProjectConfiguration): JsValue = {
+      Json.obj("AdminCreateUserConfig" -> Json.obj(
+        "AllowAdminCreateUserOnly" -> true,
+        "UnusedAccountValidityDays" -> 30
+      ))
+    }
+
+    /**
+      * The policies associated with the Amazon Cognito user pool.
+      */
+    def propPolicies(config: ProjectConfiguration): JsValue = {
+      Json.obj("Policies" ->
+        Json.obj(
+          "MinimumLength" -> 6,
+          "RequireLowercase" -> true,
+          "RequireNumbers" -> false,
+          "RequireSymbols" -> false,
+          "RequireUppercase" -> false
+        )
+      )
+    }
+
+    /**
+      * When the logical ID of this resource is provided to the Ref intrinsic function, Ref returns a generated ID,
+      * such as 'us-east-2_zgaEXAMPLE'
+      */
+    def logicalId(config: ProjectConfiguration): JsValue = {
+      val logicalResourceId = "" //todo: set the resource id name
+      CloudFormation.ref(logicalResourceId)
+    }
+
+    /**
+      * The provider name of the Amazon Cognito user pool, specified as a String.
+      */
+    def providerName(config: ProjectConfiguration): JsValue = {
+      val logicalResourceId = "" //todo: set the resource id name
+      CloudFormation.getAtt(logicalResourceId, "ProviderName")
+    }
+
+    /**
+      * The URL of the provider of the Amazon Cognito user pool, specified as a String.
+      */
+    def providerUrl(config: ProjectConfiguration): JsValue = {
+      val logicalResourceId = "" //todo: set the resource id name
+      CloudFormation.getAtt(logicalResourceId, "ProviderURL")
+    }
+
+    /**
+      * The Amazon Resource Name (ARN) of the user pool, such as
+      * 'arn:aws:cognito-idp:us-east-2:123412341234:userpool/us-east-1 _123412341'
+      */
+    def arn(config: ProjectConfiguration): JsValue = {
+      val logicalResourceId = "" //todo: set the resource id name
+      CloudFormation.getAtt(logicalResourceId, "Arn")
+    }
+  }
+
+  /**
+    * creates an Amazon Cognito user pool client.
+    */
+  object UserPoolClient {
+    def resource(config: ProjectConfiguration): JsObject = {
+      val logicalResourceId = "" //todo: set resource id name
+      Json.obj(
+        logicalResourceId -> (Json.obj(
+          "Type" -> "AWS::Cognito::UserPoolClient",
+        ) ++ CloudFormation.properties(
+          propClientName(config),
+          propExplicitAuthFlows(config),
+          propUserPoolId(config),
+        ))
+      )
+    }
+
+    /**
+      * The client name for the user pool client that you want to create.
+      */
+    def propClientName(config: ProjectConfiguration): JsObject = {
+      val clientName = "" //todo: set the client name
+      Json.obj("ClientName" -> clientName)
+    }
+
+    /**
+      * The explicit authentication flows, which can be one of the following:
+      * - ADMIN_NO_SRP_AUTH
+      * - CUSTOM_AUTH_FLOW_ONLY.
+      */
+    def propExplicitAuthFlows(config: ProjectConfiguration): JsObject = {
+      Json.obj("ExplicitAuthFlows" -> Json.arr("ADMIN_NO_SRP_AUTH"))
+    }
+
+    /**
+      * The user pool ID for the user pool where you want to create a client.
+      */
+    def propUserPoolId(config: ProjectConfiguration): JsObject = {
+      Json.obj("UserPoolId" -> Cognito.UserPool.logicalId(config))
+    }
+  }
+}
