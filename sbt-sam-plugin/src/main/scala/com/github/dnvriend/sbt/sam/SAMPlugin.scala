@@ -83,16 +83,10 @@ object SAMPlugin extends AutoPlugin {
           BucketName(config.samS3BucketName.value),
           S3ObjectKey(jarName)
         ), s3client)
-      val template = CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.map(_.value).getOrElse("NO_ARTIFACT_AVAILABLE_YET"))
+      val template: TemplateBody = CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.map(_.value).getOrElse("NO_ARTIFACT_AVAILABLE_YET"))
 
-      log.info(
-        s"""
-           |=========
-           |Template:
-           |=========
-           |${template.value}
-        """.stripMargin)
-
+      log.info("validating template:")
+      println(template.value)
       log.info(CloudFormationOperations.validateTemplate(template, client)
         .bimap(t => t.getMessage, _.toString).merge)
     },
