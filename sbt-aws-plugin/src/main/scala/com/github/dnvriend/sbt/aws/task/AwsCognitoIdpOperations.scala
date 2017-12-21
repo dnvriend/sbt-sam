@@ -53,11 +53,8 @@ import scalaz.Disjunction
  */
 
 object AwsCognitoIdpOperations {
-  def client(cr: CredentialsAndRegion): AWSCognitoIdentityProvider = {
-    AWSCognitoIdentityProviderClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AWSCognitoIdentityProvider = {
+    AWSCognitoIdentityProviderClientBuilder.defaultClient()
   }
 
   def adminCreateAndAuthUser(
