@@ -40,7 +40,8 @@ case class HttpRequest(request: JsValue) extends AllOps {
 
   def bodyAs[A: Reads](implicit validator: Validator[A] = null): DisjunctionNel[String, A] = {
     for {
-      data <- Json.parse(body.toString).as[A].safe.leftMap(t => s"Could not deserialize request:\n$request".wrapNel)
+      unescaped <- Reads.StringReads.reads(body).asEither.disjunction.leftMap(_ => NonEmptyList("Error unescaping body"))
+      data <- Json.parse(unescaped).as[A].safe.leftMap(t => s"Could not deserialize request:\n$request".wrapNel)
       validated <- (validator.? | Validator.empty).validate(data).disjunction
     } yield validated
   }
