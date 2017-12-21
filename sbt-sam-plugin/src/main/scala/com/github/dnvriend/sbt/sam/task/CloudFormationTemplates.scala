@@ -583,22 +583,6 @@ object ServerlessApi {
   def definitionBodyElements(xs: JsValue*): JsValue = {
     xs.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
-
-  def propSecurityDefinitions(config: ProjectConfiguration): JsValue = {
-    Json.obj(
-      "securityDefinitions" -> Json.obj(
-        "auth_pool" -> Json.obj(
-          "type" -> "apiKey",
-          "name" -> "Authorization",
-          "in" -> "header",
-          "x-amazon-apigateway-authtype" -> "cognito_user_pools",
-          "x-amazon-apigateway-authorizer" -> Json.obj(
-            "providerARNs" -> Cognito.UserPool.arn(config)
-          )
-        )
-      )
-    )
-  }
 }
 
 /**
@@ -613,7 +597,8 @@ object Swagger {
     merge(
       Parts.swaggerVersion,
       Parts.info(config),
-      Parts.paths(config)
+      Parts.paths(config),
+      Parts.securityDefinitions(config),
     )
   }
 
@@ -667,6 +652,34 @@ object Swagger {
       Json.obj(method -> merge(
           AmazonApiGatewayIntegration.swaggerExtension(config, handler),
           responses,
+          security,
+        )
+      )
+    }
+
+    /**
+      * Security scheme definitions that can be used across the specification.
+      * http://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html
+      * http://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-enable-cognito-user-pool.html
+      * https://github.com/dnvriend/serverless-test/blob/master/05-person-repository/auth.txt
+      * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
+      * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
+      */
+    def securityDefinitions(config: ProjectConfiguration): JsValue = {
+      Json.obj(
+        "securityDefinitions" -> Json.obj(
+          "auth_pool" -> Json.obj(
+            "type" -> "apiKey",
+            "name" -> "Authorization",
+            "in" -> "header",
+            "x-amazon-apigateway-authtype" -> "cognito_user_pools",
+            "x-amazon-apigateway-authorizer" -> Json.obj(
+              "type" -> "cognito_user_pools",
+              "providerARNs" -> Json.arr(
+                "arn:aws:cognito-idp:eu-west-1:015242279314:userpool/eu-west-1_V0UvYaYoz" //todo: replace hardcoded cognito arn with the one configured in the project
+              ),
+            )
+          )
         )
       )
     }
