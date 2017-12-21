@@ -39,10 +39,13 @@ object CloudFormationTemplates {
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
           parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
-          parseDynamoDBResource(config.tables, config.projectName, config.samStage)
+          parseDynamoDBResource(config.tables, config.projectName, config.samStage),
+//          Cognito.UserPool.resource(config),
+//          Cognito.UserPoolClient.resource(config),
+          ServerlessApi.resource(config)
           //          ,parsePolicies(config.policies)
-        ) ++
-        outputs(config)
+        )
+//        ++ outputs(config)
     )
   }
 
@@ -90,8 +93,9 @@ object CloudFormationTemplates {
   /**
     * Merges a sequence of Resources
     */
-  private def resources(resources: JsObject*): JsObject =
-    Json.obj("Resources" -> resources.reduce(_ ++ _))
+  private def resources(resources: JsValue*): JsObject = {
+    Json.obj("Resources" -> resources.toList.foldMap(identity)(JsMonoids.jsObjectMerge))
+  }
 
   private def bucketResource(resourceName: String, bucketName: String): JsObject = {
     Json.obj(
@@ -131,6 +135,7 @@ object CloudFormationTemplates {
     Json.obj(
       config.simpleClassName → Json.obj(
         "Type" → "AWS::Serverless::Function",
+        "DependsOn" -> "ServerlessRestApi",
         "Properties" → Json.obj(
           "Handler" → s"${config.fqcn}::handleRequest",
           "Runtime" → "java8",
@@ -156,7 +161,8 @@ object CloudFormationTemplates {
         "Type" -> "Api",
         "Properties" -> Json.obj(
           "Path" -> httpConf.path,
-          "Method" -> httpConf.method
+          "Method" -> httpConf.method,
+          "RestApiId" -> Json.obj("Ref" -> "ServerlessRestApi")
         )
       ))
   }
@@ -313,6 +319,7 @@ object CloudFormationTemplates {
 }
 
 trait ServerlessParameter
+
 object ServerlessParameters {
   def ref(param: ServerlessParameter): JsObject = {
     Json.obj("Ref" -> param.toString)
@@ -327,10 +334,12 @@ object ServerlessParameters {
     * 'AWS::ApiGateway::Stage' eg. 'Prod'
     */
   case object ServerlessRestApiProdStage extends ServerlessParameter
+
 }
 
 
 trait PseudoParameter
+
 object PseudoParameters {
   /**
     * Returns the param
@@ -379,6 +388,7 @@ object PseudoParameters {
     * For example, the suffix for the China (Beijing) region is amazonaws.com.cn.
     */
   case object URLSuffix extends PseudoParameter
+
 }
 
 object CloudFormation {
@@ -391,7 +401,7 @@ object CloudFormation {
     *
     * - When you specify a parameter's logical name, it returns the value of the parameter.
     * - When you specify a resource's logical name, it returns a value that you can typically
-    *   use to refer to that resource, such as a physical ID.
+    * use to refer to that resource, such as a physical ID.
     *
     * see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-ref.html
     */
@@ -410,14 +420,18 @@ object CloudFormation {
 }
 
 object Cognito {
+
   object UserPool {
+    def logicalResourceId(config: ProjectConfiguration): String = {
+      "ServerlessUserPool"
+    }
+
     /**
       * Returns a CloudFormation configuration based on the ProjectConfiguration
       */
     def resource(config: ProjectConfiguration): JsObject = {
-      val logicalResourceId = "" //todo: set resource id name
       Json.obj(
-        logicalResourceId -> (Json.obj(
+        logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPool"
         ) ++ CloudFormation.properties(
           propUserPoolName(config),
@@ -431,7 +445,7 @@ object Cognito {
       * A string used to name the user pool.
       */
     def propUserPoolName(config: ProjectConfiguration): JsValue = {
-      Json.obj("UserPoolName" -> "auth_pool") //todo: set userpool name
+      Json.obj("UserPoolName" -> "auth_pool")
     }
 
     /**
@@ -448,13 +462,15 @@ object Cognito {
       * The policies associated with the Amazon Cognito user pool.
       */
     def propPolicies(config: ProjectConfiguration): JsValue = {
-      Json.obj("Policies" ->
-        Json.obj(
-          "MinimumLength" -> 6,
-          "RequireLowercase" -> true,
-          "RequireNumbers" -> false,
-          "RequireSymbols" -> false,
-          "RequireUppercase" -> false
+      Json.obj(
+        "Policies" -> Json.obj(
+          "PasswordPolicy" -> Json.obj(
+            "MinimumLength" -> 6,
+            "RequireLowercase" -> true,
+            "RequireNumbers" -> false,
+            "RequireSymbols" -> false,
+            "RequireUppercase" -> false
+          )
         )
       )
     }
@@ -464,24 +480,21 @@ object Cognito {
       * such as 'us-east-2_zgaEXAMPLE'
       */
     def logicalId(config: ProjectConfiguration): JsValue = {
-      val logicalResourceId = "" //todo: set the resource id name
-      CloudFormation.ref(logicalResourceId)
+      CloudFormation.ref(logicalResourceId(config))
     }
 
     /**
       * The provider name of the Amazon Cognito user pool, specified as a String.
       */
     def providerName(config: ProjectConfiguration): JsValue = {
-      val logicalResourceId = "" //todo: set the resource id name
-      CloudFormation.getAtt(logicalResourceId, "ProviderName")
+      CloudFormation.getAtt(logicalResourceId(config), "ProviderName")
     }
 
     /**
       * The URL of the provider of the Amazon Cognito user pool, specified as a String.
       */
     def providerUrl(config: ProjectConfiguration): JsValue = {
-      val logicalResourceId = "" //todo: set the resource id name
-      CloudFormation.getAtt(logicalResourceId, "ProviderURL")
+      CloudFormation.getAtt(logicalResourceId(config), "ProviderURL")
     }
 
     /**
@@ -489,8 +502,7 @@ object Cognito {
       * 'arn:aws:cognito-idp:us-east-2:123412341234:userpool/us-east-1 _123412341'
       */
     def arn(config: ProjectConfiguration): JsValue = {
-      val logicalResourceId = "" //todo: set the resource id name
-      CloudFormation.getAtt(logicalResourceId, "Arn")
+      CloudFormation.getAtt(logicalResourceId(config), "Arn")
     }
   }
 
@@ -498,11 +510,15 @@ object Cognito {
     * creates an Amazon Cognito user pool client.
     */
   object UserPoolClient {
+    def logicalResourceId(config: ProjectConfiguration): String = {
+      "ServerlessUserPoolClient"
+    }
+
     def resource(config: ProjectConfiguration): JsObject = {
-      val logicalResourceId = "" //todo: set resource id name
       Json.obj(
-        logicalResourceId -> (Json.obj(
+        logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPoolClient",
+          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
         ) ++ CloudFormation.properties(
           propClientName(config),
           propExplicitAuthFlows(config),
@@ -515,7 +531,7 @@ object Cognito {
       * The client name for the user pool client that you want to create.
       */
     def propClientName(config: ProjectConfiguration): JsObject = {
-      val clientName = "" //todo: set the client name
+      val clientName = "client" //todo: set the client name
       Json.obj("ClientName" -> clientName)
     }
 
@@ -534,5 +550,90 @@ object Cognito {
     def propUserPoolId(config: ProjectConfiguration): JsObject = {
       Json.obj("UserPoolId" -> Cognito.UserPool.logicalId(config))
     }
+  }
+
+}
+
+object ServerlessApi {
+  private def properties(props: JsValue*): JsObject = {
+    Json.obj("Properties" -> props.toList.foldMap(identity)(JsMonoids.jsObjectMerge))
+  }
+
+  def resource(config: ProjectConfiguration): JsValue = {
+    if (!config.lambdas.exists(_.isInstanceOf[HttpHandler])) JsNull else {
+      Json.obj(
+        "ServerlessRestApi" -> (Json.obj(
+          "Type" -> "AWS::Serverless::Api",
+          "DependsOn" -> Cognito.UserPool.logicalResourceId(config)
+        ) ++ properties(
+          propStageName(config),
+          propDefinitionBody(config)
+        ))
+      )
+    }
+  }
+
+  def propSecurityDefinitions(config: ProjectConfiguration): JsValue = {
+    Json.obj(
+        "securityDefinitions" -> Json.obj(
+        "auth_pool" -> Json.obj(
+          "type" -> "apiKey",
+          "name" -> "Authorization",
+          "in" -> "header",
+          "x-amazon-apigateway-authtype" -> "cognito_user_pools",
+          "x-amazon-apigateway-authorizer" -> Json.obj(
+            "providerARNs" -> Cognito.UserPool.arn(config)
+          )
+        )
+      )
+    )
+  }
+
+  def propStageName(config: ProjectConfiguration): JsValue = {
+    Json.obj("StageName" -> "dev")
+  }
+
+  def propDefinitionBody(config: ProjectConfiguration): JsValue = {
+    Json.obj(
+      "DefinitionBody" -> definitionBodyElements(
+        propBodyDefinitionHeader(config),
+        propDefinitionPaths(config),
+        propSecurityDefinitions(config)
+      )
+    )
+  }
+
+  def definitionBodyElements(xs: JsValue*): JsValue = {
+    xs.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
+  }
+
+  def propBodyDefinitionHeader(config: ProjectConfiguration): JsValue = {
+    Json.obj(
+      "swagger" -> "2.0",
+      "info" -> Json.obj(
+        "version" -> "2017-02-24T04:09:00Z",
+        "title" -> "sbt-sam-serverless-api"
+      )
+    )
+  }
+
+  def propDefinitionPaths(config: ProjectConfiguration): JsValue = {
+    val http: Set[HttpHandler] = config.lambdas.collect {
+      case h: HttpHandler => h
+    }
+    Json.obj("paths" -> http.map(handler => propDefinitionPath(config, handler)).foldMap(identity)(JsMonoids.jsObjectMerge))
+  }
+
+  def propDefinitionPath(config: ProjectConfiguration, handler: HttpHandler): JsValue = {
+    val conf = handler.httpConf
+    Json.obj(
+      conf.path -> Json.obj(
+        conf.method -> Json.obj(
+          "consumes" -> Json.arr("application/json"),
+          "produces" -> Json.arr("application/json"),
+          "security" -> Json.arr(Json.obj("auth_pool" -> Json.arr()))
+        )
+      )
+    )
   }
 }
