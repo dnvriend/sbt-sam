@@ -14,7 +14,9 @@
 
 package com.github.dnvriend.sbt.sam
 
+import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -24,22 +26,27 @@ object SAMPluginKeys {
   lazy val samS3BucketName = settingKey[String]("The S3 deployment bucket name for the sam project")
   lazy val samCFTemplateName = settingKey[String]("The cloudformation template name for the sam project")
   lazy val samResourcePrefixName = settingKey[String]("The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on")
-  lazy val samJar = taskKey[File]("The location of the jar containing all the lambdas")
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")
-  lazy val discoveredClassFiles = taskKey[Set[File]]("")
-  lazy val discoveredClasses = taskKey[Set[ProjectClass]]("")
-  lazy val discoveredLambdas = taskKey[Set[ProjectLambda]]("")
-  lazy val classifiedLambdas = taskKey[Set[LambdaHandler]]("")
-  lazy val discoveredResources = taskKey[Set[Class[_]]]("")
+  lazy val discoveredClassFiles = taskKey[Set[File]]("returns a set of discovered class files")
+  lazy val discoveredClasses = taskKey[Set[ProjectClass]]("returns a set of discovered classes")
+  lazy val discoveredLambdas = taskKey[Set[ProjectLambda]]("returns a set of discovered unclassified lambdas")
+  lazy val classifiedLambdas = taskKey[Set[LambdaHandler]]("returns a set of classified lambdas")
+  lazy val discoveredResources = taskKey[Set[Class[_]]]("Returns a set of discovered aws resources")
   lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
   lazy val samUploadArtifact = taskKey[PutObjectResponse]("Upload deployment artifact to the S3 deployment bucket")
-  lazy val samDeleteArtifact = taskKey[DeleteObjectResponse]("Delete deployment artifact from the S3 deployment bucket")
+  lazy val samDeleteArtifact = taskKey[Unit]("Delete deployment artifact from the S3 deployment bucket")
   lazy val samDeleteCloudFormationStack = taskKey[Unit]("Deletes the cloud formation stack")
   lazy val samCreateCloudFormationStack = taskKey[Unit]("Create the cloud formation stack")
   lazy val samUpdateCloudFormationStack = taskKey[Unit]("Update the cloud formation stack")
-  lazy val samDescribeCloudFormationStack = taskKey[DescribeStackResponse]("Determine the state of the cloud")
+  lazy val samDescribeCloudFormationStackForCreate = taskKey[Option[Stack]]("Determine the state of the cloud")
+  lazy val samDescribeCloudFormationStack = taskKey[Option[Stack]]("Determine the state of the cloud")
+  lazy val samServiceEndpoint = taskKey[Option[ServiceEndpoint]]("Shows the service endpoint")
+
+  // resource tasks
+  lazy val dynamoDbTableResources = taskKey[Set[DynamoDb.TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
+  lazy val policyResources = taskKey[Set[Policies.Policy]]("Retrives a set of policies, which are configured in the Lightbend Config.")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")

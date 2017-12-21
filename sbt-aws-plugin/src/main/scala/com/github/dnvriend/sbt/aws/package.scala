@@ -16,7 +16,5 @@ package com.github.dnvriend.sbt
 
 package object aws {
   final val AWS_COGNITO_DEFAULT_USER_PASSWORD = "awsplugindefaultpassword"
-  final val DEFAULT_PROFILE = "default"
-  final val DEFAULT_REGION = "eu-west-1"
   final val EMPTY = ""
 }

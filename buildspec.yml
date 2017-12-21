@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo Noting to do in the install phase..
+  build:
+    commands:
+      - echo Build started on `date`
+      - sbt test
+  post_build:
+    commands:
+      - echo Build completed on `date`
+

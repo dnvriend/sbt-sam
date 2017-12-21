@@ -3,18 +3,19 @@ package com.github.dnvriend.sbt.aws.task
 import com.amazonaws.services.cloudformation._
 import com.amazonaws.services.cloudformation.model._
 import com.github.dnvriend.ops.Converter
+import play.api.libs.json.{ JsValue, Json }
+import sbt.util.Logger
 
 import scala.collection.JavaConverters._
-import play.api.libs.json.JsValue
-
 import scala.compat.Platform
-import scalaz.{ Disjunction, NonEmptyList }
+import scalaz.{ Disjunction, Show }
+import scalaz.Scalaz._
 
 object TemplateBody {
-  implicit val toValidateTemplateRequest: Converter[TemplateBody, ValidateTemplateRequest] =
+  implicit val toRequest: Converter[TemplateBody, ValidateTemplateRequest] =
     Converter.instance(template => new ValidateTemplateRequest().withTemplateBody(template.value))
   def fromJson(json: JsValue): TemplateBody = {
-    TemplateBody(json.toString)
+    TemplateBody(Json.prettyPrint(json))
   }
 }
 
@@ -23,7 +24,7 @@ final case class TemplateBody(value: String) {
 }
 
 object CreateStackSettings {
-  implicit val toCreateStackRequest: Converter[CreateStackSettings, CreateStackRequest] =
+  implicit val toRequest: Converter[CreateStackSettings, CreateStackRequest] =
     Converter.instance(settings => {
       new CreateStackRequest()
         .withStackName(settings.stackName.value)
@@ -35,6 +36,10 @@ final case class StackName(value: String) {
   require(value.nonEmpty, "Stack name should not be empty")
 }
 
+final case class ChangeSetName(value: String) {
+  require(value.nonEmpty, "change set name should not be empty")
+}
+
 final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
 
 object CreateStackResponse {
@@ -44,7 +49,7 @@ object CreateStackResponse {
 final case class CreateStackResponse(response: Option[CreateStackResult], failure: Option[Throwable])
 
 object UpdateStackSettings {
-  implicit val toUpdateStackRequest: Converter[UpdateStackSettings, UpdateStackRequest] =
+  implicit val toRequest: Converter[UpdateStackSettings, UpdateStackRequest] =
     Converter.instance(settings => {
       new UpdateStackRequest()
         .withStackName(settings.stackName.value)
@@ -52,10 +57,23 @@ object UpdateStackSettings {
     })
 }
 
+object CreateChangeSetSettings {
+  implicit val toRequest: Converter[CreateChangeSetSettings, CreateChangeSetRequest] =
+    Converter.instance(settings => {
+      new CreateChangeSetRequest()
+        .withStackName(settings.stackName.value)
+        .withTemplateBody(settings.template.value)
+        .withChangeSetName(settings.changeSetName.value)
+        .withCapabilities(settings.capability)
+    })
+}
+
+final case class CreateChangeSetSettings(template: TemplateBody, stackName: StackName, changeSetName: ChangeSetName, capability: Capability)
+
 final case class UpdateStackSettings(template: TemplateBody, stackName: StackName)
 
 object DeleteStackSettings {
-  implicit val toDeleteStackRequest: Converter[DeleteStackSettings, DeleteStackRequest] =
+  implicit val toRequest: Converter[DeleteStackSettings, DeleteStackRequest] =
     Converter.instance(settings => {
       new DeleteStackRequest()
         .withStackName(settings.stackName.value)
@@ -75,7 +93,7 @@ object DeleteStackResponse {
 final case class DeleteStackResponse(response: Option[DeleteStackResult], failure: Option[Throwable])
 
 object DescribeStackSettings {
-  implicit val toDescribeStacksRequest: Converter[DescribeStackSettings, DescribeStacksRequest] =
+  implicit val toRequest: Converter[DescribeStackSettings, DescribeStacksRequest] =
     Converter.instance(settings => {
       new DescribeStacksRequest()
         .withStackName(settings.stackName.value)
@@ -91,7 +109,7 @@ final case class DescribeStackSettings(stackName: StackName)
 final case class DescribeStackResponse(response: Option[DescribeStacksResult], failure: Option[Throwable])
 
 object DescribeStackEventsSettings {
-  implicit val toDescribeStackEventsSettings: Converter[DescribeStackEventsSettings, DescribeStackEventsRequest] =
+  implicit val toRequest: Converter[DescribeStackEventsSettings, DescribeStackEventsRequest] =
     Converter.instance(settings => {
       new DescribeStackEventsRequest()
         .withStackName(settings.stackName.value)
@@ -107,7 +125,7 @@ final case class DescribeStackEventsSettings(stackName: StackName)
 final case class DescribeStackEventsResponse(response: Option[DescribeStackEventsResult], failure: Option[Throwable])
 
 object DescribeStackResourcesSettings {
-  implicit val toDescribeStackResourcesRequest: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest] =
+  implicit val toRequest: Converter[DescribeStackResourcesSettings, DescribeStackResourcesRequest] =
     Converter.instance(settings => {
       new DescribeStackResourcesRequest()
         .withStackName(settings.stackName.value)
@@ -117,12 +135,48 @@ final case class DescribeStackResourcesSettings(stackName: StackName)
 
 final case class DescribeStackResourcesResponse(result: Option[DescribeStackResourcesResult], failure: Option[Throwable])
 
+object DescribeChangeSetSettings {
+  implicit val toRequest: Converter[DescribeChangeSetSettings, DescribeChangeSetRequest] =
+    Converter.instance(settings => {
+      new DescribeChangeSetRequest()
+        .withStackName(settings.stackName.value)
+        .withChangeSetName(settings.changeSetName.value)
+    })
+}
+final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: ChangeSetName)
+
+final case class ServiceEndpoint(value: String)
+object SamStack {
+  implicit val show: Show[SamStack] = Show.shows(model => {
+    import model._
+    s"""
+       |====================
+       |Sam's State:
+       |====================
+       |Name: ${stack.getStackName}
+       |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
+       |Status: ${stack.getStackStatus}
+       |Status reason: ${Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")}
+       |Last updated: ${stack.getLastUpdatedTime}
+       |===================
+       |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
+       |===================
+     """.stripMargin
+  })
+  def fromStack(stack: Stack): SamStack = {
+    val outputs = stack.getOutputs.asScala.toList
+    val serviceEndpoint: Option[ServiceEndpoint] =
+      outputs.find(_.getOutputKey == "ServiceEndpoint").map(o => ServiceEndpoint(o.getOutputValue))
+    SamStack(
+      serviceEndpoint,
+      stack)
+  }
+}
+final case class SamStack(serviceEndpoint: Option[ServiceEndpoint], stack: Stack)
+
 object CloudFormationOperations extends AwsProgressListenerOps {
-  def client(cr: CredentialsAndRegion): AmazonCloudFormation = {
-    AmazonCloudFormationClientBuilder.standard()
-      .withRegion(cr.region)
-      .withCredentials(cr.credentialsProvider)
-      .build()
+  def client(): AmazonCloudFormation = {
+    AmazonCloudFormationClientBuilder.defaultClient()
   }
 
   /**
@@ -151,6 +205,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def updateStack(
     settings: UpdateStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[UpdateStackSettings, UpdateStackRequest]): Disjunction[Throwable, UpdateStackResult] = {
+    println("====> Cloudformation stack string: " + settings.template.value)
     Disjunction.fromTryCatchNonFatal(client.updateStack(conv(settings)))
   }
 
@@ -165,6 +220,26 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   }
 
   /**
+   * Creates a list of changes that will be applied to a stack so that you can review the changes
+   * before executing them. You can create a change set for a stack that doesn't exist or an existing
+   * stack.
+   */
+  def createChangeSet(
+    settings: CreateChangeSetSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[CreateChangeSetSettings, CreateChangeSetRequest]): Disjunction[Throwable, CreateChangeSetResult] = {
+    Disjunction.fromTryCatchNonFatal(client.createChangeSet(conv(settings)))
+  }
+
+  /**
+   * Returns the inputs for the change set and a list of changes that AWS CloudFormation will make if you execute the change set.
+   */
+  def describeChangeSet(
+    settings: DescribeChangeSetSettings,
+    client: AmazonCloudFormation)(implicit conv: Converter[DescribeChangeSetSettings, DescribeChangeSetRequest]): Disjunction[Throwable, DescribeChangeSetResult] = {
+    Disjunction.fromTryCatchNonFatal(client.describeChangeSet(conv(settings)))
+  }
+
+  /**
    * Returns the description for the specified stack; if no stack name was specified, then it returns the description
    * for all the stacks created.
    */
@@ -172,6 +247,15 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     settings: DescribeStackSettings,
     client: AmazonCloudFormation)(implicit conv: Converter[DescribeStackSettings, DescribeStacksRequest]): Disjunction[Throwable, DescribeStacksResult] = {
     Disjunction.fromTryCatchNonFatal(client.describeStacks(conv(settings)))
+  }
+
+  /**
+   * Returns the CloudFormation Stack
+   */
+  def getStack(
+    settings: DescribeStackSettings,
+    client: AmazonCloudFormation): Option[Stack] = {
+    describeStack(settings, client).toOption.flatMap(_.getStacks.asScala.headOption)
   }
 
   /**
@@ -193,11 +277,12 @@ object CloudFormationOperations extends AwsProgressListenerOps {
     Disjunction.fromTryCatchNonFatal(client.describeStackResources(conv(settings)))
   }
 
-  def createStackEventGenerator(
+  /**
+   * Continuously polls cloud formation and publishes events until finished
+   */
+  def waitForCloudFormation(
     stackName: StackName,
     client: AmazonCloudFormation)(f: CloudFormationEvent => Unit): Unit = {
-    import scalaz._
-    import scalaz.Scalaz._
 
     val now: Long = Platform.currentTime
     var events: Set[Event] = Set.empty
@@ -222,6 +307,46 @@ object CloudFormationOperations extends AwsProgressListenerOps {
       } else {
         publishEvents(stackStatus, newEvents)
         events = newEvents
+        Thread.sleep(500)
+        loop
+      }
+    }
+
+    loop
+  }
+
+  /**
+   * Default 'waitForCloudformation' CloudFormationEvent matcher implementation.
+   */
+  def waitForCloudFormation(stackName: StackName, client: AmazonCloudFormation, log: Logger): Unit = {
+    waitForCloudFormation(stackName, client) {
+      case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, statusReason, _, _, _, _, _))) =>
+        log.info(s"$stackStatus - $resourceType - $logicalId - $status - " + Option(statusReason).filter(_ != "null").getOrElse(""))
+      case _ =>
+    }
+  }
+
+  /**
+   * Continuously polls cloud formation until the change set becomes available
+   */
+  def waitForChangeSetAvailable(
+    stackName: StackName,
+    changeSetName: ChangeSetName,
+    client: AmazonCloudFormation)(f: ChangeSetEvent => Unit): ChangeSetEvent = {
+    def publishEvent(event: ChangeSetEvent): ChangeSetEvent = {
+      f(event)
+      event
+    }
+    def loop: ChangeSetEvent = {
+      val event = describeChangeSet(DescribeChangeSetSettings(stackName, changeSetName), client)
+        .bimap(
+          error => ChangeSetEvent.failed(stackName.value, changeSetName.value, error),
+          result => ChangeSetEvent(stackName.value, changeSetName.value, result.getStatus, result.getExecutionStatus, result.getStatusReason)).merge
+
+      if (List("FAILED", "COMPLETE").exists(state => event.status.contains(state))) {
+        publishEvent(event)
+      } else {
+        publishEvent(event)
         Thread.sleep(500)
         loop
       }
@@ -263,3 +388,15 @@ final case class Event(
     timestampAsLong: Long)
 
 final case class CloudFormationEvent(status: String, event: Option[Event])
+
+object ChangeSetEvent {
+  def failed(stackName: String, changeSetName: String, throwable: Throwable): ChangeSetEvent = {
+    ChangeSetEvent(stackName, changeSetName, "FAILED", "FAILED", throwable.getMessage)
+  }
+}
+final case class ChangeSetEvent(
+    stackName: String,
+    changeSetName: String,
+    status: String,
+    executionStatus: String,
+    statusReason: String)

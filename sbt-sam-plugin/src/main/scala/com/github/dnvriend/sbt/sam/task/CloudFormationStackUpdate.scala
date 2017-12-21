@@ -1,6 +1,10 @@
 package com.github.dnvriend.sbt.sam.task
 
+import java.util.UUID
+
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
+import com.amazonaws.services.cloudformation.model.{ Capability, ExecuteChangeSetRequest, Stack }
+import com.amazonaws.services.s3.AmazonS3
 import com.github.dnvriend.sbt.aws.task._
 import sbt.util.Logger
 
@@ -10,22 +14,42 @@ import sbt.util.Logger
 object CloudFormationStackUpdate {
   def run(
     config: ProjectConfiguration,
-    describeStackResponse: DescribeStackResponse,
+    describeStackResponse: Option[Stack],
     client: AmazonCloudFormation,
+    jarName: String,
+    s3Client: AmazonS3,
     log: Logger): Unit = {
-    if (describeStackResponse.response.isDefined) {
+    if (describeStackResponse.isDefined) {
       log.info("Updating cloud formation stack")
-      CloudFormationOperations.updateStack(
-        UpdateStackSettings(
-          CloudFormationTemplates.updateTemplate(config),
-          StackName(config.samCFTemplateName.value)),
-        client
+      val changeSetName = "sam-change-set" + UUID.randomUUID()
+
+      val latestVersion: Option[S3ObjectVersionId] = S3Operations.latestVersion(
+        ListVersionsSettings(
+          BucketName(config.samS3BucketName.value),
+          S3ObjectKey(jarName)
+        ), s3Client)
+
+      val settings = CreateChangeSetSettings(
+        CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.get.value),
+        StackName(config.samCFTemplateName.value),
+        ChangeSetName(changeSetName),
+        Capability.CAPABILITY_IAM
       )
-      CloudFormationOperations.createStackEventGenerator(StackName(config.samCFTemplateName.value), client) {
-        case CloudFormationEvent(stackStatus, Some(Event(_, _, _, resourceType, status, _, _, _, _, _, _))) =>
-          log.info(s"$stackStatus - $resourceType - $status")
-        case CloudFormationEvent(stackStatus, None) =>
-          log.info(s"$stackStatus - no event")
+
+      val changeSetResult = CloudFormationOperations.createChangeSet(settings, client)
+
+      val latestEvent: ChangeSetEvent = CloudFormationOperations.waitForChangeSetAvailable(settings.stackName, settings.changeSetName, client) { event =>
+        log.info(s"Change set status: ${event.status} - execution status: ${event.executionStatus} - " + Option(event.statusReason).filter(_ != "null").getOrElse(""))
+      }
+
+      if (latestEvent.executionStatus != "UNAVAILABLE") {
+        log.info(s"Executing change set: '$changeSetName'")
+        val executeResult = client.executeChangeSet(new ExecuteChangeSetRequest()
+          .withChangeSetName(settings.changeSetName.value)
+          .withStackName(settings.stackName.value)
+        )
+
+        CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)
       }
     } else {
       log.info("Skipping updating cloud formation stack, it does not exist")

@@ -17,6 +17,7 @@ package com.github.dnvriend.sbt.aws
 import com.amazonaws.services.apigateway.AmazonApiGateway
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch
+import com.amazonaws.services.codebuild.AWSCodeBuild
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
@@ -25,22 +26,12 @@ import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
+import com.amazonaws.services.xray.AWSXRay
+import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task._
 import sbt._
 
 object AwsPluginKeys {
-  // aim account
-  lazy val awsAccountId = settingKey[String]("The AWS numeric account ID")
-  // profile and region
-  lazy val awsProfile = settingKey[String]("The AWS profile to use")
-  lazy val awsRegion = settingKey[String]("The region to deploy the service to")
-  lazy val awsAccessKeyId = settingKey[String]("The AWS access key to use")
-  lazy val awsSecretAccessKey = settingKey[String]("The AWS secret access key to use")
-  lazy val awsClientId = settingKey[String]("AWS client Id")
-
-  // credentials tasks
-  lazy val credentialsAndRegion = SettingKey[CredentialsAndRegion]("Returns the aws credentials provider and region")
-
   // clients
   lazy val clientAwsLambda = SettingKey[AWSLambda]("Returns the AwsLambda client")
   lazy val clientApiGateway = SettingKey[AmazonApiGateway]("Returns the ApiGateway client")
@@ -51,6 +42,8 @@ object AwsPluginKeys {
   lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
   lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
   lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
+  lazy val clientCodeBuild = SettingKey[AWSCodeBuild]("AWS CodeBuild is a fully managed build service in the cloud. AWS CodeBuild compiles your source code, runs unit tests, and produces artifacts that are ready to deploy. AWS CodeBuild eliminates the need to provision, manage, and scale your own build servers")
+  lazy val clientXRay = SettingKey[AWSXRay]("AWS X-Ray provides APIs for managing debug traces and retrieving service maps and other data created by processing those traces")
   lazy val clientCognito = SettingKey[AWSCognitoIdentityProvider]("Returns the cognito identity provider client")
 
   // lambda tasks
@@ -68,6 +61,11 @@ object AwsPluginKeys {
 
   // iam tasks
   lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
+  lazy val iamCredentialsRegionAndUser = taskKey[CredentialsRegionAndUser]("Returns the current user")
+  lazy val whoAmI = taskKey[Unit]("")
+
+  // code build tasks
+  lazy val cbGenerateBuildSpec = taskKey[File]("Generates a buildspec.yaml file in the root project directory")
 
   // cognito tasks
   lazy val usersToCreate = settingKey[List[CognitoUserDetails]]("List of username and password for user accounts to create")

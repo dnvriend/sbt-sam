@@ -17,9 +17,12 @@ package com.github.dnvriend.sbt.aws
 import com.amazonaws.services.cognitoidp.model.AdminRespondToAuthChallengeResult
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.aws.domain._
 import sbt.complete.DefaultParsers._
 import sbt._
 import sbt.Keys._
+
+import scalaz.std.AllInstances._
 
 import scalaz.Disjunction
 
@@ -32,29 +35,50 @@ object AwsPlugin extends AutoPlugin with AllOps {
   import autoImport._
 
   override def projectSettings = Seq(
-    credentialsAndRegion := GetCredentialsProvider.getCredentialsAndRegion(
-      awsAccessKeyId.?.value.map(_.wrap[AwsAccessKeyId]),
-      awsSecretAccessKey.?.value.map(_.wrap[AwsSecretAccessKey]),
-      awsProfile.?.value,
-      awsRegion.?.value
-    ),
-    awsRegion := DEFAULT_REGION,
-    awsProfile := DEFAULT_PROFILE,
-    usersToCreate := List(),
+    clientAwsLambda := AwsLambdaOperations.client(),
+    clientApiGateway := ApiGatewayOperations.client(),
+    clientDynamoDb := DynamoDbOperations.client(),
+    clientS3 := S3Operations.client(),
+    clientKinesis := KinesisOperations.client(),
+    clientSns := SNSOperations.client(),
+    clientCloudWatch := CloudWatchOperations.client(),
+    clientIam := IamOperations.client(),
+    clientCloudFormation := CloudFormationOperations.client(),
+    clientCodeBuild := CodeBuildOperations.client(),
+    clientXRay := XRayOperations.client(),
+    clientCognito := AwsCognitoIdpOperations.client(),
 
-    clientAwsLambda := AwsLambdaOperations.client(credentialsAndRegion.value),
-    clientApiGateway := ApiGatewayOperations.client(credentialsAndRegion.value),
-    clientDynamoDb := DynamoDbOperations.client(credentialsAndRegion.value),
-    clientS3 := S3Operations.client(credentialsAndRegion.value),
-    clientKinesis := KinesisOperations.client(credentialsAndRegion.value),
-    clientSns := SNSOperations.client(credentialsAndRegion.value),
-    clientCloudWatch := CloudWatchOperations.client(credentialsAndRegion.value),
-    clientIam := IamOperations.client(credentialsAndRegion.value),
-    clientCloudFormation := CloudFormationOperations.client(credentialsAndRegion.value),
-    clientCognito := AwsCognitoIdpOperations.client(credentialsAndRegion.value),
+    // cognito users
+    usersToCreate := List(),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),
+    iamCredentialsRegionAndUser := IamOperations.getAwsCredentialsAndUser(clientIam.value).getOrFail(),
+    iamCredentialsRegionAndUser := (iamCredentialsRegionAndUser keepAs iamCredentialsRegionAndUser).value,
+
+    whoAmI := {
+      val log = streams.value.log
+      val creds: IAMDomain.CredentialsRegionAndUser = iamCredentialsRegionAndUser.value
+      log.info(
+        s"""
+           |===================================
+           |Using the following AWS credentials
+           |===================================
+           |* ProfileLocation: ${creds.credentialsAndRegion.profileLocation.value.absolutePath}
+           |* Region: '${creds.credentialsAndRegion.region.getName}'
+           |* IAM User:
+           |  - UserName: '${creds.user.getUserName}'
+           |  - Arn: '${creds.user.getArn}'
+           |  - Created on: '${creds.user.getCreateDate}'
+           |  - Last used on: '${creds.user.getPasswordLastUsed}'
+           |* Credentials:
+           |  - AWSAccessKeyId: '${creds.credentialsAndRegion.credentials.value.getAWSAccessKeyId}'
+           |  - AWSSecretKey: '${creds.credentialsAndRegion.credentials.value.getAWSSecretKey}'
+      """.stripMargin)
+    },
+
+    // code build tasks
+    cbGenerateBuildSpec := CodeBuildOperations.generateBuildSpec(BuildSpecSettings(baseDirectory.value)),
 
     // lambda operations
     lambdaListFunctions := AwsLambdaOperations.listFunctions(clientAwsLambda.value),

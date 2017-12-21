@@ -18,6 +18,7 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
+import com.github.dnvriend.sbt.util.ResourceOperations
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
@@ -31,6 +32,7 @@ object SAMPlugin extends AutoPlugin {
   override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin && AwsPlugin
 
   val autoImport = SAMPluginKeys
+
   import autoImport._
 
   override def projectSettings = Seq(
@@ -38,7 +40,7 @@ object SAMPlugin extends AutoPlugin {
     samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
     samCFTemplateName := s"${name.value}-${samStage.value}",
     samResourcePrefixName := s"${name.value}-${samStage.value}",
-    samJar := (assemblyOutputPath in assembly).value,
+    (assemblyJarName in assembly) := "codepackage.jar",
 
     samProjectClassLoader := {
       val scalaInstance = Keys.scalaInstance.value
@@ -73,21 +75,46 @@ object SAMPlugin extends AutoPlugin {
     samValidate := {
       val log = streams.value.log
       val config = samProjectConfiguration.value
-      val template = CloudFormationTemplates.updateTemplate(config)
       val client = clientCloudFormation.value
+      val jarName = (assemblyJarName in assembly).value
+      val s3client = clientS3.value
+      val latestVersion: Option[S3ObjectVersionId] = S3Operations.latestVersion(
+        ListVersionsSettings(
+          BucketName(config.samS3BucketName.value),
+          S3ObjectKey(jarName)
+        ), s3client)
+      val template: TemplateBody = CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.map(_.value).getOrElse("NO_ARTIFACT_AVAILABLE_YET"))
+
+      log.info("validating template:")
+      println(template.value)
       log.info(CloudFormationOperations.validateTemplate(template, client)
         .bimap(t => t.getMessage, _.toString).merge)
     },
 
+    dynamoDbTableResources := {
+      val baseDir: File = baseDirectory.value
+      ResourceOperations.retrieveDynamoDbTables(baseDir)
+    },
+
+    policyResources := {
+      val baseDir: File = baseDirectory.value
+      ResourceOperations.retrievePolicies(baseDir)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
+        name.value,
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
         samStage.value,
-        credentialsAndRegion.value,
+        iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
-        classifiedLambdas.value,
+        SamResources(
+          classifiedLambdas.value,
+          dynamoDbTableResources.value,
+          policyResources.value
+        )
       )
     },
 
@@ -98,6 +125,12 @@ object SAMPlugin extends AutoPlugin {
         clientCloudFormation.value,
         streams.value.log
       )
+    },
+
+    samServiceEndpoint := {
+      val logger = streams.value.log
+      val stack = samDescribeCloudFormationStack.value
+      stack.map(SamStack.fromStack).flatMap(_.serviceEndpoint)
     },
 
     samUploadArtifact := {
@@ -130,7 +163,7 @@ object SAMPlugin extends AutoPlugin {
     samCreateCloudFormationStack := {
       CloudFormationStackCreate.run(
         samProjectConfiguration.value,
-        samDescribeCloudFormationStack.value,
+        samDescribeCloudFormationStackForCreate.value,
         clientCloudFormation.value,
         streams.value.log
       )
@@ -141,16 +174,26 @@ object SAMPlugin extends AutoPlugin {
         samProjectConfiguration.value,
         samDescribeCloudFormationStack.value,
         clientCloudFormation.value,
+        (assemblyJarName in assembly).value,
+        clientS3.value,
         streams.value.log
+      )
+    },
+
+    samDescribeCloudFormationStackForCreate := {
+      val config: ProjectConfiguration = samProjectConfiguration.value
+      CloudFormationOperations.getStack(
+        DescribeStackSettings(StackName(config.samCFTemplateName.value)),
+        clientCloudFormation.value
       )
     },
 
     samDescribeCloudFormationStack := {
       val config: ProjectConfiguration = samProjectConfiguration.value
-      CloudFormationOperations.describeStack(
+      CloudFormationOperations.getStack(
         DescribeStackSettings(StackName(config.samCFTemplateName.value)),
         clientCloudFormation.value
-      ).bimap(t => DescribeStackResponse(None, Option(t)), result => DescribeStackResponse(Option(result), None)).merge
+      )
     },
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,

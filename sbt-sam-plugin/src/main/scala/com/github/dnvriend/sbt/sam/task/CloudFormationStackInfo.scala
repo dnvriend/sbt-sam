@@ -1,20 +1,15 @@
 package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
-import com.amazonaws.services.cloudformation.model.StackResource
-import com.github.dnvriend.sbt.aws.task.{ CloudFormationOperations, DescribeStackResourcesSettings, DescribeStackResponse, StackName }
-import com.github.dnvriend.sbt.util.Report
+import com.amazonaws.services.cloudformation.model.{ Stack, StackResource }
+import com.github.dnvriend.sbt.aws.task.SamStack
 import sbt.util.Logger
 
-import scala.collection.JavaConverters._
-import scalaz.{ Show, Disjunction }
-import scalaz.std.AllInstances._
-import com.github.dnvriend.sbt.util.ShowInstances._
+import scalaz.Show
 
 object CloudFormationStackResource {
-  implicit val show: Show[CloudFormationStackResource] = Show.shows(model => {
-    import model._
-    s"$logicalResourceId - $resourceType - $resourceStatus - $timestamp"
+  implicit val show: Show[CloudFormationStackResource] = Show.shows(m => {
+    s"${m.logicalResourceId}- ${m.resourceType}- ${m.resourceStatus}- ${m.timestamp}"
   })
   def fromStackResource(resource: StackResource): CloudFormationStackResource = {
     CloudFormationStackResource(
@@ -34,16 +29,21 @@ case class CloudFormationStackResource(
 object CloudFormationStackInfo {
   def run(
     config: ProjectConfiguration,
-    describeStackResponse: DescribeStackResponse,
+    stack: Option[Stack],
     client: AmazonCloudFormation,
     log: Logger
   ): Unit = {
 
-    log.info("The stack contains the following resources:")
-    val result: Disjunction[Throwable, List[CloudFormationStackResource]] = CloudFormationOperations.describeStackResources(
-      DescribeStackResourcesSettings(StackName(config.samCFTemplateName.value)),
-      client
-    ).map(result => result.getStackResources.asScala.map(CloudFormationStackResource.fromStackResource).toList)
-    log.info(Report.report(result))
+    log.info("Stack details:")
+    val samStack = stack.map(SamStack.fromStack)
+    log.info(samStack.map(SamStack.show.shows).getOrElse("No stack details"))
+    log.info("Endpoints:")
+    samStack.flatMap(_.serviceEndpoint).foreach { endpoint =>
+      config.lambdas.foreach {
+        case HttpHandler(_, HttpConf(path, method, auth)) =>
+          log.info(s"${method.toUpperCase} - ${endpoint.value}$path")
+        case _ =>
+      }
+    }
   }
 }

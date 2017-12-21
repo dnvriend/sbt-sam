@@ -17,6 +17,8 @@ package com.github.dnvriend.ops
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream }
 import java.nio.ByteBuffer
 
+import ByteArrayOps._
+
 import play.api.libs.json.{ JsValue, Json }
 
 import scalaz.{ @@, Tag }
@@ -26,7 +28,7 @@ object ByteArrayOps extends ByteArrayOps {
 }
 
 trait ByteArrayOps {
-  implicit def ToByteArrayOps(that: Array[Byte]): ToByteArrayOps = ByteArrayOps(that)
+  implicit def ConvertToByteArrOps(that: Array[Byte]): ToByteArrayOps = ByteArrayOps(that)
 
   def withOutputStream(f: OutputStream => Unit): Array[Byte] = {
     val baos = new ByteArrayOutputStream()
@@ -77,17 +79,14 @@ class ToByteArrayOps(that: Array[Byte]) {
   }
 
   def md5: String @@ Hex = {
-    import ByteArrayOps._
     java.security.MessageDigest.getInstance("MD5").digest(that).hex
   }
 
   def sha1: String @@ Hex = {
-    import ByteArrayOps._
     java.security.MessageDigest.getInstance("SHA-1").digest(that).hex
   }
 
   def sha256: String @@ Hex = {
-    import ByteArrayOps._
     java.security.MessageDigest.getInstance("SHA-256").digest(that).hex
   }
 

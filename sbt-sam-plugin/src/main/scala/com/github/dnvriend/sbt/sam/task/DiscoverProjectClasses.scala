@@ -6,17 +6,16 @@ import scalaz.Show
 import scala.tools.nsc.classpath.{ FileUtils, PackageNameUtils }
 
 object ProjectClass {
-  implicit val show: Show[ProjectClass] = Show.shows(model => {
-    import model._
+  implicit val show: Show[ProjectClass] = Show.shows(m => {
     s"""
       |=====================
-      |ProjectClass: ${cl.getName}
+      |ProjectClass: ${m.cl.getName}
       |=====================
-      |Class: ${className.value}
-      |Package: ${packageName.value}
-      |simpleName: ${cl.getSimpleName}
-      |interfaces: ${interfaces.map(_.getName)}
-      |superclass: ${cl.getSuperclass.getName}
+      |Class: ${m.className.value}
+      |Package: ${m.packageName.value}
+      |simpleName: ${m.cl.getSimpleName}
+      |interfaces: ${m.interfaces.map(_.getName)}
+      |superclass: ${m.cl.getSuperclass.getName}
     """.stripMargin
   })
 }
@@ -58,10 +57,9 @@ object DiscoverProjectClasses {
     }
   }
 
-  def fileSyntaxToPackageSyntax(fileSyntax: String): String = {
-    fileSyntax.replace("/", ".")
-  }
-  def createRelativizer(baseDir: File): sbt.File => Option[String] = {
+  private def createRelativizer(baseDir: File): sbt.File => Option[String] = {
     IO.relativize(baseDir, _: File)
   }
+
+  private val fileSyntaxToPackageSyntax: String => String = (fileSyntax: String) => fileSyntax.replace("/", ".")
 }

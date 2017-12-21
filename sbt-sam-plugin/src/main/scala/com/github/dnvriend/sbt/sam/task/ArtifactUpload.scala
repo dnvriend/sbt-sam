@@ -14,7 +14,7 @@ object ArtifactUpload {
   ): PutObjectResponse = {
     S3Operations.putObject(
       PutObjectSettings(
-        S3BucketId(config.samS3BucketName.value),
+        BucketName(config.samS3BucketName.value),
         S3ObjectKey(artifact.getName),
         S3Object(artifact)
       ),

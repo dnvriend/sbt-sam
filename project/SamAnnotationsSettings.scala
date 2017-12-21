@@ -7,4 +7,5 @@ object SamAnnotationsSettings extends AutoPlugin {
 
   override def projectSettings = Seq(
   )
+
 }
