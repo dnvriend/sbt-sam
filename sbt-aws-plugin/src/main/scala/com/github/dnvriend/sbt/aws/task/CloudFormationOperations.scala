@@ -320,8 +320,8 @@ object CloudFormationOperations extends AwsProgressListenerOps {
    */
   def waitForCloudFormation(stackName: StackName, client: AmazonCloudFormation, log: Logger): Unit = {
     waitForCloudFormation(stackName, client) {
-      case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, _, _, _, _, _, _))) =>
-        log.info(s"$stackStatus - $resourceType - $logicalId - $status")
+      case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, statusReason, _, _, _, _, _))) =>
+        log.info(s"$stackStatus - $resourceType - $logicalId - $status - " + Option(statusReason).filter(_ != "null").getOrElse(""))
       case _ =>
     }
   }
