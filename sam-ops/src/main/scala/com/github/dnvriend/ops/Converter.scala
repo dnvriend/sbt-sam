@@ -8,7 +8,7 @@ import org.apache.avro.Schema
 import scalaz.{ @@, Disjunction, Tag }
 
 trait ConverterOps {
-  implicit def ToConverterOps[A](that: A): ToConverterOps[A] = new ToConverterOps[A](that)
+  implicit def ConvertToConvOps[A](that: A): ToConverterOps[A] = new ToConverterOps[A](that)
 }
 
 class ToConverterOps[A](that: A) {
@@ -50,7 +50,7 @@ object Converter {
     }
   }
 
-  implicit def AvroBinaryAtoBConverter[A <: Product: ToRecord, B <: Product: FromRecord](implicit schemaForA: SchemaFor[A], encoder: Converter[A, Array[Byte] @@ AvroBinary], decoder: Converter2[Schema, Array[Byte] @@ AvroBinary, B]): Converter[A, B] = new Converter[A, B] {
+  implicit def CovertAvroBinaryAtoB[A <: Product: ToRecord, B <: Product: FromRecord](implicit schemaForA: SchemaFor[A], encoder: Converter[A, Array[Byte] @@ AvroBinary], decoder: Converter2[Schema, Array[Byte] @@ AvroBinary, B]): Converter[A, B] = new Converter[A, B] {
     override def apply(v1: A): B = encoder andThen decoder.curried(schemaForA()) apply v1
   }
 }

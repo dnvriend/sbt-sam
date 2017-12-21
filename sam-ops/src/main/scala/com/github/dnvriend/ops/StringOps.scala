@@ -25,9 +25,9 @@ object StringOps extends StringOps {
 }
 
 trait StringOps {
-  implicit def ToStringOps(that: String): ToStringOps = StringOps(that)
-  implicit def ToHexStringOps(that: String @@ Hex): ToHexStringOps = new ToHexStringOps(that)
-  implicit def ToBase64StringOps(that: String @@ Base64): ToBase64StringOps = new ToBase64StringOps(that)
+  implicit def ConvertToSOps(that: String): ToStringOps = StringOps(that)
+  implicit def ConvertToHSOps(that: String @@ Hex): ToHexStringOps = new ToHexStringOps(that)
+  implicit def ConvertToB64SOps(that: String @@ Base64): ToBase64StringOps = new ToBase64StringOps(that)
 }
 
 class ToHexStringOps(that: String @@ Hex) {

@@ -70,19 +70,18 @@ final case class ResourceType(value: String)
 final case class Resource(value: String)
 
 object AmazonUser {
-  implicit val show: Show[AmazonUser] = Show.shows(model => {
-    import model._
+  implicit val show: Show[AmazonUser] = Show.shows(m => {
     s"""
       |==================
       |Amazon User
       |==================
-      |UserName: ${user.getUserName}
-      |UserId: ${user.getUserId}
-      |AccountId: ${arn.accountId.value}
-      |Arn: ${user.getArn}
-      |Region: ${regions.getOrElse("No region")}
-      |CreateDate: ${user.getCreateDate}
-      |Password last used: ${user.getPasswordLastUsed}
+      |UserName: ${m.user.getUserName}
+      |UserId: ${m.user.getUserId}
+      |AccountId: ${m.arn.accountId.value}
+      |Arn: ${m.user.getArn}
+      |Region: ${m.regions.getOrElse("No region")}
+      |CreateDate: ${m.user.getCreateDate}
+      |Password last used: ${m.user.getPasswordLastUsed}
     """.stripMargin
   })
 }

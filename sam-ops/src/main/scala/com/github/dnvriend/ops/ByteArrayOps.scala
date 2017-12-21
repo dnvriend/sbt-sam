@@ -28,7 +28,7 @@ object ByteArrayOps extends ByteArrayOps {
 }
 
 trait ByteArrayOps {
-  implicit def ToByteArrayOps(that: Array[Byte]): ToByteArrayOps = ByteArrayOps(that)
+  implicit def ConvertToByteArrOps(that: Array[Byte]): ToByteArrayOps = ByteArrayOps(that)
 
   def withOutputStream(f: OutputStream => Unit): Array[Byte] = {
     val baos = new ByteArrayOutputStream()
