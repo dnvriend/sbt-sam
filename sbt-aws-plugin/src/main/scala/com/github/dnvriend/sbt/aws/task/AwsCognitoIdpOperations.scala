@@ -72,9 +72,9 @@ object AwsCognitoIdpOperations {
       .withTemporaryPassword(tempPassword)
 
     for {
-      _ ← adminCreateUser(client, adminCreateUserRequest)
-      adminInitiateAuthResult ← adminInitiateAuth(client, clientId, userPoolId, userName, tempPassword)
-      adminRespondToAuthChallengeResult ← adminRespondToAuthChallenge(client, clientId, userPoolId, userName, password, adminInitiateAuthResult.getSession)
+      _ <- adminCreateUser(client, adminCreateUserRequest)
+      adminInitiateAuthResult <- adminInitiateAuth(client, clientId, userPoolId, userName, tempPassword)
+      adminRespondToAuthChallengeResult <- adminRespondToAuthChallenge(client, clientId, userPoolId, userName, password, adminInitiateAuthResult.getSession)
     } yield adminRespondToAuthChallengeResult
   }
 
@@ -82,7 +82,7 @@ object AwsCognitoIdpOperations {
     client: AWSCognitoIdentityProvider,
     adminCreateUserRequest: AdminCreateUserRequest): Disjunction[String, AdminCreateUserResult] = {
     Disjunction.fromTryCatchNonFatal(client.adminCreateUser(adminCreateUserRequest)).leftMap(
-      e ⇒ s"adminCreateUser with user ${adminCreateUserRequest.getUsername} error ==> ${e.toString}"
+      e => s"adminCreateUser with user ${adminCreateUserRequest.getUsername} error ==> ${e.toString}"
     )
   }
 
@@ -96,10 +96,10 @@ object AwsCognitoIdpOperations {
       .withAuthFlow(model.AuthFlowType.ADMIN_NO_SRP_AUTH)
       .withClientId(clientId)
       .withUserPoolId(userPoolId)
-      .withAuthParameters(JavaConverters.mapAsJavaMap(Map("USERNAME" → userName, "PASSWORD" → password)))
+      .withAuthParameters(JavaConverters.mapAsJavaMap(Map("USERNAME" -> userName, "PASSWORD" -> password)))
 
     Disjunction.fromTryCatchNonFatal(client.adminInitiateAuth(adminInitiateAuthRequest)).leftMap(
-      e ⇒ s"adminInitiateAuth with user: $userName and tempPassword: $password error ==> ${e.toString}"
+      e => s"adminInitiateAuth with user: $userName and tempPassword: $password error ==> ${e.toString}"
     )
   }
 
@@ -119,7 +119,7 @@ object AwsCognitoIdpOperations {
       .withSession(session)
 
     Disjunction.fromTryCatchNonFatal(client.adminRespondToAuthChallenge(adminRespondToAuthChallengeRequest)).leftMap(
-      e ⇒ s"adminRespondToAuthChallenge with user: $userName and newPassword: $newPassword error ==> ${e.toString}"
+      e => s"adminRespondToAuthChallenge with user: $userName and newPassword: $newPassword error ==> ${e.toString}"
     )
   }
 }
