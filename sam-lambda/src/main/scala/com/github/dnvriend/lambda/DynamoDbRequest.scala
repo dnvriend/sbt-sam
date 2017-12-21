@@ -27,7 +27,7 @@ object DynamoDbRequest {
 case class DynamoDbRequest(json: JsValue) {
   def getInsertedKeys[K: Reads]: List[K] = {
     (json \ "Records").as[List[JsValue]]
-      .filter(record ⇒ (record \ "eventName").as[String] == "INSERT")
-      .map(record ⇒ (record \ "dynamodb" \ "Keys").as[K])
+      .filter(record => (record \ "eventName").as[String] == "INSERT")
+      .map(record => (record \ "dynamodb" \ "Keys").as[K])
   }
 }

@@ -4,9 +4,9 @@ object Models {
 
   object DynamoDb {
 
-    case class HashKey(name: String, `type`: String = "S")
+    case class HashKey(name: String, keyType: String = "S")
 
-    case class RangeKey(name: String, `type`: String = "S")
+    case class RangeKey(name: String, keyType: String = "S")
 
     case class GlobalSecondaryIndex(indexName: String = "", hashKey: HashKey, rangeKey: Option[RangeKey], projectionType: String = "", rcu: Int = 1, wcu: Int = 1)
 

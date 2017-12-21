@@ -22,11 +22,8 @@ object CloudFormationStackCreate {
           StackName(config.samCFTemplateName.value)),
         client
       )
-      CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client) {
-        case CloudFormationEvent(stackStatus, Some(Event(_, logicalId, _, resourceType, status, _, _, _, _, _, _))) =>
-          log.info(s"$stackStatus - $resourceType - $logicalId - $status")
-        case _ =>
-      }
+
+      CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)
     } else {
       log.info("Skipping creating cloud formation stack, it already exists")
     }

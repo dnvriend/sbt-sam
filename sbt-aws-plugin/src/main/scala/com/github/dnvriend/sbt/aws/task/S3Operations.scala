@@ -7,6 +7,8 @@ import com.amazonaws.{ AmazonClientException, AmazonServiceException, AmazonWebS
 import com.github.dnvriend.ops.Converter
 import sbt._
 
+import scalaz.Show
+
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 import scalaz.Disjunction
@@ -140,7 +142,7 @@ object S3Operations extends AwsProgressListenerOps {
   private def addProgressListener(
     request: AmazonWebServiceRequest,
     fileSize: Long,
-    key: String): Unit = {
+    key: String)(implicit show: Show[ProgressBar]): Unit = {
     request.setGeneralProgressListener(new SyncProgressListener {
       var uploadedBytes = 0L
       val fileName = {
@@ -157,30 +159,11 @@ object S3Operations extends AwsProgressListenerOps {
           progressEvent.getEventType == ProgressEventType.RESPONSE_BYTE_TRANSFER_EVENT) {
           uploadedBytes = uploadedBytes + progressEvent.getBytesTransferred
         }
-        print(progressBar(if (fileSize > 0) ((uploadedBytes * 100) / fileSize).toInt else 100))
+        print(show.show(ProgressBar(if (fileSize > 0) ((uploadedBytes * 100) / fileSize).toInt else 100)))
         print(s"Lambda JAR -> S3")
         if (progressEvent.getEventType == ProgressEventType.TRANSFER_COMPLETED_EVENT)
           println()
       }
     })
-  }
-
-  /**
-   * Progress bar code borrowed from https://github.com/sbt/sbt-s3/blob/master/src/main/scala/S3Plugin.scala
-   */
-  private def progressBar(percent: Int) = {
-    val b = "=================================================="
-    val s = "                                                  "
-    val p = percent / 2
-    val z: StringBuilder = new StringBuilder(80)
-    z.append("\r[")
-    z.append(b.substring(0, p))
-    if (p < 50) { z.append("=>"); z.append(s.substring(p)) }
-    z.append("]   ")
-    if (p < 5) z.append(" ")
-    if (p < 50) z.append(" ")
-    z.append(percent)
-    z.append("%   ")
-    z.mkString
   }
 }

@@ -249,20 +249,20 @@ object CloudFormationTemplates {
     )
 
     val indexKeys = table.gsis.map { index ⇒
-      val indexHashKey = toJson(index.hashKey.name, index.hashKey.`type`)
+      val indexHashKey = toJson(index.hashKey.name, index.hashKey.keyType)
       val rangeKey = index.rangeKey match {
-        case Some(key) ⇒ toJson(key.name, key.`type`)
+        case Some(key) ⇒ toJson(key.name, key.keyType)
         case None ⇒ JsObject(Nil)
       }
       indexHashKey ++ rangeKey
     }
 
     val rangeKey = table.rangeKey match {
-      case Some(key) ⇒ toJson(key.name, key.`type`)
+      case Some(key) ⇒ toJson(key.name, key.keyType)
       case None ⇒ JsObject(Nil)
     }
 
-    val hashKey = toJson(table.hashKey.name, table.hashKey.`type`)
+    val hashKey = toJson(table.hashKey.name, table.hashKey.keyType)
     val objects = (indexKeys :+ rangeKey :+ hashKey).filter(_.value != Map.empty)
     objects.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }

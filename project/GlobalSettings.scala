@@ -8,6 +8,7 @@ import LibraryDependencies._
 
 object GlobalSettings extends AutoPlugin {
   override def trigger = allRequirements
+
   override def requires = plugins.JvmPlugin && SbtScalariform && HeaderPlugin
 
   override def globalSettings = Seq(
@@ -50,7 +51,20 @@ object GlobalSettings extends AutoPlugin {
 
   lazy val publishSourcesAndDocsSettings = Seq(
     // disable creating javadoc and scaladoc //
-    sources in (Compile,doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false
+    sources in(Compile, doc) := Seq.empty,
+    publishArtifact in(Compile, packageDoc) := false
+  )
+
+  lazy val commonSettings = Seq(
+    libraryDependencies += libAwsLambdaJavaCore,
+    libraryDependencies += libAwsLambdaJavaEvents,
+    libraryDependencies += libTypesafeConfig,
+    libraryDependencies += libPureConfig,
+    libraryDependencies += libScalaz,
+    libraryDependencies += libAvro4s,
+    libraryDependencies += libCirceYaml,
+    libraryDependencies += libPlayJson,
+    libraryDependencies += libScalazScalaTest % Test,
+    libraryDependencies += libScalaTest % Test
   )
 }
