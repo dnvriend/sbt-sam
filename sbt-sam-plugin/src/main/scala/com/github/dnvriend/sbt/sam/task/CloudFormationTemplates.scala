@@ -45,7 +45,7 @@ object CloudFormationTemplates {
 //          Cognito.UserPoolClient.resource(config),
 //          parsePolicies(config.policies),
         )
-//        ++ outputs(config)
+        ++ outputs(config)
     )
   }
 
@@ -75,13 +75,13 @@ object CloudFormationTemplates {
               "",
               Json.arr(
                 "https://",
-                ServerlessParameters.ref(ServerlessParameters.ServerlessRestApi),
+                ServerlessApi.logicalIdRestApi(config),
                 ".execute-api.",
                 PseudoParameters.ref(PseudoParameters.Region),
                 ".",
                 PseudoParameters.ref(PseudoParameters.URLSuffix),
                 "/",
-                ServerlessParameters.ref(ServerlessParameters.ServerlessRestApiProdStage)
+                ServerlessApi.logicalIdStage(config)
               )
             )
           )
@@ -317,28 +317,7 @@ object CloudFormationTemplates {
   }
 }
 
-trait ServerlessParameter
-
-object ServerlessParameters {
-  def ref(param: ServerlessParameter): JsObject = {
-    Json.obj("Ref" -> param.toString)
-  }
-
-  /**
-    * 'AWS::ApiGateway::RestApi' eg. 'gm3vkzgx9b'
-    */
-  case object ServerlessRestApi extends ServerlessParameter
-
-  /**
-    * 'AWS::ApiGateway::Stage' eg. 'Prod'
-    */
-  case object ServerlessRestApiProdStage extends ServerlessParameter
-
-}
-
-
 trait PseudoParameter
-
 object PseudoParameters {
   /**
     * Returns the param
@@ -553,6 +532,28 @@ object Cognito {
 }
 
 object ServerlessApi {
+  /**
+    * Returns the logical resource id
+    */
+  def logicalResourceId(config: ProjectConfiguration): String = {
+    "ServerlessRestApi"
+  }
+
+  /**
+    * Returns the logicalId of 'AWS::ApiGateway::RestApi'
+    */
+  def logicalIdRestApi(config: ProjectConfiguration): JsObject = {
+    CloudFormation.ref(logicalResourceId(config))
+  }
+
+  /**
+    * Returns the logicalId of 'AWS::ApiGateway::Stage'
+    */
+  def logicalIdStage(config: ProjectConfiguration): JsObject = {
+    val logicalName = s"${logicalResourceId(config)}${config.samStage.value}Stage"
+    CloudFormation.ref(logicalName)
+  }
+
   private def properties(props: JsValue*): JsObject = {
     Json.obj("Properties" -> props.toList.foldMap(identity)(JsMonoids.jsObjectMerge))
   }
@@ -560,7 +561,7 @@ object ServerlessApi {
   def resource(config: ProjectConfiguration): JsValue = {
     if (!config.lambdas.exists(_.isInstanceOf[HttpHandler])) JsNull else {
       Json.obj(
-        "ServerlessRestApi" -> (Json.obj(
+        logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Serverless::Api",
 //          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
         ) ++ properties(
