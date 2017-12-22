@@ -104,6 +104,7 @@ object SAMPlugin extends AutoPlugin {
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
+        version.value,
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
