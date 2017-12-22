@@ -24,7 +24,7 @@ import scalaz.{ @@, Show }
 object Crypto {
   def keyToSpec(key: String, salt: String): SecretKeySpec = {
     var keyBytes: Array[Byte] = (salt + key).getBytes("UTF-8")
-    val sha: MessageDigest = MessageDigest.getInstance("SHA-1")
+    val sha: MessageDigest = MessageDigest.getInstance("SHA-256")
     keyBytes = sha.digest(keyBytes)
     keyBytes = util.Arrays.copyOf(keyBytes, 16)
     new SecretKeySpec(keyBytes, "AES")

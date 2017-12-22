@@ -78,14 +78,6 @@ class ToByteArrayOps(that: Array[Byte]) {
     Tag(javax.xml.bind.DatatypeConverter.printHexBinary(that))
   }
 
-  def md5: String @@ Hex = {
-    java.security.MessageDigest.getInstance("MD5").digest(that).hex
-  }
-
-  def sha1: String @@ Hex = {
-    java.security.MessageDigest.getInstance("SHA-1").digest(that).hex
-  }
-
   def sha256: String @@ Hex = {
     java.security.MessageDigest.getInstance("SHA-256").digest(that).hex
   }
