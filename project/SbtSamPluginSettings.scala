@@ -14,6 +14,9 @@ object SbtSamPluginSettings extends AutoPlugin {
     libraryDependencies += libCirceYaml,
     libraryDependencies += libPlayJson,
     libraryDependencies += libAwsJavaSdk,
+    libraryDependencies += libScalazScalaTest,
+    libraryDependencies += libScalaTest,
+
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
