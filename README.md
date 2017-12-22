@@ -6,7 +6,28 @@
 [![Download](https://api.bintray.com/packages/dnvriend/maven/sbt-sam/images/download.svg) ](https://bintray.com/dnvriend/maven/sbt-sam/_latestVersion)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-## Configuration
+## Notice
+`sbt-sam` is work in progress so the best way to enjoy `sbt-sam` - in the mean-time - is cloning the project and publish the artifacts
+locally in order to have the latest artifacts. Then take a look at the seed projects, update the `sbt-sam`'s library versions
+according to your latest build and enjoy the same workflow you're used to, but for creating serverless applications!
+
+We do our best to create a first base version that supports `cognito` user pool secured `api gateway` backend components that
+support `dynamodb` and `dynamodb streams`. 
+
+```bash
+$ git clone git@github.com:dnvriend/sbt-sam.git
+cd sbt-sam
+sbt compile publishLocal
+``` 
+
+## sbt-sam seed projects
+The following seed projects are available:
+
+- [dnvriend/sam-seed.g8](https://github.com/dnvriend/sam-seed.g8): An template for creating public accessible, stateless applications,
+- [dnvriend/sam-dynamodb-seed.g8](https://github.com/dnvriend/sam-dynamodb-seed.g8): A template for quickly creating stateful serverless applications using dynamodb.
+- [dnvriend/sam-dynamodb-scanamo-seed.g8](https://github.com/dnvriend/sam-dynamodb-scanamo-seed.g8): A template for quickly creating stateful serverless applications using dynamodb and [scanamo](https://github.com/scanamo/scanamo).
+
+## AWS Configuration
 The standard resolution for AWS credentials is:
 
 - Environment Variables,
