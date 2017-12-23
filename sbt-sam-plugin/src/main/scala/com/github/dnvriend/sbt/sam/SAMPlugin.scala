@@ -93,12 +93,14 @@ object SAMPlugin extends AutoPlugin {
 
     dynamoDbTableResources := {
       val baseDir: File = baseDirectory.value
-      ResourceOperations.retrieveDynamoDbTables(baseDir)
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveDynamoDbTables(config)
     },
 
     policyResources := {
       val baseDir: File = baseDirectory.value
-      ResourceOperations.retrievePolicies(baseDir)
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrievePolicies(config)
     },
 
     samProjectConfiguration := {
