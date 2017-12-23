@@ -1,5 +1,6 @@
 package com.github.dnvriend.lambda
 
+import com.github.dnvriend.lambda.generators.{ ApiGatewayEvent, Generators }
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.test.TestSpec
 import play.api.libs.json.{ Format, JsString, JsValue, Json }
@@ -9,7 +10,7 @@ object TestBody {
 }
 final case class TestBody(test: String)
 
-class HttpRequestTest extends TestSpec with AllOps with LambdaEventGenerators {
+class HttpRequestTest extends TestSpec with AllOps with Generators {
   it should "parse a json inputstream" in {
     forAll { (name: String, age: Int) =>
       val json: JsValue = Json.obj("name" -> name, "age" -> age)
@@ -38,6 +39,7 @@ class HttpRequestTest extends TestSpec with AllOps with LambdaEventGenerators {
       pathParams.keys should contain("proxy")
       pathParams.get("proxy").value shouldBe "path/to/resource"
       req.pathParameters shouldBe Json.obj("proxy" -> "path/to/resource")
+      req.pathParamsOpt[Map[String, String]].value.get("proxy").value shouldBe "path/to/resource"
     }
   }
 
@@ -50,6 +52,7 @@ class HttpRequestTest extends TestSpec with AllOps with LambdaEventGenerators {
       reqParams.keys should contain("foo")
       reqParams.get("foo").value shouldBe "bar"
       req.requestParameters shouldBe Json.obj("foo" -> "bar")
+      req.requestParamsOpt[Map[String, String]].value.get("foo").value shouldBe "bar"
     }
   }
 }

@@ -11,4 +11,5 @@ abstract class TestSpec extends FlatSpec
   with DisjunctionValues
   with OptionValues
   with TryValues
-  with PropertyChecks
+  with PropertyChecks {
+}
