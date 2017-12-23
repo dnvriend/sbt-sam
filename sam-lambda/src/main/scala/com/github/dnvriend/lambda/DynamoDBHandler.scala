@@ -19,8 +19,7 @@ import java.io.{ InputStream, OutputStream }
 
 trait DynamoDBHandler extends RequestStreamHandler {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    val request: DynamoDbRequest = DynamoDbRequest.parse(input)
-    handle(request, context)
+    handle(DynamoDbRequest.parse(input), context)
   }
 
   def handle(request: DynamoDbRequest, ctx: Context): Unit
