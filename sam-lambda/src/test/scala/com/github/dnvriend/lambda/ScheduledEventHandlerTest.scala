@@ -7,13 +7,13 @@ import com.github.dnvriend.test.TestSpec
 
 class ScheduledEventHandlerTest extends TestSpec with Generators with AllOps {
   it should "handle scheduled event" in {
-    forAll { (event: ScheduledEventGen) =>
+    forAll { (scheduledEvent: ScheduledEventGen) =>
       val handler = new ScheduledEventHandler {
-        override def handle(request: ScheduledEvent, ctx: Context): Unit = {
-          request shouldBe ScheduledEvent.parse(event.json.toInputStream)
+        override def handle(event: ScheduledEvent, ctx: Context): Unit = {
+          event shouldBe ScheduledEvent.parse(scheduledEvent.json.toInputStream)
         }
       }
-      handler.handleRequest(event.json.toInputStream, null, null)
+      handler.handleRequest(scheduledEvent.json.toInputStream, null, null)
     }
   }
 }

@@ -4,10 +4,12 @@ import java.io.{ InputStream, OutputStream }
 
 import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 
-trait ScheduledEventHandler extends RequestStreamHandler {
+/**
+ * Handles kinesis events
+ */
+trait KinesisEventHandler extends RequestStreamHandler {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    handle(ScheduledEvent.parse(input), context)
+    handle(KinesisEvent.parse(input), context)
   }
-
-  def handle(event: ScheduledEvent, ctx: Context): Unit
+  def handle(events: List[KinesisEvent], ctx: Context): Unit
 }

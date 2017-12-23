@@ -9,6 +9,8 @@ object Generators extends Generators
 trait LambdaEventGenerators extends ApiGatewayEventGenerator
   with DynamoDbUpdateEventGenerator
   with ScheduledEventGenerator
+  with KinesisEventGenerator
+  with SNSEventGenerator
 
 trait JsValueGenerator {
   val jsValueGen: Gen[JsValue] = for {
@@ -214,4 +216,85 @@ trait ApiGatewayEventGenerator {
     value <- Gen.alphaStr
   } yield ApiGatewayEventGen(apiGatewayEventJson(value), value)
   implicit val apiGatewayEventArb: Arbitrary[ApiGatewayEventGen] = Arbitrary(apiGatewayEventGen)
+}
+
+final case class KinesisEventGen(json: String, value: String, base64Encoded: String)
+trait KinesisEventGenerator {
+  def kinesisEventJson(base64Encoded: String): String = {
+    s"""
+       |{
+       |  "Records": [
+       |    {
+       |      "eventID": "shardId-000000000000:49545115243490985018280067714973144582180062593244200961",
+       |      "eventVersion": "1.0",
+       |      "kinesis": {
+       |        "approximateArrivalTimestamp": 1428537600,
+       |        "partitionKey": "partitionKey-3",
+       |        "data": "$base64Encoded",
+       |        "kinesisSchemaVersion": "1.0",
+       |        "sequenceNumber": "49545115243490985018280067714973144582180062593244200961"
+       |      },
+       |      "invokeIdentityArn": "arn:aws:iam::EXAMPLE",
+       |      "eventName": "aws:kinesis:record",
+       |      "eventSourceARN": "arn:aws:kinesis:EXAMPLE",
+       |      "eventSource": "aws:kinesis",
+       |      "awsRegion": "us-east-1"
+       |    }
+       |  ]
+       |}
+    """.stripMargin
+  }
+  val kinesisEventGen: Gen[KinesisEventGen] = for {
+    value <- Gen.alphaStr
+  } yield {
+    val base64Encoded: String = java.util.Base64.getEncoder.encodeToString(value.getBytes("UTF-8"))
+    KinesisEventGen(kinesisEventJson(base64Encoded), value, base64Encoded)
+  }
+  implicit val kinesisEventArb: Arbitrary[KinesisEventGen] = Arbitrary(kinesisEventGen)
+}
+
+final case class SNSEventGen(json: String, value: String, base64Encoded: String)
+trait SNSEventGenerator {
+  def snsEventJson(base64Encoded: String): String = {
+    s"""
+       |{
+       |  "Records": [
+       |    {
+       |      "EventVersion": "1.0",
+       |      "EventSubscriptionArn": "arn:aws:sns:EXAMPLE",
+       |      "EventSource": "aws:sns",
+       |      "Sns": {
+       |        "SignatureVersion": "1",
+       |        "Timestamp": "1970-01-01T00:00:00.000Z",
+       |        "Signature": "EXAMPLE",
+       |        "SigningCertUrl": "EXAMPLE",
+       |        "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+       |        "Message": "$base64Encoded",
+       |        "MessageAttributes": {
+       |          "Test": {
+       |            "Type": "String",
+       |            "Value": "TestString"
+       |          },
+       |          "TestBinary": {
+       |            "Type": "Binary",
+       |            "Value": "TestBinary"
+       |          }
+       |        },
+       |        "Type": "Notification",
+       |        "UnsubscribeUrl": "EXAMPLE",
+       |        "TopicArn": "arn:aws:sns:EXAMPLE",
+       |        "Subject": "TestInvoke"
+       |      }
+       |    }
+       |  ]
+       |}
+     """.stripMargin
+  }
+  val snsEventGen: Gen[SNSEventGen] = for {
+    value <- Gen.alphaStr
+  } yield {
+    val base64Encoded: String = java.util.Base64.getEncoder.encodeToString(value.getBytes("UTF-8"))
+    SNSEventGen(snsEventJson(base64Encoded), value, base64Encoded)
+  }
+  implicit val snsEventArb: Arbitrary[SNSEventGen] = Arbitrary(snsEventGen)
 }
