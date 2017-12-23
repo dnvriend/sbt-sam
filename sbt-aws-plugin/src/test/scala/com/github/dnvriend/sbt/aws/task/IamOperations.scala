@@ -1,9 +1,10 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.regions.Regions
-import com.github.dnvriend.sbt.aws.TestSpec
+import com.github.dnvriend.ops.AllOps
+import com.github.dnvriend.test.TestSpec
 
-class IamOperations extends TestSpec {
+class IamOperations extends TestSpec with AllOps {
   val arnString = "arn:aws:iam::0123456789:user/dnvriend-git"
   it should "parse an arn" in {
     Arn.fromArnString(arnString.wrap[Arn]) shouldBe
