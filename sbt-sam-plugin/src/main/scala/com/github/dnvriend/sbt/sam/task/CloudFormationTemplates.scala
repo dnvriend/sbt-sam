@@ -38,7 +38,7 @@ object CloudFormationTemplates {
         samTransform ++
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
-          parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
+          parseLambdaHandlers(config, config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage),
           ServerlessApi.resource(config),
 //          Cognito.UserPool.resource(config),
@@ -110,10 +110,11 @@ object CloudFormationTemplates {
     )
   }
 
-  private def parseLambdaHandlers(bucketName: SamS3BucketName, jarName: String, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
+  private def parseLambdaHandlers(config: ProjectConfiguration, bucketName: SamS3BucketName, jarName: String, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
     handlers.foldMap {
       case HttpHandler(lambdaConf, httpConf) ⇒
         parseLambdaHandler(
+          config,
           bucketName,
           jarName,
           latestVersion,
@@ -122,6 +123,7 @@ object CloudFormationTemplates {
         )
       case DynamoHandler(lambdaConf, dynamoConf) ⇒
         parseLambdaHandler(
+          config,
           bucketName,
           jarName,
           latestVersion,
@@ -131,7 +133,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
+  private def parseLambdaHandler(cfg: ProjectConfiguration, samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
     Json.obj(
       config.simpleClassName → Json.obj(
         "Type" → "AWS::Serverless::Function",
@@ -148,6 +150,13 @@ object CloudFormationTemplates {
           "MemorySize" → config.memorySize,
           "Timeout" → config.timeout,
           "Tracing" → "Active",
+          "Environment" -> Json.obj(
+              "Variables" -> Json.obj(
+              "STAGE" -> cfg.samStage.value,
+              "PROJECT_NAME" -> cfg.projectName,
+              "VERSION" -> cfg.projectVersion
+            )
+          ),
           "Events" → event
         )
       )

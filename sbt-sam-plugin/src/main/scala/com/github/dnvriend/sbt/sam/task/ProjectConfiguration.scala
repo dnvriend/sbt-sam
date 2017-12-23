@@ -12,6 +12,7 @@ case class SamResources(lambdas: Set[LambdaHandler], tables: Set[DynamoDb.TableW
 object ProjectConfiguration {
   def fromConfig(
     projectName: String,
+    projectVersion: String,
     samS3BucketName: String,
     samCFTemplateName: String,
     samResourcePrefixName: String,
@@ -22,6 +23,7 @@ object ProjectConfiguration {
     ): ProjectConfiguration = {
     ProjectConfiguration(
       projectName,
+      projectVersion,
       SamS3BucketName(samS3BucketName),
       SamCFTemplateName(samCFTemplateName),
       SamStage(samStage),
@@ -36,6 +38,7 @@ object ProjectConfiguration {
 }
 case class ProjectConfiguration(
     projectName: String,
+    projectVersion: String,
     samS3BucketName: SamS3BucketName,
     samCFTemplateName: SamCFTemplateName,
     samStage: SamStage,
