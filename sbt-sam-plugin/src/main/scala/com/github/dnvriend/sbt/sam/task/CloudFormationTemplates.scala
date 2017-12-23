@@ -130,6 +130,15 @@ object CloudFormationTemplates {
           lambdaConf,
           dynamoDbStreamEvent(lambdaConf.simpleClassName, dynamoConf)
         )
+      case ScheduledEventHandler(lambdaConf, scheduleConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          scheduledEvent(lambdaConf.simpleClassName, scheduleConf)
+        )
     }
   }
 
@@ -158,6 +167,17 @@ object CloudFormationTemplates {
             )
           ),
           "Events" → event
+        )
+      )
+    )
+  }
+
+  private def scheduledEvent(eventName: String, scheduleConf: ScheduleConf): JsObject = {
+    Json.obj(
+      eventName -> Json.obj(
+        "Type" -> "Schedule",
+        "Properties" -> Json.obj(
+          "Schedule" -> scheduleConf.schedule
         )
       )
     )
@@ -607,7 +627,7 @@ object Swagger {
       Parts.swaggerVersion,
       Parts.info(config),
       Parts.paths(config),
-      Parts.securityDefinitions(config),
+//      Parts.securityDefinitions(config),
     )
   }
 
@@ -661,7 +681,7 @@ object Swagger {
       Json.obj(method -> merge(
           AmazonApiGatewayIntegration.swaggerExtension(config, handler),
           responses,
-          security,
+//          security,
         )
       )
     }
