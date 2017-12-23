@@ -1,6 +1,6 @@
 package com.github.dnvriend.lambda
 
-import com.github.dnvriend.lambda.generators.{ ApiGatewayEvent, Generators }
+import com.github.dnvriend.lambda.generators.{ ApiGatewayEventGen, Generators }
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.test.TestSpec
 import play.api.libs.json.{ Format, JsString, JsValue, Json }
@@ -21,7 +21,7 @@ class HttpRequestTest extends TestSpec with AllOps with Generators {
   }
 
   it should "parse http proxy event body" in {
-    forAll { (event: ApiGatewayEvent) =>
+    forAll { (event: ApiGatewayEventGen) =>
       val input = Json.parse(event.json).toString().toInputStream
       val req: HttpRequest = HttpRequest.parse(input)
       (req.body \ "test").toOption.value shouldBe JsString(event.value)
@@ -31,7 +31,7 @@ class HttpRequestTest extends TestSpec with AllOps with Generators {
   }
 
   it should "parse path params" in {
-    forAll { (event: ApiGatewayEvent) =>
+    forAll { (event: ApiGatewayEventGen) =>
       val input = Json.parse(event.json).toString().toInputStream
       val req: HttpRequest = HttpRequest.parse(input)
       val pathParams = req.pathParamAs[Map[String, String]].value
@@ -44,7 +44,7 @@ class HttpRequestTest extends TestSpec with AllOps with Generators {
   }
 
   it should "parse request parameters" in {
-    forAll { (event: ApiGatewayEvent) =>
+    forAll { (event: ApiGatewayEventGen) =>
       val input = Json.parse(event.json).toString().toInputStream
       val req: HttpRequest = HttpRequest.parse(input)
       val reqParams = req.requestParamsAs[Map[String, String]].value

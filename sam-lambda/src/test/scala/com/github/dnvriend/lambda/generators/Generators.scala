@@ -8,6 +8,7 @@ object Generators extends Generators
 
 trait LambdaEventGenerators extends ApiGatewayEventGenerator
   with DynamoDbUpdateEventGenerator
+  with ScheduledEventGenerator
 
 trait JsValueGenerator {
   val jsValueGen: Gen[JsValue] = for {
@@ -18,9 +19,34 @@ trait JsValueGenerator {
   implicit val jsValueArb: Arbitrary[JsValue] = Arbitrary(jsValueGen)
 }
 
-final case class DynamoDbUpdateEvent(json: String, value: Int)
+final case class ScheduledEventGen(json: String, account: String, id: String)
+trait ScheduledEventGenerator {
+  def scheduledEventJson(account: String, id: String): String = {
+    s"""
+      |{
+      |  "account": "$account",
+      |  "region": "us-east-1",
+      |  "detail": {},
+      |  "detail-type": "Scheduled Event",
+      |  "source": "aws.events",
+      |  "time": "1970-01-01T00:00:00Z",
+      |  "id": "$id",
+      |  "resources": [
+      |    "arn:aws:events:us-east-1:123456789012:rule/my-schedule"
+      |  ]
+      |}
+    """.stripMargin
+  }
+  val scheduledEventGen: Gen[ScheduledEventGen] = for {
+    account <- Gen.alphaStr
+    id <- Gen.uuid
+  } yield ScheduledEventGen(scheduledEventJson(account, id.toString), account, id.toString)
+  implicit val scheduledEventArb: Arbitrary[ScheduledEventGen] = Arbitrary(scheduledEventGen)
+}
+
+final case class DynamoDbUpdateEventGen(json: String, value: Int)
 trait DynamoDbUpdateEventGenerator {
-  def dynamoDbUpdateEvent(value: Int) = {
+  def dynamoDbUpdateEventJson(value: Int) = {
     s"""
       |{
       |  "Records": [
@@ -115,15 +141,15 @@ trait DynamoDbUpdateEventGenerator {
     """.stripMargin
   }
 
-  val dynamodbUpdateEventGen: Gen[DynamoDbUpdateEvent] = for {
+  val dynamodbUpdateEventGen: Gen[DynamoDbUpdateEventGen] = for {
     value <- Gen.posNum[Int]
-  } yield DynamoDbUpdateEvent(dynamoDbUpdateEvent(value), value)
-  implicit val dynamodbUpdateEventArb: Arbitrary[DynamoDbUpdateEvent] = Arbitrary(dynamodbUpdateEventGen)
+  } yield DynamoDbUpdateEventGen(dynamoDbUpdateEventJson(value), value)
+  implicit val dynamodbUpdateEventArb: Arbitrary[DynamoDbUpdateEventGen] = Arbitrary(dynamodbUpdateEventGen)
 }
 
-final case class ApiGatewayEvent(json: String, value: String)
+final case class ApiGatewayEventGen(json: String, value: String)
 trait ApiGatewayEventGenerator {
-  def apiGatewayEvent(value: String) = {
+  def apiGatewayEventJson(value: String) = {
     s"""
        |{
        |  "body": "{\\"test\\":\\"$value\\"}",
@@ -184,8 +210,8 @@ trait ApiGatewayEventGenerator {
        |}
     """.stripMargin
   }
-  val apiGatewayEventGen: Gen[ApiGatewayEvent] = for {
+  val apiGatewayEventGen: Gen[ApiGatewayEventGen] = for {
     value <- Gen.alphaStr
-  } yield ApiGatewayEvent(apiGatewayEvent(value), value)
-  implicit val apiGatewayEventArb: Arbitrary[ApiGatewayEvent] = Arbitrary(apiGatewayEventGen)
+  } yield ApiGatewayEventGen(apiGatewayEventJson(value), value)
+  implicit val apiGatewayEventArb: Arbitrary[ApiGatewayEventGen] = Arbitrary(apiGatewayEventGen)
 }
