@@ -1,10 +1,9 @@
 package com.github.dnvriend.sbt.util
 
-import com.github.dnvriend.sbt.TestSpec
-
 import scalaz._
 import scalaz.std.AllInstances._
 import ShowInstances._
+import com.github.dnvriend.test.TestSpec
 
 object TestReport {
   implicit val show: Show[TestReport] = Show.shows(model => model.str)
