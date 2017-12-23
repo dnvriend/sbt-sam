@@ -1,8 +1,6 @@
 package com.github.dnvriend.sbt.util
 
-import java.io
-
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies, SNS, Kinesis }
 import com.typesafe.config.{ Config, ConfigFactory }
 import pureconfig.error.ConfigReaderFailures
 import pureconfig.loadConfig
@@ -13,10 +11,24 @@ import scalaz._
 import scalaz.Scalaz._
 import com.github.dnvriend.ops.FunctionalOps
 
-object ResourceOperations extends FunctionalOps {
+object ResourceOperations extends FunctionalOps
+  with DynamoDBResourceOperations
+  with PolicyResourceOperations
+  with SNSResourceOperations
+  with KinesisResourceOperations {
+  /**
+   * Loads the resource configuration from base path
+   */
+  def readConfig(baseDir: File): Config = {
+    ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
+  }
+}
 
-  def retrieveDynamoDbTables(baseDir: File): Set[DynamoDb.TableWithIndex] = {
-    val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
+trait DynamoDBResourceOperations extends FunctionalOps {
+  /**
+   * Based on a dynamodb typesafe configuration, returns a set of DynamoDB Tables with Index configuration
+   */
+  def retrieveDynamoDbTables(conf: Config): Set[DynamoDb.TableWithIndex] = {
     val dynamoDbConfig = conf.getConfig("dynamodb").safe
 
     dynamoDbConfig.map { dynamoDb =>
@@ -41,9 +53,10 @@ object ResourceOperations extends FunctionalOps {
 
     }.getOrElse(Nil).toSet
   }
+}
 
-  def retrievePolicies(baseDir: File): Set[Policies.Policy] = {
-    val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
+trait PolicyResourceOperations extends FunctionalOps {
+  def retrievePolicies(conf: Config): Set[Policies.Policy] = {
     val policiesConfigAttempt: Disjunction[Throwable, Config] = conf.getConfig("policies").safe
 
     def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policies.Policy]] = policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
@@ -58,3 +71,22 @@ object ResourceOperations extends FunctionalOps {
   }
 }
 
+trait SNSResourceOperations extends FunctionalOps {
+  def retrieveTopics(conf: Config): Set[SNS.Topic] = {
+    conf.getConfig("topics").safe.flatMap { topics =>
+      topics.root().keySet().asScala.toList.map(name => (name, topics.getConfig(name))).map {
+        case (cName, conf) => loadConfig[SNS.Topic](conf).map(_.copy(configName = cName)).disjunction
+      }.sequenceU
+    }.getOrElse(Nil).toSet
+  }
+}
+
+trait KinesisResourceOperations extends FunctionalOps {
+  def retrieveStreams(conf: Config): Set[Kinesis.Stream] = {
+    conf.getConfig("streams").safe.flatMap { streams =>
+      streams.root().keySet().asScala.toList.map(name => (name, streams.getConfig(name))).map {
+        case (cName, conf) => loadConfig[Kinesis.Stream](conf).map(_.copy(configName = cName)).disjunction
+      }.sequenceU
+    }.getOrElse(Nil).toSet
+  }
+}
