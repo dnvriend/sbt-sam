@@ -654,23 +654,21 @@ object Swagger {
       * Required: The available paths and operations for the API.
       */
     def paths(config: ProjectConfiguration): JsValue = {
-      val handlers: Set[HttpHandler] = config.lambdas.collect {
+      val httpHandlers: Set[HttpHandler] = config.lambdas.collect {
         case h: HttpHandler => h
       }
-      Json.obj("paths" -> handlers.map(handler => path(config, handler)).foldMap(identity)(JsMonoids.jsObjectMerge))
+      val handersByPath: Map[String, Set[HttpHandler]] = httpHandlers.groupBy(_.httpConf.path)
+      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(config, resourcePath, handlers) }.toList
+      Json.obj("paths" -> pathsWithOperations.foldMap(identity)(JsMonoids.jsObjectMerge))
     }
 
     /**
       * A relative path to an individual endpoint. The field name MUST begin with a slash.
       * The path is appended to the basePath in order to construct the full URL.
       */
-    def path(config: ProjectConfiguration, handler: HttpHandler): JsValue = {
-      val path: String = handler.httpConf.path
-      Json.obj(
-        path -> merge(
-          operation(config, handler),
-        )
-      )
+    def path(config: ProjectConfiguration, path: String, handlersForPath: Set[HttpHandler]): JsValue = {
+      val operations = handlersForPath.map(handler => operation(config, handler)).toList
+      Json.obj(path -> merge(operations:_*))
     }
 
     /**
