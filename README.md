@@ -3,6 +3,7 @@
 # sbt-serverless-plugin
 [![Build Status](https://travis-ci.org/dnvriend/sbt-sam.svg?branch=master)](https://travis-ci.org/dnvriend/sbt-sam)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/36f71fd0aff3488a922db7f8e0c9008b)](https://www.codacy.com/app/dnvriend/sbt-sam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dnvriend/sbt-sam&amp;utm_campaign=Badge_Grade)
+[![codecov](https://codecov.io/gh/dnvriend/sbt-sam/branch/master/graph/badge.svg)](https://codecov.io/gh/dnvriend/sbt-sam)
 [![Download](https://api.bintray.com/packages/dnvriend/maven/sbt-sam/images/download.svg) ](https://bintray.com/dnvriend/maven/sbt-sam/_latestVersion)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
