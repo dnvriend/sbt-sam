@@ -228,7 +228,7 @@ trait KinesisEventGenerator {
        |      "eventID": "shardId-000000000000:49545115243490985018280067714973144582180062593244200961",
        |      "eventVersion": "1.0",
        |      "kinesis": {
-       |        "approximateArrivalTimestamp": 1428537600,
+       |        "approximateArrivalTimestamp": 1514147985.576,
        |        "partitionKey": "partitionKey-3",
        |        "data": "$base64Encoded",
        |        "kinesisSchemaVersion": "1.0",

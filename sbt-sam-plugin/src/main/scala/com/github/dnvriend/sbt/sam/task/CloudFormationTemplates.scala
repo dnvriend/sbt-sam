@@ -151,12 +151,22 @@ object CloudFormationTemplates {
           lambdaConf,
           snsEvent(lambdaConf.simpleClassName, snsConf, config.projectName, config.samStage.value)
         )
+      case KinesisEventHandler(lambdaConf, kinesisConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          kinesisEvent(lambdaConf.simpleClassName, kinesisConf, config.projectName, config.samStage.value)
+        )
     }
   }
 
   private def parseLambdaHandler(cfg: ProjectConfiguration, samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
+    val lambdaName = config.simpleClassName
     Json.obj(
-      config.simpleClassName → Json.obj(
+      lambdaName → Json.obj(
         "Type" → "AWS::Serverless::Function",
         "Properties" → Json.obj(
           "Handler" → s"${config.fqcn}::handleRequest",
@@ -190,10 +200,26 @@ object CloudFormationTemplates {
     )
   }
 
+  private def kinesisEvent(eventName: String, conf: KinesisConf, projectName: String, stageName: String): JsObject = {
+    val prefix = s"$projectName-$stageName"
+    val streamName: String = s"$prefix-${conf.stream}"
+    val lambdaEventName = s"${eventName}KinesisEvent"
+    Json.obj(
+      lambdaEventName -> Json.obj(
+        "Type" -> "Kinesis",
+        "Properties" -> Json.obj(
+          "Stream" -> CloudFormation.kinesisArn(streamName),
+          "StartingPosition" -> conf.startingPosition,
+          "BatchSize" -> conf.batchSize
+        )
+      )
+    )
+  }
+
   private def snsEvent(eventName: String, conf: SNSConf, projectName: String, stageName: String): JsObject = {
     val prefix = s"$projectName-$stageName"
     val topicName: String = s"$prefix-${conf.topic}"
-    val lambdaEventName = s"${eventName}Event"
+    val lambdaEventName = s"${eventName}SNSEvent"
     Json.obj(
       lambdaEventName -> Json.obj(
         "Type" -> "SNS",
@@ -205,8 +231,9 @@ object CloudFormationTemplates {
   }
 
   private def scheduledEvent(eventName: String, scheduleConf: ScheduleConf): JsObject = {
+    val lambdaEventName = s"${eventName}ScheduleEvent"
     Json.obj(
-      eventName -> Json.obj(
+      lambdaEventName -> Json.obj(
         "Type" -> "Schedule",
         "Properties" -> Json.obj(
           "Schedule" -> scheduleConf.schedule
@@ -216,8 +243,9 @@ object CloudFormationTemplates {
   }
 
   private def apiGatewayEvent(eventName: String, httpConf: HttpConf): JsObject = {
+    val lambdaEventName = s"${eventName}ApiEvent"
     Json.obj(
-      eventName -> Json.obj(
+      lambdaEventName -> Json.obj(
         "Type" -> "Api",
         "Properties" -> Json.obj(
           "Path" -> httpConf.path,
@@ -228,8 +256,9 @@ object CloudFormationTemplates {
   }
 
   private def dynamoDbStreamEvent(eventName: String, dynamoConf: DynamoConf): JsObject = {
+    val lambdaEventName = s"${eventName}DynamoDBStreamEvent"
     Json.obj(
-      eventName → Json.obj(
+      lambdaEventName → Json.obj(
         "Type" → "DynamoDB",
         "Properties" → Json.obj(
           "Stream" → CloudFormation.getAtt(dynamoConf.tableName, "StreamArn"),
@@ -266,7 +295,12 @@ object CloudFormationTemplates {
           "Properties" -> Json.obj(
             "Name" -> streamName,
             "ShardCount" -> stream.shardCount,
-            "RetentionPeriodHours" -> stream.retensionPeriodHours
+            "RetentionPeriodHours" -> stream.retensionPeriodHours,
+            "Tags" -> Json.arr(
+              Json.obj("Key" -> "sbt:sam:projectName", "Value" -> config.projectName),
+              Json.obj("Key" -> "sbt:sam:projectVersion", "Value" -> config.projectVersion),
+              Json.obj("Key" -> "sbt:sam:stage", "Value" -> config.samStage.value)
+            )
           )
         )
       )
@@ -520,9 +554,18 @@ object CloudFormation {
     * Returns the arn of an sns topic by means of subst
     */
   def snsArn(topicName: String): JsObject = {
-    // arn:aws:sns:eu-west-1:015242279314:sam-dynamodb-seed-dnvriend-person-received
+    // arn:aws:sns:eu-west-1:123456789:sam-dynamodb-seed-dnvriend-person-received
     val snsInput = "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:" + topicName
     subst(snsInput)
+  }
+
+  /**
+    * Returns the arn of a kinesis stream by means of subst
+    */
+  def kinesisArn(streamName: String): JsObject = {
+    // arn:aws:kinesis:eu-west-1:123456789:stream/sam-seed-test1-person-received
+    val kinesisInput = "arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/" + streamName
+    subst(kinesisInput)
   }
 }
 

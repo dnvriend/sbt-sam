@@ -54,6 +54,18 @@ case class SNSEventHandler(
                           snsConf: SNSConf
                           ) extends LambdaHandler
 
+case class KinesisConf(
+                        stream: String,
+                        // TRIM_HORIZON or LATEST
+                        startingPosition: String = "LATEST",
+                        // Maximum number of stream records to process per function invocation
+                        batchSize: Int = 100
+                      )
+case class KinesisEventHandler(
+                              config: LambdaConfig,
+                              kinesisConf: KinesisConf
+                              ) extends LambdaHandler
+
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
           stage: String): Set[LambdaHandler] = {
@@ -82,7 +94,14 @@ object ClassifyLambdas {
         case (fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToSNSEventHandler(fqcn, simpleName, anno, stage))
       }
 
-    dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers
+    val kinesisEventHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("KinesisConf"))
+      .map(cl => (cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("KinesisConf"))))
+      .flatMap {
+        case (fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToKinesisEventHandler(fqcn, simpleName, anno, stage))
+      }
+
+
+    dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers
   }
 
   def annotationPredicate(annotationName: String)(cl: Class[_]): Boolean = {
@@ -139,6 +158,20 @@ object ClassifyLambdas {
     SNSEventHandler(
       LambdaConfig(className, simpleName, memorySize, timeout, description),
       SNSConf(topic)
+    )
+  }
+
+  def mapAnnoToKinesisEventHandler(className: String, simpleName: String, anno: Annotation, stage: String): KinesisEventHandler = {
+    val stream = anno.annotationType().getMethod("stream").invoke(anno).asInstanceOf[String]
+    val batchSize = anno.annotationType().getMethod("batchSize").invoke(anno).asInstanceOf[Int]
+    val startingPosition = anno.annotationType().getMethod("startingPosition").invoke(anno).asInstanceOf[String]
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+
+    KinesisEventHandler(
+      LambdaConfig(className, simpleName, memorySize, timeout, description),
+      KinesisConf(stream, startingPosition, batchSize)
     )
   }
 
