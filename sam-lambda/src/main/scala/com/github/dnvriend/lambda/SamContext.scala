@@ -38,6 +38,6 @@ case class SamContext(
    * Returns the DynamoDB table name
    */
   def dynamoDbTableName(tableName: String): String = {
-    s"$projectName-$stage-people"
+    s"$projectName-$stage-$tableName"
   }
 }

@@ -235,6 +235,9 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.2 (2017-12-24)
+- Fix for resolving scoped DynamoDB table names
+
 ## 1.0.1 (2017-12-24)
 - Support for (public/unsecure) API Gateway
 - Support for DynamoDB

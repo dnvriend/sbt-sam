@@ -43,14 +43,15 @@ object CloudFormationStackInfo {
 
     log.info("Stack details:")
     val samStack = stack.map(SamStack.fromStack)
-    log.info(samStack.map(SamStack.show.shows).getOrElse("No stack details"))
+    log.info(samStack.map(SamStack.show.shows).getOrElse(Console.YELLOW + "Not yet deployed"))
     log.info("DynamoDbTables:")
     config.tables.map(table => {
       val tableName = s"$projectName-$stage-${table.name}"
       (table, DynamoDbOperations.describeTable(tableName, dynamoClient))
     }).foreach {
       case (table, optionalInfo) =>
-        log.info(s"* ${table.name} -> ${optionalInfo.fold(Console.YELLOW + "not yet deployed")(info => Console.GREEN + s"${info.getTableArn}")}")
+        val streamName = table.stream.fold("")(stream => s"stream: $stream")
+        log.info(s"* ${table.name} $streamName -> ${optionalInfo.fold(Console.YELLOW + "not yet deployed")(info => Console.GREEN + s"${info.getTableArn}")}")
     }
     log.info("SNS Topics:")
     config.topics.map { topic =>
