@@ -2,7 +2,8 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
+import com.github.dnvriend.sbt.sam.task.Models.SNS.Topic
+import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Kinesis, Policies}
 import play.api.libs.json._
 
 import scalaz._
@@ -40,6 +41,8 @@ object CloudFormationTemplates {
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
           parseLambdaHandlers(config, config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage),
+          parseTopicResource(config),
+          parseStreamResource(config),
           ServerlessApi.resource(config),
 //          Cognito.UserPool.resource(config),
 //          Cognito.UserPoolClient.resource(config),
@@ -139,6 +142,15 @@ object CloudFormationTemplates {
           lambdaConf,
           scheduledEvent(lambdaConf.simpleClassName, scheduleConf)
         )
+      case SNSEventHandler(lambdaConf, snsConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          snsEvent(lambdaConf.simpleClassName, snsConf, config.projectName, config.samStage.value)
+        )
     }
   }
 
@@ -154,7 +166,7 @@ object CloudFormationTemplates {
             "Key" -> jarName,
             "Version" -> latestVersion
           ),
-          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess"),
+          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess", "AmazonSNSFullAccess", "AmazonKinesisFullAccess"),
           "Description" → config.description,
           "MemorySize" → config.memorySize,
           "Timeout" → config.timeout,
@@ -163,10 +175,30 @@ object CloudFormationTemplates {
               "Variables" -> Json.obj(
               "STAGE" -> cfg.samStage.value,
               "PROJECT_NAME" -> cfg.projectName,
-              "VERSION" -> cfg.projectVersion
+              "VERSION" -> cfg.projectVersion,
+              "AWS_ACCOUNT_ID" -> CloudFormation.accountId
             )
           ),
+          "Tags" -> Json.obj(
+            "sbt:sam:projectName" -> cfg.projectName,
+            "sbt:sam:projectVersion" -> cfg.projectVersion,
+            "sbt:sam:stage" -> cfg.samStage.value
+          ),
           "Events" → event
+        )
+      )
+    )
+  }
+
+  private def snsEvent(eventName: String, conf: SNSConf, projectName: String, stageName: String): JsObject = {
+    val prefix = s"$projectName-$stageName"
+    val topicName: String = s"$prefix-${conf.topic}"
+    val lambdaEventName = s"${eventName}Event"
+    Json.obj(
+      lambdaEventName -> Json.obj(
+        "Type" -> "SNS",
+        "Properties" -> Json.obj(
+          "Topic" -> CloudFormation.snsArn(topicName)
         )
       )
     )
@@ -200,13 +232,46 @@ object CloudFormationTemplates {
       eventName → Json.obj(
         "Type" → "DynamoDB",
         "Properties" → Json.obj(
-          "Stream" → Json.obj(
-            "Fn::GetAtt" → Json.arr(dynamoConf.tableName, "StreamArn")
-          ),
+          "Stream" → CloudFormation.getAtt(dynamoConf.tableName, "StreamArn"),
           "BatchSize" → dynamoConf.batchSize,
           "StartingPosition" → dynamoConf.startingPosition
         )
       ))
+  }
+
+  private def parseTopicResource(config: ProjectConfiguration): JsValue = {
+    def mapTopicResource(topic: Topic): JsValue = {
+      val prefix = s"${config.projectName}-${config.samStage.value}"
+      val topicName: String = s"$prefix-${topic.name}"
+      val displayName: String = s"$prefix-${topic.displayName}"
+      Json.obj(
+        topic.configName -> Json.obj(
+          "Type" -> "AWS::SNS::Topic",
+          "Properties" -> Json.obj(
+            "DisplayName" -> displayName,
+            "TopicName" -> topicName
+          )
+        )
+      )
+    }
+    config.topics.foldMap(topic => mapTopicResource(topic))(JsMonoids.jsObjectMerge)
+  }
+
+  private def parseStreamResource(config: ProjectConfiguration): JsValue = {
+    def mapStreamResource(stream: Kinesis.Stream): JsValue = {
+      val streamName: String = s"${config.projectName}-${config.samStage.value}-${stream.name}"
+      Json.obj(
+        stream.configName -> Json.obj(
+          "Type" -> "AWS::Kinesis::Stream",
+          "Properties" -> Json.obj(
+            "Name" -> streamName,
+            "ShardCount" -> stream.shardCount,
+            "RetentionPeriodHours" -> stream.retensionPeriodHours
+          )
+        )
+      )
+    }
+    config.streams.foldMap(stream => mapStreamResource(stream))(JsMonoids.jsObjectMerge)
   }
 
   private def parseDynamoDBResource(tables: Set[DynamoDb.TableWithIndex], projectName: String, stage: SamStage): JsObject = {
@@ -423,6 +488,41 @@ object CloudFormation {
     */
   def getAtt(logicalName: String, attributeName: String): JsObject = {
     Json.obj("Fn::GetAtt" -> Json.arr(logicalName, attributeName))
+  }
+
+  /**
+    * Substitutes variables in an input string with their associated values at runtime.
+    * Variables can be template parameter names, resource logical IDs or resource attributes.
+    */
+  def subst(input: String): JsObject = Json.obj("Fn::Sub" -> input)
+
+  /**
+    * Returns the AWS account id eg '123456789012'
+    */
+  def accountId: JsObject = subst("${AWS::AccountId}")
+
+  /**
+    * Returns the AWS region eg: 'us-east-2'
+    */
+  def region: JsObject = subst("${AWS::Region}")
+
+  /**
+    * Returns the stack id eg: 'arn:aws:cloudformation:us-east-1:123456789012:stack/MyStack/1c2fa620-982a-11e3-aff7-50e2416294e0'
+    */
+  def stackId: JsObject = subst("${AWS::StackId}")
+
+  /**
+    * Returns the stack name eg: 'MyStack'
+    */
+  def stackName: JsObject = subst("${AWS::StackName}")
+
+  /**
+    * Returns the arn of an sns topic by means of subst
+    */
+  def snsArn(topicName: String): JsObject = {
+    // arn:aws:sns:eu-west-1:015242279314:sam-dynamodb-seed-dnvriend-person-received
+    val snsInput = "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:" + topicName
+    subst(snsInput)
   }
 }
 

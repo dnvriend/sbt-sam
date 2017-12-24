@@ -149,17 +149,18 @@ final case class ServiceEndpoint(value: String)
 object SamStack {
   implicit val show: Show[SamStack] = Show.shows(model => {
     import model._
+    val stackStatus = if (stack.getStackStatus.contains("COMPLETE")) Console.GREEN + stack.getStackStatus else stack.getStackStatus
     s"""
        |====================
        |Sam's State:
        |====================
        |Name: ${stack.getStackName}
        |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
-       |Status: ${stack.getStackStatus}
+       |Status: $stackStatus
        |Status reason: ${Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")}
        |Last updated: ${stack.getLastUpdatedTime}
        |===================
-       |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
+       |ServiceEndpoint: ${serviceEndpoint.map(_.value).map(url => Console.GREEN + url).getOrElse(Console.RED + "No endpoint")}
        |===================
      """.stripMargin
   })

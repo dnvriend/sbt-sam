@@ -14,13 +14,14 @@
 
 package com.github.dnvriend.lambda
 
-import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 import java.io.{ InputStream, OutputStream }
+
+import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 
 trait DynamoDBHandler extends RequestStreamHandler {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    handle(DynamoDbRequest.parse(input), context)
+    handle(DynamoDbRequest.parse(input), SamContext(context))
   }
 
-  def handle(request: DynamoDbRequest, ctx: Context): Unit
+  def handle(request: DynamoDbRequest, ctx: SamContext): Unit
 }

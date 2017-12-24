@@ -2,13 +2,18 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Kinesis, Policies, SNS}
 
 case class SamCFTemplateName(value: String)
 case class SamS3BucketName(value: String)
 case class SamResourcePrefixName(value: String)
 case class SamStage(value: String)
-case class SamResources(lambdas: Set[LambdaHandler], tables: Set[DynamoDb.TableWithIndex], policies: Set[Policies.Policy])
+case class SamResources(lambdas: Set[LambdaHandler],
+                        tables: Set[DynamoDb.TableWithIndex],
+                        policies: Set[Policies.Policy],
+                        topics: Set[SNS.Topic],
+                        streams: Set[Kinesis.Stream]
+                       )
 object ProjectConfiguration {
   def fromConfig(
     projectName: String,
@@ -32,7 +37,9 @@ object ProjectConfiguration {
       amazonUser,
       samResources.lambdas,
       samResources.tables,
-      samResources.policies
+      samResources.policies,
+      samResources.topics,
+      samResources.streams
     )
   }
 }
@@ -47,5 +54,7 @@ case class ProjectConfiguration(
     amazonUser: AmazonUser,
     lambdas: Set[LambdaHandler],
     tables: Set[DynamoDb.TableWithIndex],
-    policies: Set[Policies.Policy]
+    policies: Set[Policies.Policy],
+    topics: Set[SNS.Topic],
+    streams: Set[Kinesis.Stream]
 )

@@ -103,6 +103,18 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrievePolicies(config)
     },
 
+    topicResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveTopics(config)
+    },
+
+    streamResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveStreams(config)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -116,7 +128,9 @@ object SAMPlugin extends AutoPlugin {
         SamResources(
           classifiedLambdas.value,
           dynamoDbTableResources.value,
-          policyResources.value
+          policyResources.value,
+          topicResources.value,
+          streamResources.value
         )
       )
     },
@@ -126,6 +140,8 @@ object SAMPlugin extends AutoPlugin {
         samProjectConfiguration.value,
         samDescribeCloudFormationStack.value,
         clientCloudFormation.value,
+        clientDynamoDb.value,
+        clientSns.value,
         streams.value.log
       )
     },

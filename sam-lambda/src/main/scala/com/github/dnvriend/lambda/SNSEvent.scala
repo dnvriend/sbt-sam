@@ -18,7 +18,7 @@ case class SNS(
     Type: String,
     UnsubscribeUrl: String,
     TopicArn: String,
-    Subject: String
+    Subject: Option[String]
 )
 
 object SNSEvent {
@@ -32,37 +32,27 @@ case class SNSEvent(
     EventSubscriptionArn: String,
     EventSource: String,
     Sns: SNS
-)
-/**
- * {
- * "Records": [
- * {
- * "EventVersion": "1.0",
- * "EventSubscriptionArn": "arn:aws:sns:EXAMPLE",
- * "EventSource": "aws:sns",
- * "Sns": {
- * "SignatureVersion": "1",
- * "Timestamp": "1970-01-01T00:00:00.000Z",
- * "Signature": "EXAMPLE",
- * "SigningCertUrl": "EXAMPLE",
- * "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
- * "Message": "Hello from SNS!",
- * "MessageAttributes": {
- * "Test": {
- * "Type": "String",
- * "Value": "TestString"
- * },
- * "TestBinary": {
- * "Type": "Binary",
- * "Value": "TestBinary"
- * }
- * },
- * "Type": "Notification",
- * "UnsubscribeUrl": "EXAMPLE",
- * "TopicArn": "arn:aws:sns:EXAMPLE",
- * "Subject": "TestInvoke"
- * }
- * }
- * ]
- * }
- */
+) {
+  /**
+   * Returns the message
+   */
+  def message: String = Sns.Message
+
+  /**
+   * Assumes the message is base64 encoded string
+   */
+  def messageAsBytes: Array[Byte] = java.util.Base64.getDecoder.decode(message)
+
+  /**
+   * Assumes the message is an unescaped JSON string
+   */
+  def messageAs[A: Reads]: A = Json.parse(message).as[A]
+
+  /**
+   * Assumes the message is an escaped JSON string
+   */
+  def messageEscapedAs[A](implicit reads: Reads[A]): A = {
+    val escapedReads: Reads[A] = Reads.StringReads.map(Json.parse).andThen(reads)
+    Json.parse(message).as[A](escapedReads)
+  }
+}
