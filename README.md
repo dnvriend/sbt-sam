@@ -29,6 +29,7 @@ The following seed projects are available:
 - [dnvriend/sam-dynamodb-seed.g8](https://github.com/dnvriend/sam-dynamodb-seed.g8): A template for quickly creating stateful serverless applications using [dynamodb](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
 - [dnvriend/sam-dynamodb-scanamo-seed.g8](https://github.com/dnvriend/sam-dynamodb-scanamo-seed.g8): A template for quickly creating stateful serverless applications using dynamodb and [scanamo](https://github.com/scanamo/scanamo)
 - [dnvriend/sam-dynamodb-streams-seed.g8](https://github.com/dnvriend/sam-dynamodb-streams-seed.g8): A template project for quickly creating stateful serverless applications using [dynamodb streams](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html)
+- [dnvriend/sam-sns-seed.g8](https://github.com/dnvriend/sam-sns-seed.g8): A template project for quickly creating applications driven by [sns](https://aws.amazon.com/sns/) async notifications
 
 ## Available tasks
 The following tasks are available:
