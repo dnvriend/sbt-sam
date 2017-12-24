@@ -10,7 +10,7 @@ object Kinesis {
   implicit val reads: Reads[Kinesis] = Json.reads
 }
 case class Kinesis(
-    approximateArrivalTimestamp: Long,
+    approximateArrivalTimestamp: Double,
     partitionKey: String,
     data: String,
     kinesisSchemaVersion: String,
@@ -33,6 +33,23 @@ case class KinesisEvent(
     eventSource: String,
     awsRegion: String
 ) {
+  /**
+   * Assumes data is base64 encoded
+   */
   def dataAsBytes: Array[Byte] = java.util.Base64.getDecoder.decode(dataAsBase64)
+
+  /**
+   * Returns base64 encoded String
+   */
   def dataAsBase64: String = kinesis.data
+
+  /**
+   * Assumes data is UTF-8 encoded String
+   */
+  def dataAsString: String = new String(dataAsBytes, "UTF-8")
+
+  /**
+   * Assumes data is UTF-8 encoded JSON string
+   */
+  def dataAs[A: Reads]: A = Json.parse(dataAsBytes).as[A]
 }

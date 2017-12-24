@@ -142,6 +142,7 @@ object SAMPlugin extends AutoPlugin {
         clientCloudFormation.value,
         clientDynamoDb.value,
         clientSns.value,
+        clientKinesis.value,
         streams.value.log
       )
     },

@@ -35,7 +35,21 @@ case class SamContext(
   }
 
   /**
-   * Returns the DynamoDB table name
+   * Returns the Arn for a kinesis stream
+   */
+  def kinesisStreamArn(streamName: String): String = {
+    s"arn:aws:kinesis:$region:$accountId:stream/$projectName-$stage-$streamName"
+  }
+
+  /**
+   * Returns the scoped Kinesis stream name
+   */
+  def kinesisStreamName(streamName: String): String = {
+    s"$projectName-$stage-$streamName"
+  }
+
+  /**
+   * Returns the scoped DynamoDB table name
    */
   def dynamoDbTableName(tableName: String): String = {
     s"$projectName-$stage-$tableName"

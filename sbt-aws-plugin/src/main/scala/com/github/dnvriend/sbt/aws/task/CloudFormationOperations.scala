@@ -152,7 +152,7 @@ object SamStack {
     val stackStatus = if (stack.getStackStatus.contains("COMPLETE")) Console.GREEN + stack.getStackStatus else stack.getStackStatus
     s"""
        |====================
-       |Sam's State:
+       |Stack State:
        |====================
        |Name: ${stack.getStackName}
        |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
