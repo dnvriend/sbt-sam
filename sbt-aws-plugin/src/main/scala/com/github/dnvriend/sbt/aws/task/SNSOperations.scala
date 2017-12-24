@@ -1,6 +1,9 @@
 package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.services.sns._
+import com.amazonaws.services.sns.model.Topic
+
+import scala.collection.JavaConverters._
 
 /**
  * add-permission                           | check-if-phone-number-is-opted-out
@@ -22,5 +25,9 @@ import com.amazonaws.services.sns._
 object SNSOperations {
   def client(): AmazonSNS = {
     AmazonSNSClientBuilder.defaultClient()
+  }
+
+  def describeTopic(topicName: String, client: AmazonSNS): Option[Topic] = {
+    client.listTopics().getTopics.asScala.find(_.getTopicArn.endsWith(topicName))
   }
 }

@@ -48,6 +48,12 @@ case class ScheduledEventHandler(
                           scheduleConf: ScheduleConf,
                           ) extends LambdaHandler
 
+case class SNSConf(topic: String)
+case class SNSEventHandler(
+                          config: LambdaConfig,
+                          snsConf: SNSConf
+                          ) extends LambdaHandler
+
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
           stage: String): Set[LambdaHandler] = {
@@ -70,7 +76,13 @@ object ClassifyLambdas {
         case (fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToScheduledEventHandler(fqcn, simpleName, anno, stage))
       }
 
-    dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers
+    val snsEventHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("SNSConf"))
+      .map(cl => (cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("SNSConf"))))
+      .flatMap {
+        case (fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToSNSEventHandler(fqcn, simpleName, anno, stage))
+      }
+
+    dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers
   }
 
   def annotationPredicate(annotationName: String)(cl: Class[_]): Boolean = {
@@ -115,6 +127,18 @@ object ClassifyLambdas {
     ScheduledEventHandler(
       LambdaConfig(className, simpleName, memorySize, timeout, description),
       ScheduleConf(schedule)
+    )
+  }
+
+  def mapAnnoToSNSEventHandler(className: String, simpleName: String, anno: Annotation, stage: String): SNSEventHandler = {
+    val topic = anno.annotationType().getMethod("topic").invoke(anno).asInstanceOf[String]
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+
+    SNSEventHandler(
+      LambdaConfig(className, simpleName, memorySize, timeout, description),
+      SNSConf(topic)
     )
   }
 

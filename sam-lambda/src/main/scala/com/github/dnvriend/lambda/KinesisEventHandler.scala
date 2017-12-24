@@ -9,7 +9,7 @@ import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
  */
 trait KinesisEventHandler extends RequestStreamHandler {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    handle(KinesisEvent.parse(input), context)
+    handle(KinesisEvent.parse(input), SamContext(context))
   }
-  def handle(events: List[KinesisEvent], ctx: Context): Unit
+  def handle(events: List[KinesisEvent], ctx: SamContext): Unit
 }

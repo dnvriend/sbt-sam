@@ -10,6 +10,7 @@ class KinesisStreamsResourceOperationsTest extends TestSpec {
         """
           |streams {
           |   People {
+          |     name = "people-stream"
           |     retension-period-hours = 48
           |     shard-count = 10
           |     export = true
@@ -17,6 +18,7 @@ class KinesisStreamsResourceOperationsTest extends TestSpec {
           |}
         """.stripMargin.tsc) shouldBe Set(
           Kinesis.Stream(
+            name = "people-stream",
             configName = "People",
             retensionPeriodHours = 48,
             shardCount = 10,
@@ -31,31 +33,37 @@ class KinesisStreamsResourceOperationsTest extends TestSpec {
         """
           |streams {
           |   People {
+          |     name = "people-stream"
           |     retension-period-hours = 48
           |     export = true
           |  }
           |   People2 {
+          |     name = "people-stream2"
           |     retension-period-hours = 24
           |     export = true
           |  }
           |   People3 {
+          |     name = "people-stream3"
           |     retension-period-hours = 12
           |     export = true
           |  }
           |}
         """.stripMargin.tsc) shouldBe Set(
           Kinesis.Stream(
+            name = "people-stream",
             configName = "People",
             retensionPeriodHours = 48,
             shardCount = 1,
             export = true
           ),
           Kinesis.Stream(
+            name = "people-stream2",
             configName = "People2",
             retensionPeriodHours = 24,
             export = true
           ),
           Kinesis.Stream(
+            name = "people-stream3",
             configName = "People3",
             retensionPeriodHours = 12,
             export = true

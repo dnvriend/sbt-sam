@@ -10,12 +10,14 @@ class SNSTopicsResourceOperationsTest extends TestSpec {
         """
           |topics {
           |   People {
+          |    name = "people-stream"
           |    display-name = "people"
           |    export = true
           |  }
           |}
         """.stripMargin.tsc) shouldBe Set(
           Topic(
+            name = "people-stream",
             configName = "People",
             displayName = "people",
             export = true
@@ -29,30 +31,36 @@ class SNSTopicsResourceOperationsTest extends TestSpec {
         """
           |topics {
           |   People {
+          |    name = "people-stream"
           |    display-name = "people"
           |    export = true
           |  }
           |   People2 {
+          |    name = "people-stream2"
           |    display-name = "people2"
           |    export = true
           |  }
           |   People3 {
+          |    name = "people-stream3"
           |    display-name = "people3"
           |    export = true
           |  }
           |}
         """.stripMargin.tsc) shouldBe Set(
           Topic(
+            name = "people-stream",
             configName = "People",
             displayName = "people",
             export = true
           ),
           Topic(
+            name = "people-stream2",
             configName = "People2",
             displayName = "people2",
             export = true
           ),
           Topic(
+            name = "people-stream3",
             configName = "People3",
             displayName = "people3",
             export = true

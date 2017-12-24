@@ -6,8 +6,8 @@ import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 
 trait ScheduledEventHandler extends RequestStreamHandler {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    handle(ScheduledEvent.parse(input), context)
+    handle(ScheduledEvent.parse(input), SamContext(context))
   }
 
-  def handle(event: ScheduledEvent, ctx: Context): Unit
+  def handle(event: ScheduledEvent, ctx: SamContext): Unit
 }
