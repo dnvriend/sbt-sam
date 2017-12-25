@@ -8,7 +8,17 @@ final case class ProjectLambda(projectClass: ProjectClass)
 
 object DiscoverLambdas {
   def lambdaPredicate(pc: ProjectClass): Boolean = {
-    interfacesContainsRequestStreamHandlerInterface(pc.interfaces)
+    val superClassName = Option(pc.cl.getSuperclass).map(_.getName).getOrElse("")
+    interfacesContainsRequestStreamHandlerInterface(pc.interfaces) ||
+      List(
+        "com.github.dnvriend.dynamodb.repo.BinaryRepositoryApiGatewayHandler",
+        "com.github.dnvriend.dynamodb.repo.JsonRepositoryApiGatewayHandler",
+        "com.github.dnvriend.lambda.ApiGatewayHandler",
+        "com.github.dnvriend.lambda.DynamoDBHandler",
+        "com.github.dnvriend.lambda.KinesisEventHandler",
+        "com.github.dnvriend.lambda.ScheduledEventHandler",
+        "com.github.dnvriend.lambda.SNSEventHandler",
+      ).contains(superClassName)
   }
 
   def interfacesContainsRequestStreamHandlerInterface(interfaces: List[Class[_]]): Boolean = {
@@ -26,7 +36,7 @@ object DiscoverLambdas {
    */
   def run(projectClasses: Set[ProjectClass]): Set[ProjectLambda] = {
     projectClasses
-      //      .map(debugProjectClass)
+//      .map(debugProjectClass)
       .filter(lambdaPredicate)
       .map(pc => ProjectLambda(pc))
   }
