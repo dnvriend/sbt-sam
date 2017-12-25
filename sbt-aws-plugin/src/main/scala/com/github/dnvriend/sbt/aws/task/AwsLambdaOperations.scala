@@ -40,10 +40,13 @@ object AwsLambdaOperations {
     Try(client.getFunction(req.withFunctionName(functionName))).toOption
   }
 
-  def findFunction(functionName: String, client: AWSLambda): Option[FunctionConfiguration] = for {
-    functions <- Try(client.listFunctions().getFunctions).toOption
-    function <- functions.asScala.find(_.getFunctionName.startsWith(functionName))
-  } yield function
+  def findFunction(fqcn: String, client: AWSLambda): Option[FunctionConfiguration] = {
+    println(s"Getting info for function: '$fqcn'")
+    for {
+      functions <- Try(client.listFunctions().getFunctions).toOption
+      function <- functions.asScala.find(_.getHandler.startsWith(fqcn))
+    } yield function
+  }
 
   private def withInvokeRequest(f: InvokeRequest => InvokeResult): InvokeResult = {
     f(new InvokeRequest())

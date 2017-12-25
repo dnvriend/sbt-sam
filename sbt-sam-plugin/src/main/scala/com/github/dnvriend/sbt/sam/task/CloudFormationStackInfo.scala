@@ -68,8 +68,7 @@ object CloudFormationStackInfo {
            |Status: $stackStatus
            |Status reason: $statusReason
            |Last updated: $lastUpdated
-           |ServiceEndpoint: $serviceEndpoint
-     """.stripMargin
+           |ServiceEndpoint: $serviceEndpoint""".stripMargin
       }
     }
 
@@ -164,9 +163,8 @@ object CloudFormationStackInfo {
       }
       val httpHandlers: String = {
         config.lambdas.collect({ case h: HttpHandler => h }).map { handler =>
-          val className: String = handler.lambdaConfig.simpleClassName
-          val lambdaName = s"$stackName-$className"
-          (handler, AwsLambdaOperations.findFunction(lambdaName, lambdaClient))
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
@@ -175,9 +173,8 @@ object CloudFormationStackInfo {
       }
       val dynamoHandlers: String = {
         config.lambdas.collect({ case h: DynamoHandler => h }).map { handler =>
-          val className: String = handler.lambdaConfig.simpleClassName
-          val lambdaName = s"$stackName-$className"
-          (handler, AwsLambdaOperations.findFunction(lambdaName, lambdaClient))
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
@@ -186,9 +183,8 @@ object CloudFormationStackInfo {
       }
       val scheduledEventHandlers: String = {
         config.lambdas.collect({ case h: ScheduledEventHandler => h }).map { handler =>
-          val className: String = handler.lambdaConfig.simpleClassName
-          val lambdaName = s"$stackName-$className"
-          (handler, AwsLambdaOperations.findFunction(lambdaName, lambdaClient))
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
@@ -197,9 +193,8 @@ object CloudFormationStackInfo {
       }
       val kinesisEventHandlers: String = {
         config.lambdas.collect({ case h: KinesisEventHandler => h }).map { handler =>
-          val className: String = handler.lambdaConfig.simpleClassName
-          val lambdaName = s"$stackName-$className"
-          (handler, AwsLambdaOperations.findFunction(lambdaName, lambdaClient))
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
@@ -208,17 +203,15 @@ object CloudFormationStackInfo {
       }
       val snsEventHandlers: String = {
         config.lambdas.collect({ case h: SNSEventHandler => h }).map { handler =>
-          val className: String = handler.lambdaConfig.simpleClassName
-          val lambdaName = s"$stackName-$className"
-          (handler, AwsLambdaOperations.findFunction(lambdaName, lambdaClient))
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
         }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No SNS event handlers configured")
       }
-      s"""
-        |Lambdas:
+      s"""Lambdas:
         |Api Http Event Handlers:
         |$httpHandlers
         |DynamoDB Streams Handlers:
