@@ -39,6 +39,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientKinesis := KinesisOperations.client(),
     clientSns := SNSOperations.client(),
     clientCloudWatch := CloudWatchOperations.client(),
+    clientAwsLogs := CloudWatchLogsOperations.client(),
     clientIam := IamOperations.client(),
     clientCloudFormation := CloudFormationOperations.client(),
     clientCodeBuild := CodeBuildOperations.client(),

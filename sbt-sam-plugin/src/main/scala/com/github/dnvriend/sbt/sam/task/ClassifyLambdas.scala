@@ -2,7 +2,9 @@ package com.github.dnvriend.sbt.sam.task
 
 import java.lang.annotation.Annotation
 
-sealed trait LambdaHandler
+sealed trait LambdaHandler {
+  def lambdaConfig: LambdaConfig
+}
 
 case class LambdaConfig(
                          fqcn: String,

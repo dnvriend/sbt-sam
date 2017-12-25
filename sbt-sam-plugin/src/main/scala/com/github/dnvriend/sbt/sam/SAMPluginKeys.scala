@@ -56,4 +56,5 @@ object SAMPluginKeys {
   lazy val samRemove = taskKey[Unit]("Remove a service")
   lazy val samUpdate = inputKey[Unit]("Update a service")
   lazy val samValidate = taskKey[Unit]("Validates the cloud formation template")
+  lazy val samLogs = inputKey[Unit]("Shows logs of the specified lambda")
 }
