@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda._
 import com.amazonaws.services.lambda.model._
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * add-permission                           | create-alias
@@ -31,13 +32,18 @@ object AwsLambdaOperations {
     client.listFunctions().getFunctions.asScala.toList
   }
 
-  private def withGetFunctionRequest(f: GetFunctionRequest => GetFunctionResult): GetFunctionResult = {
+  private def withGetFunctionRequest(f: GetFunctionRequest => Option[GetFunctionResult]): Option[GetFunctionResult] = {
     f(new GetFunctionRequest())
   }
 
-  def getFunction(functionName: String, client: AWSLambda): GetFunctionResult = withGetFunctionRequest { req =>
-    client.getFunction(req.withFunctionName(functionName))
+  def getFunction(functionName: String, client: AWSLambda): Option[GetFunctionResult] = withGetFunctionRequest { req =>
+    Try(client.getFunction(req.withFunctionName(functionName))).toOption
   }
+
+  def findFunction(functionName: String, client: AWSLambda): Option[FunctionConfiguration] = for {
+    functions <- Try(client.listFunctions().getFunctions).toOption
+    function <- functions.asScala.find(_.getFunctionName.startsWith(functionName))
+  } yield function
 
   private def withInvokeRequest(f: InvokeRequest => InvokeResult): InvokeResult = {
     f(new InvokeRequest())

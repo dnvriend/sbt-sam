@@ -25,14 +25,14 @@ case class DynamoConf(
                        enabled: Boolean = true,
                      )
 
-case class HttpHandler(
+final case class HttpHandler(
                         lambdaConfig: LambdaConfig,
                         httpConf: HttpConf
                       ) extends LambdaHandler
 
-case class DynamoHandler(
-                          config: LambdaConfig,
-                          dynamoConf: DynamoConf
+final case class DynamoHandler(
+                                lambdaConfig: LambdaConfig,
+                                dynamoConf: DynamoConf
                         ) extends LambdaHandler
 
 case class ScheduleConf(
@@ -43,15 +43,15 @@ case class ScheduleConf(
   // rate(2 hours)
   // rate(2 days)
 }
-case class ScheduledEventHandler(
-                          config: LambdaConfig,
-                          scheduleConf: ScheduleConf,
+final case class ScheduledEventHandler(
+                                        lambdaConfig: LambdaConfig,
+                                        scheduleConf: ScheduleConf,
                           ) extends LambdaHandler
 
 case class SNSConf(topic: String)
-case class SNSEventHandler(
-                          config: LambdaConfig,
-                          snsConf: SNSConf
+final case class SNSEventHandler(
+                                  lambdaConfig: LambdaConfig,
+                                  snsConf: SNSConf
                           ) extends LambdaHandler
 
 case class KinesisConf(
@@ -61,9 +61,9 @@ case class KinesisConf(
                         // Maximum number of stream records to process per function invocation
                         batchSize: Int = 100
                       )
-case class KinesisEventHandler(
-                              config: LambdaConfig,
-                              kinesisConf: KinesisConf
+final case class KinesisEventHandler(
+                                      lambdaConfig: LambdaConfig,
+                                      kinesisConf: KinesisConf
                               ) extends LambdaHandler
 
 object ClassifyLambdas {
