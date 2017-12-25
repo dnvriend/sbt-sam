@@ -260,6 +260,22 @@ Deleting artifact version: '5fgiHbqR5Xl2_MUm3RlLC1SXFI7yQkRY'
 [success] Total time: 22 s, completed Dec 24, 2017 1:43:48 PM
 ```
 
+## samLogs
+The task `samLogs` shows the last log output for a selected lambda:
+
+```
+> samLogs CreatePerson
+[info] 2017-12-25T19:17:00.125 - REPORT RequestId: cc92212d-e99f-11e7-822c-0310ed4e4ed5	Duration: 164.65 ms	Billed Duration: 200 ms 	Memory Size: 1024 MB	Max Memory Used: 151 MB
+[info] 2017-12-25T19:17:00.125 - END RequestId: cc92212d-e99f-11e7-822c-0310ed4e4ed5
+[info] 2017-12-25T19:17:00.124 - {}
+[info] 2017-12-25T19:16:59.958 - START RequestId: cc92212d-e99f-11e7-822c-0310ed4e4ed5 Version: $LATEST
+[info] 2017-12-25T19:16:58.344 - REPORT RequestId: c6f81bf6-e99f-11e7-857b-91f7f814692c	Duration: 6097.46 ms	Billed Duration: 6100 ms 	Memory Size: 1024 MB	Max Memory Used: 151 MB
+[info] 2017-12-25T19:16:58.344 - END RequestId: c6f81bf6-e99f-11e7-857b-91f7f814692c
+[info] 2017-12-25T19:16:58.241 - {}
+[info] 2017-12-25T19:16:52.246 - START RequestId: c6f81bf6-e99f-11e7-857b-91f7f814692c Version: $LATEST
+[success] Total time: 1 s, completed Dec 25, 2017 7:20:17 PM
+```
+
 ## AWS Configuration
 The standard resolution for AWS credentials is:
 
@@ -322,6 +338,11 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+
+## 1.0.4 (2017-12-25)
+- Support for logging lambda log output with `samLogs`
+- Two repositories: `BinaryRepository` and `JsonRepository`
+- Two new ApiGatewayHandlers: `BinaryRepositoryApiGatewayHandler` and `JsonRepositoryApiGatewayHandler`
 
 ## 1.0.3 (2017-12-25)
 - Support for Kinesis Resources
