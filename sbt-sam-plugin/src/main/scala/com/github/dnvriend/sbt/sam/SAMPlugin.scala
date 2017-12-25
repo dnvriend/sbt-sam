@@ -19,11 +19,14 @@ import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
 import com.github.dnvriend.sbt.util.ResourceOperations
+import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
 import sbtassembly.AssemblyKeys._
 import sbtassembly.AssemblyPlugin
+
+import scala.compat.Platform
 
 object SAMPlugin extends AutoPlugin {
 
@@ -134,6 +137,7 @@ object SAMPlugin extends AutoPlugin {
         )
       )
     },
+    samProjectConfiguration := (samProjectConfiguration keepAs samProjectConfiguration).value,
 
     samInfo := {
       CloudFormationStackInfo.run(
@@ -215,6 +219,34 @@ object SAMPlugin extends AutoPlugin {
         DescribeStackSettings(StackName(config.samCFTemplateName.value)),
         clientCloudFormation.value
       )
+    },
+
+    samLogs := {
+      val lambdaName = Defaults.getForParser(samProjectConfiguration)((state, config) => {
+        val strings: List[String] = config.toList.flatMap(_.lambdas.toList).map(_.lambdaConfig.simpleClassName)
+        Space ~> StringBasic.examples(strings: _*)
+      }).parsed
+      val logger = streams.value.log
+      val config = samProjectConfiguration.value
+      val lambdaClient = clientAwsLambda.value
+      val logsClient = clientAwsLogs.value
+      val projectName = config.projectName
+      val stage = config.samStage.value
+      val maybeLambdaConfig = config.lambdas.find(_.lambdaConfig.simpleClassName == lambdaName).map(_.lambdaConfig)
+      for {
+        lambdaConf <- maybeLambdaConfig
+        function <- AwsLambdaOperations.findFunction(lambdaConf.fqcn, projectName, stage, lambdaClient)
+        logGroup <- CloudWatchLogsOperations.findLogGroup(function.getFunctionArn, logsClient)
+      } {
+        import scala.concurrent.duration._
+        val endTime: Long = Platform.currentTime
+        val startTime: Long = endTime - (5.minutes.toMillis)
+        CloudWatchLogsOperations.getLogEvents(logGroup.getLogGroupName, startTime, endTime, logsClient).foreach {
+          case LogEvent(timestamp, ingestionTime, message) =>
+            def format(time: Long): String = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(new java.util.Date(time))
+            logger.info(s"${format(timestamp)} - $message")
+        }
+      }
     },
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,
