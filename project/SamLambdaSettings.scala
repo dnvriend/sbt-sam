@@ -6,6 +6,7 @@ object SamLambdaSettings extends AutoPlugin {
   override def trigger = noTrigger
   override def requires = plugins.JvmPlugin
 
-  override def projectSettings =
-    GlobalSettings.commonSettings
+  override def projectSettings = Seq(
+    libraryDependencies += LibraryDependencies.libDynamoDBSdk % Provided
+  ) ++ GlobalSettings.commonSettings
 }

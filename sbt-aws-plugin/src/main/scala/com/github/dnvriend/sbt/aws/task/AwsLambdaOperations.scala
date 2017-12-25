@@ -40,11 +40,16 @@ object AwsLambdaOperations {
     Try(client.getFunction(req.withFunctionName(functionName))).toOption
   }
 
-  def findFunction(fqcn: String, client: AWSLambda): Option[FunctionConfiguration] = {
-    println(s"Getting info for function: '$fqcn'")
+  def findFunction(fqcn: String, projectName: String, stage: String, client: AWSLambda): Option[FunctionConfiguration] = {
+    def predicate(conf: FunctionConfiguration): Boolean = {
+      val env = conf.getEnvironment.getVariables.asScala
+      conf.getHandler.startsWith(fqcn) &&
+        env.get("PROJECT_NAME").exists(_ == projectName) &&
+        env.get("STAGE").exists(_ == stage)
+    }
     for {
       functions <- Try(client.listFunctions().getFunctions).toOption
-      function <- functions.asScala.find(_.getHandler.startsWith(fqcn))
+      function <- functions.asScala.find(predicate)
     } yield function
   }
 
