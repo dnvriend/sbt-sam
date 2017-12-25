@@ -89,40 +89,105 @@ When there is no projection:
 
 ```bash
 > samInfo
-[info] Stack details:
-[info] No stack details
+[info] ====================
+[info] Stack State:
+[info] ====================
+[info] Stack 'sam-dynamodb-streams-seed-dendev' is not yet deployed
+[info] Lambdas:
+[info] Api Http Event Handlers:
+[info] * GetPerson: not yet deployed
+[info] * PostPerson: not yet deployed
+[info] * GetPersonIds: not yet deployed
+[info] * GetListOfPerson: not yet deployed
+[info] DynamoDB Streams Handlers:
+[info] No DynamoDB event handlers configured
+[info] Scheduled Event Handlers:
+[info] No scheduled event handlers configured
+[info] Kinesis Event Handlers:
+[info] No kinesis event handlers configured
+[info] SNS Event Handlers:
+[info] No SNS event handlers configured
+[info] DynamoDbTables:
+[info] * people_ids: not yet deployed
+[info] * people: not yet deployed
+[info] SNS Topics:
+[info] No topics configured
+[info] Kinesis Streams:
+[info] No streams configured
 [info] Endpoints:
-[success] Total time: 0 s, completed Dec 24, 2017 9:30:39 AM
+[info] No service endpoint found
+[success] Total time: 15 s, completed Dec 25, 2017 9:50:04 AM
 ```
 
 When there is a projection:
 
 ```bash
 > samInfo
-[info] Stack details:
 [info]
 [info] ====================
-[info] Sam's State:
+[info] Stack State:
 [info] ====================
-[info] Name: sam-dynamodb-seed-dnvriend
+[info] Name: sam-dynamodb-streams-seed-dendev
 [info] Description: No description
 [info] Status: UPDATE_COMPLETE
 [info] Status reason: No status reason
-[info] Last updated: Sun Dec 24 13:15:58 CET 2017
-[info] ===================
-[info] ServiceEndpoint: https://v1z5r7e4uh.execute-api.eu-west-1.amazonaws.com/dnvriend
-[info] ===================
-[info]
+[info] Last updated: Mon Dec 25 09:51:15 CET 2017
+[info] ServiceEndpoint: https://83s0mdgwve.execute-api.eu-west-1.amazonaws.com/dendev
+[info] Lambdas:
+[info] Api Http Event Handlers:
+[info] * PostPerson:
+[info]   - Arn: arn:aws:lambda:eu-west-1:123456789:function:sam-dynamodb-streams-seed-dendev-PostPerson-1MHJFKIRG9R3E
+[info]   - Role: arn:aws:iam::123456789:role/sam-dynamodb-streams-seed-dendev-PostPersonRole-O3MLQ6A02WK1
+[info]   - Handler: com.github.dnvriend.PostPerson::handleRequest
+[info]   - size: 52396083
+[info]   - timeout: 300
+[info]   - memory: 1024
+[info]   - tracing: Active
+[info]   - lastmodified: 2017-12-25T08:51:44.641+0000
+[info] * GetPerson:
+[info]   - Arn: arn:aws:lambda:eu-west-1:123456789:function:sam-dynamodb-streams-seed-dendev-GetPersonIds-1UFSUY7OHO88E
+[info]   - Role: arn:aws:iam::123456789:role/sam-dynamodb-streams-seed-dendev-GetPersonIdsRole-1PNBZRCMTUJGU
+[info]   - Handler: com.github.dnvriend.GetPersonIds::handleRequest
+[info]   - size: 52396083
+[info]   - timeout: 300
+[info]   - memory: 1024
+[info]   - tracing: Active
+[info]   - lastmodified: 2017-12-25T08:51:36.510+0000
+[info] DynamoDB Streams Handlers:
+[info] No DynamoDB event handlers configured
+[info] Scheduled Event Handlers:
+[info] No scheduled event handlers configured
+[info] Kinesis Event Handlers:
+[info] No kinesis event handlers configured
+[info] SNS Event Handlers:
+[info] No SNS event handlers configured
 [info] DynamoDbTables:
-[info] * people -> arn:aws:dynamodb:eu-west-1:1234567890:table/sam-dynamodb-seed-dnvriend-people
+[info] * people:
+[info]   - TableName: sam-dynamodb-streams-seed-dendev-people
+[info]   - TableId: 69fc4efe-ebe6-4094-90a8-af014ecf5737
+[info]   - TableArn: arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dendev-people
+[info]   - Table status: ACTIVE
+[info]   - Number of items: 0
+[info]   - TableSizeBytes: 0
+[info]   - TableCreation: Mon Dec 25 09:51:19 CET 2017
+[info]   - ProvisionedThroughput: {NumberOfDecreasesToday: 0,ReadCapacityUnits: 1,WriteCapacityUnits: 1}
+[info]   - KeySchema: [{AttributeName: id,KeyType: HASH}]
+[info]   - Attribute Definitions: [{AttributeName: id,AttributeType: S}]
+[info]   - Local Secondary Indexes: null
+[info]   - Global Secondary Indexes: null
+[info]   - StreamArn: arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dendev-people/stream/2017-12-25T08:51:19.399
+[info]   - StreamLabel: 2017-12-25T08:51:19.399
+[info]   - Restore Summary: null
 [info] SNS Topics:
-[info] * person-received -> arn:aws:sns:eu-west-1:1234567890:sam-dynamodb-seed-dnvriend-person-received
+[info] No topics configured
 [info] Kinesis Streams:
+[info] No streams configured
 [info] Endpoints:
-[info] GET - https://v1z5r7e4uh.execute-api.eu-west-1.amazonaws.com/dnvriend/person/{id}
-[info] GET - https://v1z5r7e4uh.execute-api.eu-west-1.amazonaws.com/dnvriend/person
-[info] POST - https://v1z5r7e4uh.execute-api.eu-west-1.amazonaws.com/dnvriend/person
-[success] Total time: 2 s, completed Dec 24, 2017 1:31:55 PM
+[info] GET - https://83s0mdgwve.execute-api.eu-west-1.amazonaws.com/dendev/person
+[info] POST - https://83s0mdgwve.execute-api.eu-west-1.amazonaws.com/dendev/person
+[info] GET - https://83s0mdgwve.execute-api.eu-west-1.amazonaws.com/dendev/person/{id}
+[info] GET - https://83s0mdgwve.execute-api.eu-west-1.amazonaws.com/dendev/personids
+[success] Total time: 1 s, completed Dec 25, 2017 9:52:35 AM
 ```
 
 ### samDeploy
