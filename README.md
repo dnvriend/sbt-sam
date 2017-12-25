@@ -21,6 +21,28 @@ cd sbt-sam
 sbt compile publishLocal
 ``` 
 
+## Installation
+`sbt-sam` comes in the form of an sbt-plugin and libraries, and is published to [Bintray jcenter](https://bintray.com/bintray/jcenter) 
+so you should edit at least two files. The latest version is [![Download](https://api.bintray.com/packages/dnvriend/maven/sam-lambda/images/download.svg)](https://bintray.com/dnvriend/maven/sam-lambda/_latestVersion)
+
+**Installation of the libraries**:
+Add the following to your `build.sbt` file:
+
+```
+libraryDependencies += "com.github.dnvriend" %% "sam-annotations" % "put-latest-version-here"
+libraryDependencies += "com.github.dnvriend" %% "sam-lambda" % "put-latest-version-here"
+```
+
+**Installation of the sbt-plugin**:
+Add the following to your `project/plugins.sbt` file:
+
+```
+addSbtPlugin("com.github.dnvriend" % "sbt-sam-plugin" % "put-latest-version-here")
+
+resolvers += Resolver.url("bintray-dnvriend-ivy-sbt-plugins", url("http://dl.bintray.com/dnvriend/sbt-plugins"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.bintrayRepo("dnvriend", "maven") 
+```
+
 ## sbt-sam seed projects
 The following seed projects are available:
 
@@ -235,14 +257,19 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.3 (2017-12-25)
+- Support for Kinesis Resources
+- Support for Kinesis Events
+
 ## 1.0.2 (2017-12-24)
 - Fix for resolving scoped DynamoDB table names
 
 ## 1.0.1 (2017-12-24)
 - Support for (public/unsecure) API Gateway
-- Support for DynamoDB
-- Support for DynamoDB Streams 
-- Support for SNS
+- Support for DynamoDB Table Resources
+- Support for DynamoDB Streams Events
+- Support for SNS Resources
+- Support for SNS Events
 - Support for Scheduled Events
 
 ## 1.0.0 (2017-12-20)

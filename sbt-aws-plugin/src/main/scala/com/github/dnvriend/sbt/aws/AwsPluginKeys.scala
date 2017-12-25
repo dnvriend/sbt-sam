@@ -46,7 +46,7 @@ object AwsPluginKeys {
 
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
-  lazy val lambdaGetFunction = inputKey[GetFunctionResult]("Returns the configuration information of the Lambda function")
+  lazy val lambdaGetFunction = inputKey[Option[GetFunctionResult]]("Returns the configuration information of the Lambda function")
   lazy val lambdaInvoke = inputKey[InvokeResult]("Invokes a specific Lambda function")
   lazy val lambdaMetrics = taskKey[LambdaMetrics]("Get metrics for all lambdas")
 

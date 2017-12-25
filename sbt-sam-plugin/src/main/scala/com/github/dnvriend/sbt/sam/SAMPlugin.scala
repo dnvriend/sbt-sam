@@ -143,6 +143,7 @@ object SAMPlugin extends AutoPlugin {
         clientDynamoDb.value,
         clientSns.value,
         clientKinesis.value,
+        clientAwsLambda.value,
         streams.value.log
       )
     },
