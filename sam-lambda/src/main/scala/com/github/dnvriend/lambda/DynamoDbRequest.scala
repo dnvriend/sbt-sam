@@ -22,6 +22,9 @@ object DynamoDbRequest {
   def parse(input: InputStream): DynamoDbRequest = {
     DynamoDbRequest(Json.parse(input))
   }
+  def parse(str: String): DynamoDbRequest = {
+    DynamoDbRequest(Json.parse(str))
+  }
 }
 
 case class DynamoDbRequest(json: JsValue) {

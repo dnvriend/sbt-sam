@@ -48,6 +48,70 @@ trait ScheduledEventGenerator {
 
 final case class DynamoDbUpdateEventGen(json: String, value: Int)
 trait DynamoDbUpdateEventGenerator {
+  def keysOnlyJson: String = {
+    """
+      |{
+      |  "Records": [
+      |    {
+      |      "eventID": "0b5799c7352ae32f0f180d88a35fc2ec",
+      |      "eventName": "INSERT",
+      |      "eventVersion": "1.1",
+      |      "eventSource": "aws:dynamodb",
+      |      "awsRegion": "eu-west-1",
+      |      "dynamodb": {
+      |        "ApproximateCreationDateTime": 1.5142308E9,
+      |        "Keys": {
+      |          "id": {
+      |            "S": "c922d4cb-0a98-42a3-bd8b-a87a5a4f30d4"
+      |          }
+      |        },
+      |        "SequenceNumber": "100000000013566460532",
+      |        "SizeBytes": 38,
+      |        "StreamViewType": "KEYS_ONLY"
+      |      },
+      |      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dnvriend-people/stream/2017-12-25T19:37:13.703"
+      |    }
+      |  ]
+      |}
+    """.stripMargin
+
+    def newImageJson: String = {
+      """
+        |{
+        |  "Records": [
+        |    {
+        |      "eventID": "0101fd68132522bfa1a6601bfe851d80",
+        |      "eventName": "INSERT",
+        |      "eventVersion": "1.1",
+        |      "eventSource": "aws:dynamodb",
+        |      "awsRegion": "eu-west-1",
+        |      "dynamodb": {
+        |        "ApproximateCreationDateTime": 1.51423224E9,
+        |        "Keys": {
+        |          "id": {
+        |            "S": "a811a9ea-6062-4e16-b14d-6eb2603bc6e8"
+        |          }
+        |        },
+        |        "NewImage": {
+        |          "json": {
+        |            "S": "{\"name\":\"foo\",\"id\":\"a811a9ea-6062-4e16-b14d-6eb2603bc6e8\"}"
+        |          },
+        |          "id": {
+        |            "S": "a811a9ea-6062-4e16-b14d-6eb2603bc6e8"
+        |          }
+        |        },
+        |        "SequenceNumber": "88100000000034022438926",
+        |        "SizeBytes": 138,
+        |        "StreamViewType": "NEW_IMAGE"
+        |      },
+        |      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dnvriend-people/stream/2017-12-25T20:03:14.819"
+        |    }
+        |  ]
+        |}
+      """.stripMargin
+    }
+  }
+
   def dynamoDbUpdateEventJson(value: Int) = {
     s"""
       |{
