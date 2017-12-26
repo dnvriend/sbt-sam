@@ -21,9 +21,7 @@ import com.github.dnvriend.ops.AllOps
 
 trait DynamoDBHandler extends RequestStreamHandler with AllOps {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    val str = input.toByteArray.str
-    println("====> " + str)
-    handle(DynamoDbRequest.parse(str), SamContext(context))
+    handle(DynamoDbRequest.parse(input), SamContext(context))
   }
 
   def handle(request: DynamoDbRequest, ctx: SamContext): Unit
