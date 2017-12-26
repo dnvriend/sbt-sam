@@ -19,4 +19,13 @@ abstract class TestSpec extends FlatSpec
       ConfigFactory.parseString(that)
     }
   }
+
+  def interceptStdOut(f: => Unit): String = {
+    val stream = new java.io.ByteArrayOutputStream()
+    try Console.withOut(stream)(f) finally {
+      stream.flush()
+      stream.close()
+    }
+    new String(stream.toByteArray)
+  }
 }

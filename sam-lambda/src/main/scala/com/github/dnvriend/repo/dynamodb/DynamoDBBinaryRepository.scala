@@ -1,4 +1,4 @@
-package com.github.dnvriend.dynamodb.repo
+package com.github.dnvriend.repo.dynamodb
 
 import java.nio.ByteBuffer
 import java.util.UUID
@@ -6,6 +6,7 @@ import java.util.UUID
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.{ AmazonDynamoDB, AmazonDynamoDBClientBuilder }
 import com.github.dnvriend.lambda.SamContext
+import com.github.dnvriend.repo.BinaryRepository
 
 import scala.collection.JavaConverters._
 import scalaz.Scalaz._
@@ -16,7 +17,7 @@ import scalaz._
  * an 'id' and 'blob' attribute. It stores a payload as Bytes
  * in the 'blob' attribute
  */
-class BinaryRepository(tableName: String, ctx: SamContext) {
+class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends BinaryRepository {
   val table: String = ctx.dynamoDbTableName(tableName)
   val db: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient()
 
@@ -35,7 +36,7 @@ class BinaryRepository(tableName: String, ctx: SamContext) {
   /**
    * Stores a value with key 'id'
    */
-  def put(id: String, value: Array[Byte]): Unit = {
+  override def put(id: String, value: Array[Byte]): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.putItem(
         new PutItemRequest()
@@ -55,7 +56,7 @@ class BinaryRepository(tableName: String, ctx: SamContext) {
   /**
    * Returns a value, if present with key 'id'
    */
-  def find(id: String): Option[Array[Byte]] = {
+  override def find(id: String): Option[Array[Byte]] = {
     val result: Disjunction[String, Array[Byte]] = for {
       attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map("id" -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
       blobField <- Validation.lift(attributes)(attr => attr.get("blob").isDefined, "No blob attribute in table").map(_.get("blob")).disjunction
@@ -73,7 +74,7 @@ class BinaryRepository(tableName: String, ctx: SamContext) {
   /**
    * Updates a value with key 'id'
    */
-  def update(id: String, value: Array[Byte]): Unit = {
+  override def update(id: String, value: Array[Byte]): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.updateItem(table, Map("id" -> new AttributeValue(id)).asJava, Map("blob" -> new AttributeValueUpdate(new AttributeValue().withB(wrapBytes(value)), AttributeAction.PUT)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
@@ -83,7 +84,7 @@ class BinaryRepository(tableName: String, ctx: SamContext) {
   /**
    * Deletes a value with key 'id'
    */
-  def delete(id: String): Unit = {
+  override def delete(id: String): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.deleteItem(table, Map("id" -> new AttributeValue(id)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
@@ -93,7 +94,7 @@ class BinaryRepository(tableName: String, ctx: SamContext) {
   /**
    * Returns a list of values, default 100 items
    */
-  def list(limit: Int = 100): List[(String, Array[Byte])] = {
+  override def list(limit: Int = 100): List[(String, Array[Byte])] = {
     Disjunction.fromTryCatchNonFatal {
       db.scan(new ScanRequest()
         .withTableName(table)
