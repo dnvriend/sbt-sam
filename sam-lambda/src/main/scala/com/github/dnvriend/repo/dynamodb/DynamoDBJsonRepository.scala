@@ -1,22 +1,23 @@
-package com.github.dnvriend.dynamodb.repo
+package com.github.dnvriend.repo.dynamodb
 
 import java.util.UUID
 
-import com.github.dnvriend.lambda.SamContext
-import play.api.libs.json.{ Json, Reads, Writes }
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.{ AmazonDynamoDB, AmazonDynamoDBClientBuilder }
+import com.github.dnvriend.lambda.SamContext
+import com.github.dnvriend.repo.JsonRepository
+import play.api.libs.json.{ Json, Reads, Writes }
 
 import scala.collection.JavaConverters._
-import scalaz._
 import scalaz.Scalaz._
+import scalaz._
 
 /**
  * JsonDynamoDBRepository is a repository with only two attributes,
  * an 'id' and 'json' attribute. It stores a payload as JSON string
  * in the 'json' attribute
  */
-class JsonRepository(tableName: String, ctx: SamContext) {
+class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRepository {
   val table: String = ctx.dynamoDbTableName(tableName)
   val db: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient()
 
@@ -42,7 +43,7 @@ class JsonRepository(tableName: String, ctx: SamContext) {
   /**
    * Stores a value with key 'id'
    */
-  def put[A: Writes](id: String, value: A): Unit = {
+  override def put[A: Writes](id: String, value: A): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.putItem(
         new PutItemRequest()
@@ -62,7 +63,7 @@ class JsonRepository(tableName: String, ctx: SamContext) {
   /**
    * Returns a value, if present with key 'id'
    */
-  def find[A: Reads](id: String): Option[A] = {
+  override def find[A: Reads](id: String): Option[A] = {
     val result: Disjunction[String, A] = for {
       attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map("id" -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
       jsonField <- Validation.lift(attributes)(attr => attr.get("json").isEmpty, "No json attribute in table").map(_.get("json")).disjunction
@@ -81,7 +82,7 @@ class JsonRepository(tableName: String, ctx: SamContext) {
   /**
    * Updates a value with key 'id'
    */
-  def update[A: Writes](id: String, value: A): Unit = {
+  override def update[A: Writes](id: String, value: A): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.updateItem(table, Map("id" -> new AttributeValue(id)).asJava, Map("json" -> new AttributeValueUpdate(new AttributeValue(marshal(value)), AttributeAction.PUT)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
@@ -91,7 +92,7 @@ class JsonRepository(tableName: String, ctx: SamContext) {
   /**
    * Deletes a value with key 'id'
    */
-  def delete(id: String): Unit = {
+  override def delete(id: String): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
       db.deleteItem(table, Map("id" -> new AttributeValue(id)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
@@ -101,7 +102,7 @@ class JsonRepository(tableName: String, ctx: SamContext) {
   /**
    * Returns a list of values, default 100 items
    */
-  def list[A: Reads](limit: Int = 100): List[(String, A)] = {
+  override def list[A: Reads](limit: Int = 100): List[(String, A)] = {
     Disjunction.fromTryCatchNonFatal {
       db.scan(new ScanRequest()
         .withTableName(table)

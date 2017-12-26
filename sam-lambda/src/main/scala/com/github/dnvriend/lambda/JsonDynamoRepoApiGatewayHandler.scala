@@ -1,13 +1,13 @@
-package com.github.dnvriend.dynamodb.repo
+package com.github.dnvriend.lambda
 
-import com.github.dnvriend.lambda.{ ApiGatewayHandler, HttpRequest, HttpResponse, SamContext }
+import com.github.dnvriend.repo.dynamodb.DynamoDBJsonRepository
 import play.api.libs.json.Format
 
-abstract class JsonRepositoryApiGatewayHandler[A: Format](tableName: String) extends ApiGatewayHandler {
+abstract class JsonDynamoRepoApiGatewayHandler[A: Format](tableName: String) extends ApiGatewayHandler {
   override def handle(request: HttpRequest, ctx: SamContext): HttpResponse = {
-    val repo = new JsonRepository(tableName, ctx)
+    val repo = new DynamoDBJsonRepository(tableName, ctx)
     handle(request.bodyOpt[A], repo, request, ctx)
   }
 
-  def handle(value: Option[A], repo: JsonRepository, request: HttpRequest, ctx: SamContext): HttpResponse
+  def handle(value: Option[A], repo: DynamoDBJsonRepository, request: HttpRequest, ctx: SamContext): HttpResponse
 }
