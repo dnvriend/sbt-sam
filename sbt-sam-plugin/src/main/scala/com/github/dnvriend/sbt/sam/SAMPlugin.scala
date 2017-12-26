@@ -238,10 +238,6 @@ object SAMPlugin extends AutoPlugin {
         function <- AwsLambdaOperations.findFunction(lambdaConf.fqcn, projectName, stage, lambdaClient)
         logGroup <- CloudWatchLogsOperations.findLogGroup(function.getFunctionName, logsClient)
       } {
-//        logger.info("Lambda: " + lambdaName)
-//        logger.info("lambdaConf: " + lambdaConf)
-//        logger.info("function: " + function.getFunctionArn)
-//        logger.info("loggroup: " + logGroup)
         CloudWatchLogsOperations.getLogEvents(logGroup.getLogGroupName, logsClient).sortBy(_.timestamp).foreach {
           case LogEvent(timestamp, ingestionTime, message) =>
             def format(time: Long): String = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(new java.util.Date(time))

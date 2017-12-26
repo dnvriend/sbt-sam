@@ -9,7 +9,7 @@ object MockContext {
 class MockContext extends Context {
   override def getFunctionName: String = "mock"
 
-  override def getRemainingTimeInMillis: Int = 0
+  override def getRemainingTimeInMillis: Int = 300 * 60 * 1000
 
   override def getLogger: LambdaLogger = MockLambdaLogger.apply()
 

@@ -339,6 +339,11 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.5 (2017-12-26)
+- Fix for `samLogs`
+  - resolving the correct logGroup and logStream for the function,
+  - showing the logs in ascending order, for use with sbt console logging
+
 ## 1.0.4 (2017-12-25)
 - Support for logging lambda log output with `samLogs`
 - Two repositories: `BinaryRepository` and `JsonRepository`
