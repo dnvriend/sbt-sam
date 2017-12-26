@@ -39,10 +39,14 @@ object SAMPlugin extends AutoPlugin {
   import autoImport._
 
   override def projectSettings = Seq(
-    samStage := "dev",
-    samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
-    samCFTemplateName := s"${name.value}-${samStage.value}",
-    samResourcePrefixName := s"${name.value}-${samStage.value}",
+    samStageValue := {
+      val samStageProp: Option[String] = samStage.?.value
+      val samStageEnv: Option[String] = sys.env.get("SAM_STAGE")
+      samStageEnv.orElse(samStageProp).getOrElse(throw new RuntimeException("'SAM_STAGE' not set in environment or 'samStage' not set in project"))
+    },
+    samS3BucketName := s"${organization.value}-${name.value}-${samStageValue.value}",
+    samCFTemplateName := s"${name.value}-${samStageValue.value}",
+    samResourcePrefixName := s"${name.value}-${samStageValue.value}",
     (assemblyJarName in assembly) := "codepackage.jar",
 
     samProjectClassLoader := {
@@ -70,7 +74,7 @@ object SAMPlugin extends AutoPlugin {
     discoveredLambdas := (discoveredLambdas triggeredBy discoveredClasses).value,
     discoveredLambdas := (discoveredLambdas keepAs discoveredLambdas).value,
 
-    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStage.value),
+    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStageValue.value),
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
@@ -125,7 +129,7 @@ object SAMPlugin extends AutoPlugin {
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
-        samStage.value,
+        samStageValue.value,
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
         SamResources(
