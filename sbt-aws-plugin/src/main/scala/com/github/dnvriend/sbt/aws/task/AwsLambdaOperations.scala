@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda._
 import com.amazonaws.services.lambda.model._
 
 import scala.collection.JavaConverters._
-import scala.util.Try
+import scala.util.{ Failure, Try }
 
 /**
  * add-permission                           | create-alias
@@ -29,7 +29,11 @@ object AwsLambdaOperations {
   }
 
   def listFunctions(client: AWSLambda): List[FunctionConfiguration] = {
-    client.listFunctions().getFunctions.asScala.toList
+    Try(client.listFunctions().getFunctions.asScala.toList).recoverWith {
+      case t =>
+        println(t.getMessage)
+        Failure(t)
+    }.getOrElse(Nil)
   }
 
   private def withGetFunctionRequest(f: GetFunctionRequest => Option[GetFunctionResult]): Option[GetFunctionResult] = {
@@ -37,20 +41,25 @@ object AwsLambdaOperations {
   }
 
   def getFunction(functionName: String, client: AWSLambda): Option[GetFunctionResult] = withGetFunctionRequest { req =>
-    Try(client.getFunction(req.withFunctionName(functionName))).toOption
+    Try(client.getFunction(req.withFunctionName(functionName))).recoverWith {
+      case t =>
+        println(t.getMessage)
+        Failure(t)
+    }.toOption
   }
 
   def findFunction(fqcn: String, projectName: String, stage: String, client: AWSLambda): Option[FunctionConfiguration] = {
     def predicate(conf: FunctionConfiguration): Boolean = {
       val env = conf.getEnvironment.getVariables.asScala
-      conf.getHandler.startsWith(fqcn) &&
+      conf.getHandler.startsWith(s"$fqcn::handleRequest") &&
         env.get("PROJECT_NAME").exists(_ == projectName) &&
         env.get("STAGE").exists(_ == stage)
     }
-    for {
-      functions <- Try(client.listFunctions().getFunctions).toOption
+    val result = for {
+      functions <- Option(client.listFunctions().getFunctions)
       function <- functions.asScala.find(predicate)
     } yield function
+    result
   }
 
   private def withInvokeRequest(f: InvokeRequest => InvokeResult): InvokeResult = {
