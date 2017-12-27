@@ -11,8 +11,10 @@ object DiscoverLambdas {
     val superClassName = Option(pc.cl.getSuperclass).map(_.getName).getOrElse("")
     interfacesContainsRequestStreamHandlerInterface(pc.interfaces) ||
       List(
-        "com.github.dnvriend.dynamodb.repo.BinaryRepositoryApiGatewayHandler",
-        "com.github.dnvriend.dynamodb.repo.JsonRepositoryApiGatewayHandler",
+        "com.github.dnvriend.lambda.BinaryDynamoRepoApiGatewayHandler",
+        "com.github.dnvriend.lambda.JsonDynamoRepoApiGatewayHandler",
+        "com.github.dnvriend.lambda.JsonApiGatewayHandler",
+        "com.github.dnvriend.lambda.JsonDApiGatewayHandler",
         "com.github.dnvriend.lambda.ApiGatewayHandler",
         "com.github.dnvriend.lambda.DynamoDBHandler",
         "com.github.dnvriend.lambda.KinesisEventHandler",

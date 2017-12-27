@@ -167,8 +167,12 @@ object CloudFormationStackInfo {
           (handler, AwsLambdaOperations.findFunction(fqcn, projectName, stage, lambdaClient))
         }.map {
           case (handler, optionalInfo) =>
-            val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
+            val projectionStatus = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+            val handlerName: String = handler.lambdaConfig.simpleClassName
+            val handlerPath: String = handler.httpConf.path
+            val handlerMethod: String = handler.httpConf.method.toUpperCase
+            val handlerInfo: String = s"$handlerName: ($handlerMethod -> '$handlerPath')"
+            s"* ${Console.GREEN}$handlerInfo: ${Console.RESET}$projectionStatus"
         }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Api Http Event handlers configured")
       }
       val dynamoHandlers: String = {

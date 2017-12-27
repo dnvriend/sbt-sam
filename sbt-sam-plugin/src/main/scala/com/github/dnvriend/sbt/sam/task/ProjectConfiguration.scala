@@ -4,10 +4,20 @@ import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
 import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Kinesis, Policies, SNS}
 
-case class SamCFTemplateName(value: String)
-case class SamS3BucketName(value: String)
+import scala.util.matching.Regex
+
+case class SamCFTemplateName(value: String) {
+  val templateNameRegex: Regex = """[a-zA-Z][-a-zA-Z0-9]*""".r
+  require(templateNameRegex.findFirstIn(value).isDefined, s"CloudFormation template name, with name '$value', must satisfy regular expression pattern: [a-zA-Z][-a-zA-Z0-9]*")
+}
+case class SamS3BucketName(value: String) {
+  val bucketNameRegex: Regex = """^([a-z]|(\d(?!\d{0,2}\.\d{1,3}\.\d{1,3}\.\d{1,3})))([a-z\d]|(\.(?!(\.|-)))|(-(?!\.))){1,61}[a-z\d\.]$""".r
+  require(bucketNameRegex.findFirstIn(value).exists(name => name.length > 3 && name.length < 63), s"Bucket name with name '$value', should be between 3 and 63 characters long")
+}
 case class SamResourcePrefixName(value: String)
-case class SamStage(value: String)
+case class SamStage(value: String) {
+  require(!List("-", ".", " ", "/").exists(char => value.contains(char)), s"sam stage with value '$value', should not contain '.', '-', '/' or spaces")
+}
 case class SamResources(lambdas: Set[LambdaHandler],
                         tables: Set[DynamoDb.TableWithIndex],
                         policies: Set[Policies.Policy],
@@ -26,11 +36,13 @@ object ProjectConfiguration {
     amazonUser: AmazonUser,
     samResources: SamResources,
     ): ProjectConfiguration = {
+    val cfTemplateName = samCFTemplateName.replace(".", "-").replace(" ", "")
+    val s3BucketName = samS3BucketName.replace(".", "-").replace(" ", "")
     ProjectConfiguration(
       projectName,
       projectVersion,
-      SamS3BucketName(samS3BucketName),
-      SamCFTemplateName(samCFTemplateName),
+      SamS3BucketName(s3BucketName),
+      SamCFTemplateName(cfTemplateName),
       SamStage(samStage),
       SamResourcePrefixName(samResourcePrefixName),
       credentialsRegionAndUser,
