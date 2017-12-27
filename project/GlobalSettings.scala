@@ -44,9 +44,15 @@ object GlobalSettings extends AutoPlugin {
     scalacOptions += "-Ydelambdafy:inline",
     scalacOptions += "-unchecked",
     scalacOptions += "-deprecation",
-    scalacOptions += "-language:higherKinds",
-    scalacOptions += "-language:implicitConversions",
     scalacOptions += "-feature",
+    scalacOptions ++= Seq(
+      "-encoding", "utf-8",                // Specify character encoding used by source files.
+      "-explaintypes",                     // Explain type errors in more detail.
+      "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
+      "-language:higherKinds",             // Allow higher-kinded types
+      "-language:implicitConversions",     // Allow definition of implicit functions called views
+      "-target:jvm-1.8",                   // Generate Java 8 byte code
+    )
   )
 
   lazy val publishSourcesAndDocsSettings = Seq(

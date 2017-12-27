@@ -3,9 +3,11 @@ import sbt._
 object LibraryDependencies {
   // libraries
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.255"
-  val libDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.253"
+  val libAwsDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.255"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
-  val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "1.2.0"
+  val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.0.2"
+  val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.1"
+  val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.58"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.2"
   val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.8.0"
   val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.18"
