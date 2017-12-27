@@ -339,6 +339,12 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.6 (2017-12-27)
+- Support for AWS Encryption SDK
+- Two new ApiGatewayHandlers: `JsonApiGatewayHandler` and `JsonDApiGatewayHandler`
+- Fix for `samDeploy` that resolved to incorrect cloudformation-create-update flow
+- HttpHandlers show handlerName and httpMethod and httpPath when calling `samInfo`
+
 ## 1.0.5 (2017-12-26)
 - Fix for `samLogs`
   - resolving the correct logGroup and logStream for the function,
@@ -346,8 +352,8 @@ The 'default cli config' file:
 
 ## 1.0.4 (2017-12-25)
 - Support for logging lambda log output with `samLogs`
-- Two repositories: `BinaryRepository` and `JsonRepository`
-- Two new ApiGatewayHandlers: `BinaryRepositoryApiGatewayHandler` and `JsonRepositoryApiGatewayHandler`
+- Two new repositories: `BinaryRepository` and `JsonRepository`
+- Two new ApiGatewayHandlers: `BinaryDynamoRepoApiGatewayHandler` and `JsonDynamoRepoApiGatewayHandler`
 
 ## 1.0.3 (2017-12-25)
 - Support for Kinesis Resources
