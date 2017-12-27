@@ -19,8 +19,7 @@ trait BinaryRepository {
   /**
    * Deletes a value with key 'id'
    */
-  def delete(id: String): Unit = {
-  }
+  def delete(id: String): Unit
 
   /**
    * Returns a list of values, default 100 items

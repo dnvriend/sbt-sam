@@ -1,7 +1,7 @@
 package com.github.dnvriend.lambda.generators
 
 import org.scalacheck._
-import play.api.libs.json.{ JsValue, Json }
+import play.api.libs.json.{ Format, JsValue, Json }
 
 trait Generators extends LambdaEventGenerators with JsValueGenerator
 object Generators extends Generators
@@ -249,6 +249,10 @@ trait DynamoDbUpdateEventGenerator {
   implicit val dynamodbUpdateEventArb: Arbitrary[DynamoDbUpdateEventGen] = Arbitrary(dynamodbUpdateEventGen)
 }
 
+object ApiGatewayEventGenBody {
+  implicit val format: Format[ApiGatewayEventGenBody] = Json.format
+}
+final case class ApiGatewayEventGenBody(test: String)
 final case class ApiGatewayEventGen(json: String, value: String)
 trait ApiGatewayEventGenerator {
   def apiGatewayEventJson(value: String) = {

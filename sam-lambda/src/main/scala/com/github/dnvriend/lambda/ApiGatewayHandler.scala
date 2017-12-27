@@ -18,7 +18,7 @@ import java.io.{ InputStream, OutputStream }
 
 import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 import com.github.dnvriend.ops.AllOps
-import play.api.libs.json.{ JsString, JsValue, Json }
+import play.api.libs.json._
 
 trait ApiGatewayHandler extends RequestStreamHandler with AllOps {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
@@ -31,5 +31,8 @@ trait ApiGatewayHandler extends RequestStreamHandler with AllOps {
     output.close()
   }
 
+  /**
+   * Handle an ApiGateway Event
+   */
   def handle(request: HttpRequest, ctx: SamContext): HttpResponse
 }
