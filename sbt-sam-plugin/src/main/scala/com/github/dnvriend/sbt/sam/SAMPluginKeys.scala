@@ -41,8 +41,8 @@ object SAMPluginKeys {
   lazy val samDeleteCloudFormationStack = TaskKey[Unit]("Deletes the cloud formation stack")
   lazy val samCreateCloudFormationStack = TaskKey[Unit]("Create the cloud formation stack")
   lazy val samUpdateCloudFormationStack = TaskKey[Unit]("Update the cloud formation stack")
-  lazy val samDescribeCloudFormationStackForCreate = TaskKey[Option[Stack]]("Determine the state of the cloud")
-  lazy val samDescribeCloudFormationStack = TaskKey[Option[Stack]]("Determine the state of the cloud")
+  lazy val samDescribeCloudFormationStackForCreate = TaskKey[Option[Stack]]("Determine the state of the cloud for create")
+  lazy val samDescribeCloudFormationStack = TaskKey[Option[Stack]]("Determine the state of the cloud for update or delete")
   lazy val samServiceEndpoint = TaskKey[Option[ServiceEndpoint]]("Shows the service endpoint")
 
   // resource tasks

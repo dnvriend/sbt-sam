@@ -36,7 +36,7 @@ object CloudFormationStackUpdate {
         Capability.CAPABILITY_IAM
       )
 
-      val changeSetResult = CloudFormationOperations.createChangeSet(settings, client)
+      val changeSetResult = CloudFormationOperations.createChangeSet(settings, client).valueOr(t => throw t)
 
       val latestEvent: ChangeSetEvent = CloudFormationOperations.waitForChangeSetAvailable(settings.stackName, settings.changeSetName, client) { event =>
         log.info(s"Change set status: ${event.status} - execution status: ${event.executionStatus} - " + Option(event.statusReason).filter(_ != "null").getOrElse(""))

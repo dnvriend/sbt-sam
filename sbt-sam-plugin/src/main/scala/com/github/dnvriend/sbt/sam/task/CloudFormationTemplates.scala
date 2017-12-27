@@ -176,7 +176,7 @@ object CloudFormationTemplates {
             "Key" -> jarName,
             "Version" -> latestVersion
           ),
-          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess", "AmazonSNSFullAccess", "AmazonKinesisFullAccess"),
+          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess", "AmazonSNSFullAccess", "AmazonKinesisFullAccess", "AWSKeyManagementServicePowerUser"),
           "Description" → config.description,
           "MemorySize" → config.memorySize,
           "Timeout" → config.timeout,

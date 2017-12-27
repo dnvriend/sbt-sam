@@ -239,7 +239,8 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def getStack(
     settings: DescribeStackSettings,
     client: AmazonCloudFormation): Option[Stack] = {
-    describeStack(settings, client).toOption.flatMap(_.getStacks.asScala.headOption)
+    val result = describeStack(settings, client)
+    result.toOption.flatMap(_.getStacks.asScala.headOption)
   }
 
   /**

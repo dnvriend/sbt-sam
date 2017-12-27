@@ -17,8 +17,7 @@ object CloudFormationStackDelete {
       CloudFormationOperations.deleteStack(
         DeleteStackSettings(
           StackName(config.samCFTemplateName.value)), client
-      )
-
+      ).valueOr(t => throw t)
       CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)
     } else {
       log.info("Skipping deleting cloud formation stack, it does not exist")

@@ -8,8 +8,8 @@ object SamLambdaSettings extends AutoPlugin {
 
   override def projectSettings = Seq(
     libraryDependencies += LibraryDependencies.libAwsDynamoDBSdk,
-    libraryDependencies += LibraryDependencies.libSecurityBouncyCastle,
-    libraryDependencies += LibraryDependencies.libAwsEncryptionSDK,
+    libraryDependencies += LibraryDependencies.libSecurityBouncyCastle % Provided,
+    libraryDependencies += LibraryDependencies.libAwsEncryptionSDK % Provided,
     libraryDependencies += LibraryDependencies.libAwsJavaSdk % Test
   ) ++ GlobalSettings.commonSettings
 }
