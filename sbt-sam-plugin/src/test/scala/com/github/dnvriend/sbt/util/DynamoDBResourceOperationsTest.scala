@@ -1,11 +1,16 @@
 package com.github.dnvriend.sbt.util
 
 import com.github.dnvriend.ops.AllOps
-import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.{ GlobalSecondaryIndex, HashKey, RangeKey, TableWithIndex }
+import com.github.dnvriend.sbt.resource.ResourceOperations
+import com.github.dnvriend.sbt.resource.dynamodb.model._
 import com.github.dnvriend.test.TestSpec
 
 class DynamoDBResourceOperationsTest extends TestSpec with AllOps {
-  "dynamodb config" should "read a simple table" in {
+  "dynamodb config" should "read an empty configuration" in {
+    ResourceOperations.retrieveDynamoDbTables("".tsc) shouldBe Set()
+  }
+
+  it should "read a simple table" in {
     ResourceOperations
       .retrieveDynamoDbTables(
         """

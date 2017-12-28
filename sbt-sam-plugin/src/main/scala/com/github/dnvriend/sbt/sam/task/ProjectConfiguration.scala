@@ -2,7 +2,10 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Kinesis, Policies, SNS}
+import com.github.dnvriend.sbt.resource.dynamodb.model._
+import com.github.dnvriend.sbt.resource.kinesis.model._
+import com.github.dnvriend.sbt.resource.sns.model._
+import com.github.dnvriend.sbt.resource.policy.model._
 
 import scala.util.matching.Regex
 
@@ -19,10 +22,10 @@ case class SamStage(value: String) {
   require(!List("-", ".", " ", "/").exists(char => value.contains(char)), s"sam stage with value '$value', should not contain '.', '-', '/' or spaces")
 }
 case class SamResources(lambdas: Set[LambdaHandler],
-                        tables: Set[DynamoDb.TableWithIndex],
-                        policies: Set[Policies.Policy],
-                        topics: Set[SNS.Topic],
-                        streams: Set[Kinesis.Stream]
+                        tables: Set[TableWithIndex],
+                        policies: Set[Policy],
+                        topics: Set[Topic],
+                        streams: Set[KinesisStream]
                        )
 object ProjectConfiguration {
   def fromConfig(
@@ -65,8 +68,8 @@ case class ProjectConfiguration(
     credentialsRegionAndUser: CredentialsRegionAndUser,
     amazonUser: AmazonUser,
     lambdas: Set[LambdaHandler],
-    tables: Set[DynamoDb.TableWithIndex],
-    policies: Set[Policies.Policy],
-    topics: Set[SNS.Topic],
-    streams: Set[Kinesis.Stream]
+    tables: Set[TableWithIndex],
+    policies: Set[Policy],
+    topics: Set[Topic],
+    streams: Set[KinesisStream]
 )

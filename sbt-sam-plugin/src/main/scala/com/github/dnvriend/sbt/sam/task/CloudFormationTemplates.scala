@@ -1,9 +1,10 @@
 package com.github.dnvriend.sbt.sam.task
 
+import com.github.dnvriend.sbt.resource.dynamodb.model._
+import com.github.dnvriend.sbt.resource.kinesis.model._
+import com.github.dnvriend.sbt.resource.sns.model._
+import com.github.dnvriend.sbt.resource.policy.model._
 import com.github.dnvriend.sbt.aws.task.TemplateBody
-import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
-import com.github.dnvriend.sbt.sam.task.Models.SNS.Topic
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Kinesis, Policies}
 import play.api.libs.json._
 
 import scalaz._
@@ -287,7 +288,7 @@ object CloudFormationTemplates {
   }
 
   private def parseStreamResource(config: ProjectConfiguration): JsValue = {
-    def mapStreamResource(stream: Kinesis.Stream): JsValue = {
+    def mapStreamResource(stream: KinesisStream): JsValue = {
       val streamName: String = s"${config.projectName}-${config.samStage.value}-${stream.name}"
       Json.obj(
         stream.configName -> Json.obj(
@@ -308,7 +309,7 @@ object CloudFormationTemplates {
     config.streams.foldMap(stream => mapStreamResource(stream))(JsMonoids.jsObjectMerge)
   }
 
-  private def parseDynamoDBResource(tables: Set[DynamoDb.TableWithIndex], projectName: String, stage: SamStage): JsObject = {
+  private def parseDynamoDBResource(tables: Set[TableWithIndex], projectName: String, stage: SamStage): JsObject = {
     def streamJson(table: TableWithIndex) = table.stream match {
       case Some(s) ⇒ Json.obj(
         table.configName → Json.obj(
@@ -351,7 +352,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def parsePolicies(policies: Set[Policies.Policy]): JsObject = {
+  private def parsePolicies(policies: Set[Policy]): JsObject = {
     policies.foldMap { policy ⇒
       Json.obj(
         policy.configName → Json.obj(
@@ -369,7 +370,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def attributeDefinitions(table: DynamoDb.TableWithIndex): JsArray = {
+  private def attributeDefinitions(table: TableWithIndex): JsArray = {
     def toJson(name: String, `type`: String): JsObject = Json.obj(
       "AttributeName" → name,
       "AttributeType" → `type`
@@ -394,7 +395,7 @@ object CloudFormationTemplates {
     objects.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def keySchemaToJson(hashKey: DynamoDb.HashKey, rangeKey: Option[DynamoDb.RangeKey]): JsArray = {
+  private def keySchemaToJson(hashKey: HashKey, rangeKey: Option[RangeKey]): JsArray = {
     val hashKeyJson = Json.obj(
       "AttributeName" → hashKey.name,
       "KeyType" → "HASH"
@@ -411,7 +412,7 @@ object CloudFormationTemplates {
     list.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def statementsToJson(statements: List[Policies.Statements]): JsArray = {
+  private def statementsToJson(statements: List[Statements]): JsArray = {
     statements.map { statement ⇒
       Json.obj(
         "Effect" → "Allow",
@@ -421,13 +422,13 @@ object CloudFormationTemplates {
     }.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def rolesToJson(roles: List[Policies.Role]): JsArray = {
+  private def rolesToJson(roles: List[Role]): JsArray = {
     roles.map { role ⇒
       Json.obj("Ref" → role.ref)
     }.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def indexesToJson(gsis: List[DynamoDb.GlobalSecondaryIndex]): JsArray = {
+  private def indexesToJson(gsis: List[GlobalSecondaryIndex]): JsArray = {
     val objects: List[JsObject] = gsis.map { index ⇒
       Json.obj(
         "IndexName" → index.indexName,

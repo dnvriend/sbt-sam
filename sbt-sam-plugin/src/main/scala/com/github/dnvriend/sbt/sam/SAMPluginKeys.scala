@@ -16,7 +16,10 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Kinesis, Policies, SNS }
+import com.github.dnvriend.sbt.resource.dynamodb.model._
+import com.github.dnvriend.sbt.resource.kinesis.model._
+import com.github.dnvriend.sbt.resource.sns.model._
+import com.github.dnvriend.sbt.resource.policy.model._
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -46,10 +49,10 @@ object SAMPluginKeys {
   lazy val samServiceEndpoint = TaskKey[Option[ServiceEndpoint]]("Shows the service endpoint")
 
   // resource tasks
-  lazy val dynamoDbTableResources = taskKey[Set[DynamoDb.TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
-  lazy val policyResources = taskKey[Set[Policies.Policy]]("Retrieves a set of policies, which are configured in the Lightbend Config.")
-  lazy val topicResources = taskKey[Set[SNS.Topic]]("Retrieves a set of topics, which are configured in the Lightbend Config.")
-  lazy val streamResources = taskKey[Set[Kinesis.Stream]]("Retrieves a set of streams, which are configured in the Lightbend Config.")
+  lazy val dynamoDbTableResources = taskKey[Set[TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
+  lazy val policyResources = taskKey[Set[Policy]]("Retrieves a set of policies, which are configured in the Lightbend Config.")
+  lazy val topicResources = taskKey[Set[Topic]]("Retrieves a set of topics, which are configured in the Lightbend Config.")
+  lazy val streamResources = taskKey[Set[KinesisStream]]("Retrieves a set of streams, which are configured in the Lightbend Config.")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")

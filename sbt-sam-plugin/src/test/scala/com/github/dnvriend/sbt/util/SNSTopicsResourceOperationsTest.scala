@@ -1,10 +1,15 @@
 package com.github.dnvriend.sbt.util
 
-import com.github.dnvriend.sbt.sam.task.Models.SNS.Topic
+import com.github.dnvriend.sbt.resource.ResourceOperations
+import com.github.dnvriend.sbt.resource.sns.model.Topic
 import com.github.dnvriend.test.TestSpec
 
 class SNSTopicsResourceOperationsTest extends TestSpec {
-  "sns config" should "read an sns topic" in {
+  "sns config" should "read an empty configuration" in {
+    ResourceOperations.retrieveTopics("".tsc) shouldBe Set()
+  }
+
+  it should "read an sns topic" in {
     ResourceOperations
       .retrieveTopics(
         """
