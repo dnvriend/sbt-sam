@@ -28,4 +28,12 @@ object Models {
 
   }
 
+  object Cognito {
+
+    case class Authpool(name: String, passwordPolicies: PasswordPolicies)
+
+    case class PasswordPolicies(minimumLength: Int, requireLowercase: Boolean, requireNumbers: Boolean, requireSymbols: Boolean, requireUppercase: Boolean)
+
+  }
+
 }

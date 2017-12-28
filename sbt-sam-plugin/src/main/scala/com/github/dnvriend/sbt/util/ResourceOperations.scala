@@ -1,8 +1,6 @@
 package com.github.dnvriend.sbt.util
 
-import java.io
-
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies, Cognito }
 import com.typesafe.config.{ Config, ConfigFactory }
 import pureconfig.error.ConfigReaderFailures
 import pureconfig.loadConfig
@@ -46,15 +44,30 @@ object ResourceOperations extends FunctionalOps {
     val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
     val policiesConfigAttempt: Disjunction[Throwable, Config] = conf.getConfig("policies").safe
 
-    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policies.Policy]] = policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
-      case (cName, conf) =>
-        loadConfig[Policies.Policy](conf).map(_.copy(configName = cName)).disjunction
-    }.sequenceU
+    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policies.Policy]] =
+      policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
+        case (cName, conf) =>
+          loadConfig[Policies.Policy](conf).map(_.copy(configName = cName)).disjunction
+      }.sequenceU
 
     (for {
       policiesConfig ← policiesConfigAttempt
       policies ← extractPolicies(policiesConfig)
     } yield policies).getOrElse(Nil).toSet
   }
+
+  def retrieveCognito(baseDir: File): Option[Cognito.Authpool] = {
+    val conf: Config = ConfigFactory.parseFile(baseDir / "conf" / "sam.conf")
+    val cognitoConfigAttempt: Disjunction[Throwable, Config] = conf.getConfig("cognito.AuthPool").safe
+
+    def extractCognito(cognito: Config): Disjunction[ConfigReaderFailures, Cognito.Authpool] =
+      loadConfig[Cognito.Authpool](cognito).disjunction
+
+    (for {
+      cognitoConfig <- cognitoConfigAttempt
+      cognito <- extractCognito(cognitoConfig)
+    } yield cognito).toOption
+  }
+
 }
 

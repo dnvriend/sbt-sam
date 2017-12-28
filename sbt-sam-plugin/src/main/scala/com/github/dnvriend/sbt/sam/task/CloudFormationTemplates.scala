@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.sam.task.Models.Cognito.{Authpool, PasswordPolicies}
 import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
 import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
 import play.api.libs.json._
@@ -41,8 +42,8 @@ object CloudFormationTemplates {
           parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage),
           ServerlessApi.resource(config),
-//          Cognito.UserPool.resource(config),
-//          Cognito.UserPoolClient.resource(config),
+          Cognito.UserPool.resource(config),
+          Cognito.UserPoolClient.resource(config),
 //          parsePolicies(config.policies),
         )
         ++ outputs(config)
@@ -317,7 +318,28 @@ object CloudFormationTemplates {
   }
 }
 
+trait ServerlessParameter
+
+object ServerlessParameters {
+  def ref(param: ServerlessParameter): JsObject = {
+    Json.obj("Ref" -> param.toString)
+  }
+
+  /**
+    * 'AWS::ApiGateway::RestApi' eg. 'gm3vkzgx9b'
+    */
+  case object ServerlessRestApi extends ServerlessParameter
+
+  /**
+    * 'AWS::ApiGateway::Stage' eg. 'Prod'
+    */
+  case object ServerlessRestApiProdStage extends ServerlessParameter
+
+}
+
+
 trait PseudoParameter
+
 object PseudoParameters {
   /**
     * Returns the param
@@ -407,28 +429,33 @@ object Cognito {
     /**
       * Returns a CloudFormation configuration based on the ProjectConfiguration
       */
-    def resource(config: ProjectConfiguration): JsObject = {
-      Json.obj(
-        logicalResourceId(config) -> (Json.obj(
-          "Type" -> "AWS::Cognito::UserPool"
-        ) ++ CloudFormation.properties(
-          propUserPoolName(config),
-          propAdminCreateUserConfig(config),
-          propPolicies(config),
-        ))
-      )
+    def resource(config: ProjectConfiguration): JsObject  = config.cognito match {
+
+      case Some(authPool) =>
+        Json.obj(
+          logicalResourceId(config) -> (Json.obj(
+            "Type" -> "AWS::Cognito::UserPool"
+          ) ++ CloudFormation.properties(
+            propUserPoolName(authPool),
+            propAdminCreateUserConfig(config),
+            propPolicies(authPool.passwordPolicies),
+          ))
+        )
+
+      case None => JsObject(Nil)
     }
 
     /**
       * A string used to name the user pool.
       */
-    def propUserPoolName(config: ProjectConfiguration): JsValue = {
-      Json.obj("UserPoolName" -> "auth_pool")
+    def propUserPoolName(authpool: Authpool): JsValue = {
+      Json.obj("UserPoolName" -> authpool.name)
     }
 
     /**
       * The type of configuration for creating a new user profile.
       */
+    //todo: fill in the details
     def propAdminCreateUserConfig(config: ProjectConfiguration): JsValue = {
       Json.obj("AdminCreateUserConfig" -> Json.obj(
         "AllowAdminCreateUserOnly" -> true,
@@ -439,15 +466,15 @@ object Cognito {
     /**
       * The policies associated with the Amazon Cognito user pool.
       */
-    def propPolicies(config: ProjectConfiguration): JsValue = {
+    def propPolicies(passwordPolicies: PasswordPolicies): JsValue = {
       Json.obj(
         "Policies" -> Json.obj(
           "PasswordPolicy" -> Json.obj(
-            "MinimumLength" -> 6,
-            "RequireLowercase" -> true,
-            "RequireNumbers" -> false,
-            "RequireSymbols" -> false,
-            "RequireUppercase" -> false
+            "MinimumLength" -> passwordPolicies.minimumLength,
+            "RequireLowercase" -> passwordPolicies.requireLowercase,
+            "RequireNumbers" -> passwordPolicies.requireNumbers,
+            "RequireSymbols" -> passwordPolicies.requireSymbols,
+            "RequireUppercase" -> passwordPolicies.requireUppercase
           )
         )
       )
@@ -492,7 +519,8 @@ object Cognito {
       "ServerlessUserPoolClient"
     }
 
-    def resource(config: ProjectConfiguration): JsObject = {
+    def resource(config: ProjectConfiguration): JsObject =  config.cognito match {
+      case Some(authPool) =>
       Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPoolClient",
@@ -503,6 +531,7 @@ object Cognito {
           propUserPoolId(config),
         ))
       )
+      case None => JsObject(Nil)
     }
 
     /**
@@ -651,8 +680,8 @@ object Swagger {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
           AmazonApiGatewayIntegration.swaggerExtension(config, handler),
-          responses,
-          security,
+        security(handler.httpConf.authorization),
+        responses,
         )
       )
     }
@@ -676,12 +705,22 @@ object Swagger {
             "x-amazon-apigateway-authorizer" -> Json.obj(
               "type" -> "cognito_user_pools",
               "providerARNs" -> Json.arr(
-                "arn:aws:cognito-idp:eu-west-1:015242279314:userpool/eu-west-1_V0UvYaYoz" //todo: replace hardcoded cognito arn with the one configured in the project
+                Json.obj(
+                "Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")
+                )
               ),
             )
           )
         )
       )
+    }
+
+    /**
+      * A declaration of which security schemes are applied for the API as a whole.
+      */
+    def security(authorized: Boolean): JsValue = authorized match {
+      case false => JsNull
+      case true => Json.obj("security" -> Json.arr(Json.obj("auth_pool" -> Json.arr())))
     }
 
     /**
@@ -698,10 +737,6 @@ object Swagger {
       */
     val responses = Json.obj("responses" -> Json.obj())
 
-    /**
-      * A declaration of which security schemes are applied for the API as a whole.
-      */
-    val security = Json.obj("security" -> Json.arr(Json.obj("auth_pool" -> Json.arr())))
   } // end parts
 
   /**

@@ -101,6 +101,11 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrievePolicies(baseDir)
     },
 
+    cognitoResources := {
+      val baseDir: File = baseDirectory.value
+      ResourceOperations.retrieveCognito(baseDir)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -113,7 +118,8 @@ object SAMPlugin extends AutoPlugin {
         SamResources(
           classifiedLambdas.value,
           dynamoDbTableResources.value,
-          policyResources.value
+          policyResources.value,
+          cognitoResources.value
         )
       )
     },

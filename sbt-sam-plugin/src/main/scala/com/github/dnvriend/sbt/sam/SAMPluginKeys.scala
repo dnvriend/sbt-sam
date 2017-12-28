@@ -16,7 +16,7 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies }
+import com.github.dnvriend.sbt.sam.task.Models.{ DynamoDb, Policies, Cognito }
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -47,6 +47,7 @@ object SAMPluginKeys {
   // resource tasks
   lazy val dynamoDbTableResources = taskKey[Set[DynamoDb.TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
   lazy val policyResources = taskKey[Set[Policies.Policy]]("Retrives a set of policies, which are configured in the Lightbend Config.")
+  lazy val cognitoResources = taskKey[Option[Cognito.Authpool]]("Tries to retrieve a cognito configuration, specified in the Lightbend Config .")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")
