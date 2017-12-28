@@ -18,15 +18,13 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
-import com.github.dnvriend.sbt.util.ResourceOperations
+import com.github.dnvriend.sbt.resource.ResourceOperations
 import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
 import sbtassembly.AssemblyKeys._
 import sbtassembly.AssemblyPlugin
-
-import scala.compat.Platform
 
 object SAMPlugin extends AutoPlugin {
 

@@ -1,10 +1,15 @@
 package com.github.dnvriend.sbt.util
 
-import com.github.dnvriend.sbt.sam.task.Models.Kinesis
+import com.github.dnvriend.sbt.resource.ResourceOperations
+import com.github.dnvriend.sbt.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.test.TestSpec
 
 class KinesisStreamsResourceOperationsTest extends TestSpec {
-  "kinesis streams config" should "read a stream" in {
+  "kinesis streams config" should "read an empty configuration" in {
+    ResourceOperations.retrieveStreams("".tsc) shouldBe Set()
+  }
+
+  it should "read a stream" in {
     ResourceOperations
       .retrieveStreams(
         """
@@ -17,7 +22,7 @@ class KinesisStreamsResourceOperationsTest extends TestSpec {
           |  }
           |}
         """.stripMargin.tsc) shouldBe Set(
-          Kinesis.Stream(
+          KinesisStream(
             name = "people-stream",
             configName = "People",
             retensionPeriodHours = 48,
@@ -49,20 +54,20 @@ class KinesisStreamsResourceOperationsTest extends TestSpec {
           |  }
           |}
         """.stripMargin.tsc) shouldBe Set(
-          Kinesis.Stream(
+          KinesisStream(
             name = "people-stream",
             configName = "People",
             retensionPeriodHours = 48,
             shardCount = 1,
             export = true
           ),
-          Kinesis.Stream(
+          KinesisStream(
             name = "people-stream2",
             configName = "People2",
             retensionPeriodHours = 24,
             export = true
           ),
-          Kinesis.Stream(
+          KinesisStream(
             name = "people-stream3",
             configName = "People3",
             retensionPeriodHours = 12,
