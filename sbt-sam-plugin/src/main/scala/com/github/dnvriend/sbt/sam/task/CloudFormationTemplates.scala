@@ -48,7 +48,7 @@ object CloudFormationTemplates {
           ServerlessApi.resource(config),
           Cognito.UserPool.resource(config),
           Cognito.UserPoolClient.resource(config),
-//          parsePolicies(config.policies),
+          //          parsePolicies(config.policies),
         )
         ++ outputs(config)
     )
@@ -184,7 +184,7 @@ object CloudFormationTemplates {
           "Timeout" → config.timeout,
           "Tracing" → "Active",
           "Environment" -> Json.obj(
-              "Variables" -> Json.obj(
+            "Variables" -> Json.obj(
               "STAGE" -> cfg.samStage.value,
               "PROJECT_NAME" -> cfg.projectName,
               "VERSION" -> cfg.projectVersion,
@@ -285,6 +285,7 @@ object CloudFormationTemplates {
         )
       )
     }
+
     config.topics.foldMap(topic => mapTopicResource(topic))(JsMonoids.jsObjectMerge)
   }
 
@@ -307,6 +308,7 @@ object CloudFormationTemplates {
         )
       )
     }
+
     config.streams.foldMap(stream => mapStreamResource(stream))(JsMonoids.jsObjectMerge)
   }
 
@@ -448,6 +450,7 @@ object CloudFormationTemplates {
 }
 
 trait PseudoParameter
+
 object PseudoParameters {
   /**
     * Returns the param
@@ -707,6 +710,7 @@ object Cognito {
       Json.obj("UserPoolId" -> Cognito.UserPool.logicalId(config))
     }
   }
+
 }
 
 object ServerlessApi {
@@ -741,7 +745,7 @@ object ServerlessApi {
       Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Serverless::Api",
-//          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
+          //          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
         ) ++ properties(
           propStageName(config),
           propDefinitionBody(config)
@@ -771,12 +775,13 @@ object Swagger {
   private def merge(parts: JsValue*): JsValue = {
     parts.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
+
   def spec(config: ProjectConfiguration): JsValue = {
     merge(
       Parts.swaggerVersion,
       Parts.info(config),
       Parts.paths(config),
-//      Parts.securityDefinitions(config),
+      //      Parts.securityDefinitions(config),
     )
   }
 
@@ -792,12 +797,12 @@ object Swagger {
     def info(config: ProjectConfiguration): JsValue = {
       val title = s"${config.projectName}-${config.samStage.value}"
       Json.obj(
-      "info" -> Json.obj(
-        "version" -> "2017-02-24T04:09:00Z",
-        "title" -> title
+        "info" -> Json.obj(
+          "version" -> "2017-02-24T04:09:00Z",
+          "title" -> title
+        )
       )
-    )
-  }
+    }
 
     /**
       * Required: The available paths and operations for the API.
@@ -817,7 +822,7 @@ object Swagger {
       */
     def path(config: ProjectConfiguration, path: String, handlersForPath: Set[HttpHandler]): JsValue = {
       val operations = handlersForPath.map(handler => operation(config, handler)).toList
-      Json.obj(path -> merge(operations:_*))
+      Json.obj(path -> merge(operations: _*))
     }
 
     /**
@@ -826,10 +831,10 @@ object Swagger {
     def operation(config: ProjectConfiguration, handler: HttpHandler) = {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
-          AmazonApiGatewayIntegration.swaggerExtension(config, handler),
-          responses,
-          security(handler.httpConf.authorization),
-        )
+        AmazonApiGatewayIntegration.swaggerExtension(config, handler),
+        responses,
+        security(handler.httpConf.authorization),
+      )
       )
     }
 
@@ -853,6 +858,7 @@ object Swagger {
               "type" -> "cognito_user_pools",
               "providerARNs" -> Json.arr(
                 Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
+              )
             )
           )
         )
@@ -917,4 +923,5 @@ object Swagger {
       Json.obj("uri" -> Json.obj("Fn::Sub" -> lambdaUri))
     }
   }
+
 }

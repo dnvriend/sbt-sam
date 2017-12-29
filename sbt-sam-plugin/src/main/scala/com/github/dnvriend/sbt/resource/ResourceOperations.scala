@@ -6,8 +6,8 @@ import com.github.dnvriend.sbt.resource.dynamodb.DynamoDBResourceOperations
 import com.github.dnvriend.sbt.resource.kinesis.KinesisResourceOperations
 import com.github.dnvriend.sbt.resource.policy.PolicyResourceOperations
 import com.github.dnvriend.sbt.resource.sns.SNSResourceOperations
-import com.typesafe.config.{Config, ConfigFactory}
-import sbt.{File, _}
+import com.typesafe.config.{ Config, ConfigFactory }
+import sbt.{ File, _ }
 
 object ResourceOperations extends ResourceOperations
 trait ResourceOperations extends FunctionalOps
