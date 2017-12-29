@@ -3,7 +3,7 @@ package com.github.dnvriend.sbt.sam.resource
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.test.TestSpec
 
-class CFKinesisStreamsResourceOperationsTest extends TestSpec {
+class KinesisStreamsResourceOperationsTest extends TestSpec {
   "kinesis streams config" should "read an empty configuration" in {
     ResourceOperations.retrieveStreams("".tsc) shouldBe Set()
   }

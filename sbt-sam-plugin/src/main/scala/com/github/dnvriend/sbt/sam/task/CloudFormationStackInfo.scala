@@ -12,7 +12,6 @@ import com.amazonaws.services.s3.model.{ AccessControlList, Bucket }
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import sbt.util.Logger
 
 import scala.collection.JavaConverters._
@@ -125,12 +124,14 @@ object CloudFormationStackInfo {
     val bucketsSummary: String = {
       def report(bucket: Bucket, location: String, acl: AccessControlList) = {
         import bucket._
+        val arn: String = s"arn:aws:s3:::$getName"
+        val grants = acl.getGrantsAsList.asScala.toList.foldMap(_.getPermission.toString)
         s"""
+           |  - BucketArn: $arn
            |  - BucketName: $getName
-           |  - Owner: $getOwner
-           |  - CreationDate: $getCreationDate
+           |  - grants: $grants
            |  - Location: $location
-           |  - permission: ${acl.getGrantsAsList.asScala.map(_.getPermission)}""".stripMargin
+           |  - CreationDate: $getCreationDate""".stripMargin
       }
       config.buckets.map { bucket =>
         val bucketName = BucketName(s"$projectName-$stage-${bucket.name}")
