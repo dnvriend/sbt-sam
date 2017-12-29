@@ -18,7 +18,7 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
-import com.github.dnvriend.sbt.resource.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
 import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._

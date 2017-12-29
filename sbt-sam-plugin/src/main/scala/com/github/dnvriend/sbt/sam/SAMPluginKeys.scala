@@ -16,10 +16,10 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.resource.dynamodb.model._
-import com.github.dnvriend.sbt.resource.kinesis.model._
-import com.github.dnvriend.sbt.resource.sns.model._
-import com.github.dnvriend.sbt.resource.policy.model._
+import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
+import com.github.dnvriend.sbt.sam.resource.kinesis.model._
+import com.github.dnvriend.sbt.sam.resource.sns.model._
+import com.github.dnvriend.sbt.sam.resource.policy.model._
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 

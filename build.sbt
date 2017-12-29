@@ -13,7 +13,7 @@ lazy val `sbt-sam` = (project in file("."))
 
 lazy val `sbt-sam-plugin` = (project in file("sbt-sam-plugin"))
   .dependsOn(`sam-ops`, `sbt-aws-plugin`, `sam-testing-lib` % "test->test")
-  .enablePlugins(SbtSamPluginSettings)
+  .enablePlugins(SbtSamPluginSettings, BuildInfoPlugin)
 
 lazy val `sbt-aws-plugin` = (project in file("sbt-aws-plugin"))
   .dependsOn(`sam-ops`, `sam-testing-lib` % "test->test")

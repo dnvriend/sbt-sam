@@ -2,10 +2,10 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
-import com.github.dnvriend.sbt.resource.dynamodb.model._
-import com.github.dnvriend.sbt.resource.kinesis.model._
-import com.github.dnvriend.sbt.resource.sns.model._
-import com.github.dnvriend.sbt.resource.policy.model._
+import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
+import com.github.dnvriend.sbt.sam.resource.kinesis.model._
+import com.github.dnvriend.sbt.sam.resource.sns.model._
+import com.github.dnvriend.sbt.sam.resource.policy.model._
 
 import scala.util.matching.Regex
 
@@ -13,9 +13,12 @@ case class SamCFTemplateName(value: String) {
   val templateNameRegex: Regex = """[a-zA-Z][-a-zA-Z0-9]*""".r
   require(templateNameRegex.findFirstIn(value).isDefined, s"CloudFormation template name, with name '$value', must satisfy regular expression pattern: [a-zA-Z][-a-zA-Z0-9]*")
 }
-case class SamS3BucketName(value: String) {
+
+object SamS3BucketName {
   val bucketNameRegex: Regex = """^([a-z]|(\d(?!\d{0,2}\.\d{1,3}\.\d{1,3}\.\d{1,3})))([a-z\d]|(\.(?!(\.|-)))|(-(?!\.))){1,61}[a-z\d\.]$""".r
-  require(bucketNameRegex.findFirstIn(value).exists(name => name.length > 3 && name.length < 63), s"Bucket name with name '$value', should be between 3 and 63 characters long")
+}
+case class SamS3BucketName(value: String) {
+  require(SamS3BucketName.bucketNameRegex.findFirstIn(value).exists(name => name.length > 3 && name.length < 63), s"Bucket name with name '$value', should be between 3 and 63 characters long")
 }
 case class SamResourcePrefixName(value: String)
 case class SamStage(value: String) {
@@ -50,11 +53,11 @@ object ProjectConfiguration {
       SamResourcePrefixName(samResourcePrefixName),
       credentialsRegionAndUser,
       amazonUser,
-      samResources.lambdas,
-      samResources.tables,
-      samResources.policies,
-      samResources.topics,
-      samResources.streams
+      samResources.lambdas.toList,
+      samResources.tables.toList,
+      samResources.policies.toList,
+      samResources.topics.toList,
+      samResources.streams.toList
     )
   }
 }
@@ -67,9 +70,16 @@ case class ProjectConfiguration(
     samResourcePrefixName: SamResourcePrefixName,
     credentialsRegionAndUser: CredentialsRegionAndUser,
     amazonUser: AmazonUser,
-    lambdas: Set[LambdaHandler],
-    tables: Set[TableWithIndex],
-    policies: Set[Policy],
-    topics: Set[Topic],
-    streams: Set[KinesisStream]
-)
+    lambdas: List[LambdaHandler] = List.empty,
+    tables: List[TableWithIndex] = List.empty,
+    policies: List[Policy] = List.empty,
+    topics: List[Topic] = List.empty,
+    streams: List[KinesisStream] = List.empty,
+) {
+  def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
+  def existHttpHandlers: Boolean = httpHandlers.nonEmpty
+  def scheduledEventHandlers: List[ScheduledEventHandler] = lambdas.collect({case h: ScheduledEventHandler => h})
+  def snsEventHandlers: List[SNSEventHandler] = lambdas.collect({case h: SNSEventHandler => h})
+  def dynamoHandlers: List[DynamoHandler] = lambdas.collect({case h: DynamoHandler => h})
+  def kinesisEventHandlers: List[KinesisEventHandler] = lambdas.collect({case h: KinesisEventHandler => h})
+}
