@@ -34,5 +34,7 @@ case class HttpResponse(statusCode: Int, body: JsValue, headers: Map[String, Str
 
   def notFound: HttpResponse = copy(statusCode = 404)
 
+  def validationError: HttpResponse = copy(statusCode = 400)
+
   def serverError: HttpResponse = copy(statusCode = 500)
 }

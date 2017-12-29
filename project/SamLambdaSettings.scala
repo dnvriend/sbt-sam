@@ -6,6 +6,10 @@ object SamLambdaSettings extends AutoPlugin {
   override def trigger = noTrigger
   override def requires = plugins.JvmPlugin
 
-  override def projectSettings =
-    GlobalSettings.commonSettings
+  override def projectSettings = Seq(
+    libraryDependencies += LibraryDependencies.libAwsDynamoDBSdk,
+    libraryDependencies += LibraryDependencies.libSecurityBouncyCastle % Provided,
+    libraryDependencies += LibraryDependencies.libAwsEncryptionSDK % Provided,
+    libraryDependencies += LibraryDependencies.libAwsJavaSdk % Test
+  ) ++ GlobalSettings.commonSettings
 }

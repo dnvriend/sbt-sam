@@ -1,13 +1,15 @@
 package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
-import com.github.dnvriend.sbt.sam.task.Models.Cognito.{Authpool, PasswordPolicies}
-import com.github.dnvriend.sbt.sam.task.Models.DynamoDb.TableWithIndex
-import com.github.dnvriend.sbt.sam.task.Models.{DynamoDb, Policies}
+import com.github.dnvriend.sbt.resource.cognito.model.{Authpool, PasswordPolicies}
+import com.github.dnvriend.sbt.resource.dynamodb.model._
+import com.github.dnvriend.sbt.resource.kinesis.model._
+import com.github.dnvriend.sbt.resource.policy.model._
+import com.github.dnvriend.sbt.resource.sns.model._
 import play.api.libs.json._
 
-import scalaz._
 import scalaz.Scalaz._
+import scalaz._
 
 object JsMonoids {
   val jsObjectMerge: Monoid[JsValue] = Monoid.instance({
@@ -39,8 +41,10 @@ object CloudFormationTemplates {
         samTransform ++
         resources(
           bucketResource("SbtSamDeploymentBucket", config.samS3BucketName.value),
-          parseLambdaHandlers(config.samS3BucketName, jarName, latestVersion, config.lambdas),
+          parseLambdaHandlers(config, config.samS3BucketName, jarName, latestVersion, config.lambdas),
           parseDynamoDBResource(config.tables, config.projectName, config.samStage),
+          parseTopicResource(config),
+          parseStreamResource(config),
           ServerlessApi.resource(config),
           Cognito.UserPool.resource(config),
           Cognito.UserPoolClient.resource(config),
@@ -111,10 +115,11 @@ object CloudFormationTemplates {
     )
   }
 
-  private def parseLambdaHandlers(bucketName: SamS3BucketName, jarName: String, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
+  private def parseLambdaHandlers(config: ProjectConfiguration, bucketName: SamS3BucketName, jarName: String, latestVersion: String, handlers: Set[LambdaHandler]): JsObject = {
     handlers.foldMap {
       case HttpHandler(lambdaConf, httpConf) ⇒
         parseLambdaHandler(
+          config,
           bucketName,
           jarName,
           latestVersion,
@@ -123,18 +128,47 @@ object CloudFormationTemplates {
         )
       case DynamoHandler(lambdaConf, dynamoConf) ⇒
         parseLambdaHandler(
+          config,
           bucketName,
           jarName,
           latestVersion,
           lambdaConf,
           dynamoDbStreamEvent(lambdaConf.simpleClassName, dynamoConf)
         )
+      case ScheduledEventHandler(lambdaConf, scheduleConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          scheduledEvent(lambdaConf.simpleClassName, scheduleConf)
+        )
+      case SNSEventHandler(lambdaConf, snsConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          snsEvent(lambdaConf.simpleClassName, snsConf, config.projectName, config.samStage.value)
+        )
+      case KinesisEventHandler(lambdaConf, kinesisConf) ⇒
+        parseLambdaHandler(
+          config,
+          bucketName,
+          jarName,
+          latestVersion,
+          lambdaConf,
+          kinesisEvent(lambdaConf.simpleClassName, kinesisConf, config.projectName, config.samStage.value)
+        )
     }
   }
 
-  private def parseLambdaHandler(samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
+  private def parseLambdaHandler(cfg: ProjectConfiguration, samS3BucketName: SamS3BucketName, jarName: String, latestVersion: String, config: LambdaConfig, event: JsObject): JsObject = {
+    val lambdaName = config.simpleClassName
     Json.obj(
-      config.simpleClassName → Json.obj(
+      lambdaName → Json.obj(
         "Type" → "AWS::Serverless::Function",
         "Properties" → Json.obj(
           "Handler" → s"${config.fqcn}::handleRequest",
@@ -144,20 +178,76 @@ object CloudFormationTemplates {
             "Key" -> jarName,
             "Version" -> latestVersion
           ),
-          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess"),
+          "Policies" → Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess", "AmazonSNSFullAccess", "AmazonKinesisFullAccess", "AWSKeyManagementServicePowerUser"),
           "Description" → config.description,
           "MemorySize" → config.memorySize,
           "Timeout" → config.timeout,
           "Tracing" → "Active",
+          "Environment" -> Json.obj(
+              "Variables" -> Json.obj(
+              "STAGE" -> cfg.samStage.value,
+              "PROJECT_NAME" -> cfg.projectName,
+              "VERSION" -> cfg.projectVersion,
+              "AWS_ACCOUNT_ID" -> CloudFormation.accountId
+            )
+          ),
+          "Tags" -> Json.obj(
+            "sbt:sam:projectName" -> cfg.projectName,
+            "sbt:sam:projectVersion" -> cfg.projectVersion,
+            "sbt:sam:stage" -> cfg.samStage.value
+          ),
           "Events" → event
         )
       )
     )
   }
 
-  private def apiGatewayEvent(eventName: String, httpConf: HttpConf): JsObject = {
+  private def kinesisEvent(eventName: String, conf: KinesisConf, projectName: String, stageName: String): JsObject = {
+    val prefix = s"$projectName-$stageName"
+    val streamName: String = s"$prefix-${conf.stream}"
+    val lambdaEventName = s"${eventName}KinesisEvent"
     Json.obj(
-      eventName -> Json.obj(
+      lambdaEventName -> Json.obj(
+        "Type" -> "Kinesis",
+        "Properties" -> Json.obj(
+          "Stream" -> CloudFormation.kinesisArn(streamName),
+          "StartingPosition" -> conf.startingPosition,
+          "BatchSize" -> conf.batchSize
+        )
+      )
+    )
+  }
+
+  private def snsEvent(eventName: String, conf: SNSConf, projectName: String, stageName: String): JsObject = {
+    val prefix = s"$projectName-$stageName"
+    val topicName: String = s"$prefix-${conf.topic}"
+    val lambdaEventName = s"${eventName}SNSEvent"
+    Json.obj(
+      lambdaEventName -> Json.obj(
+        "Type" -> "SNS",
+        "Properties" -> Json.obj(
+          "Topic" -> CloudFormation.snsArn(topicName)
+        )
+      )
+    )
+  }
+
+  private def scheduledEvent(eventName: String, scheduleConf: ScheduleConf): JsObject = {
+    val lambdaEventName = s"${eventName}ScheduleEvent"
+    Json.obj(
+      lambdaEventName -> Json.obj(
+        "Type" -> "Schedule",
+        "Properties" -> Json.obj(
+          "Schedule" -> scheduleConf.schedule
+        )
+      )
+    )
+  }
+
+  private def apiGatewayEvent(eventName: String, httpConf: HttpConf): JsObject = {
+    val lambdaEventName = s"${eventName}ApiEvent"
+    Json.obj(
+      lambdaEventName -> Json.obj(
         "Type" -> "Api",
         "Properties" -> Json.obj(
           "Path" -> httpConf.path,
@@ -168,20 +258,59 @@ object CloudFormationTemplates {
   }
 
   private def dynamoDbStreamEvent(eventName: String, dynamoConf: DynamoConf): JsObject = {
+    val lambdaEventName = s"${eventName}DynamoDBStreamEvent"
     Json.obj(
-      eventName → Json.obj(
+      lambdaEventName → Json.obj(
         "Type" → "DynamoDB",
         "Properties" → Json.obj(
-          "Stream" → Json.obj(
-            "Fn::GetAtt" → Json.arr(dynamoConf.tableName, "StreamArn")
-          ),
+          "Stream" → CloudFormation.getAtt(dynamoConf.tableName, "StreamArn"),
           "BatchSize" → dynamoConf.batchSize,
           "StartingPosition" → dynamoConf.startingPosition
         )
       ))
   }
 
-  private def parseDynamoDBResource(tables: Set[DynamoDb.TableWithIndex], projectName: String, stage: SamStage): JsObject = {
+  private def parseTopicResource(config: ProjectConfiguration): JsValue = {
+    def mapTopicResource(topic: Topic): JsValue = {
+      val prefix = s"${config.projectName}-${config.samStage.value}"
+      val topicName: String = s"$prefix-${topic.name}"
+      val displayName: String = s"$prefix-${topic.displayName}"
+      Json.obj(
+        topic.configName -> Json.obj(
+          "Type" -> "AWS::SNS::Topic",
+          "Properties" -> Json.obj(
+            "DisplayName" -> displayName,
+            "TopicName" -> topicName
+          )
+        )
+      )
+    }
+    config.topics.foldMap(topic => mapTopicResource(topic))(JsMonoids.jsObjectMerge)
+  }
+
+  private def parseStreamResource(config: ProjectConfiguration): JsValue = {
+    def mapStreamResource(stream: KinesisStream): JsValue = {
+      val streamName: String = s"${config.projectName}-${config.samStage.value}-${stream.name}"
+      Json.obj(
+        stream.configName -> Json.obj(
+          "Type" -> "AWS::Kinesis::Stream",
+          "Properties" -> Json.obj(
+            "Name" -> streamName,
+            "ShardCount" -> stream.shardCount,
+            "RetentionPeriodHours" -> stream.retensionPeriodHours,
+            "Tags" -> Json.arr(
+              Json.obj("Key" -> "sbt:sam:projectName", "Value" -> config.projectName),
+              Json.obj("Key" -> "sbt:sam:projectVersion", "Value" -> config.projectVersion),
+              Json.obj("Key" -> "sbt:sam:stage", "Value" -> config.samStage.value)
+            )
+          )
+        )
+      )
+    }
+    config.streams.foldMap(stream => mapStreamResource(stream))(JsMonoids.jsObjectMerge)
+  }
+
+  private def parseDynamoDBResource(tables: Set[TableWithIndex], projectName: String, stage: SamStage): JsObject = {
     def streamJson(table: TableWithIndex) = table.stream match {
       case Some(s) ⇒ Json.obj(
         table.configName → Json.obj(
@@ -224,7 +353,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def parsePolicies(policies: Set[Policies.Policy]): JsObject = {
+  private def parsePolicies(policies: Set[Policy]): JsObject = {
     policies.foldMap { policy ⇒
       Json.obj(
         policy.configName → Json.obj(
@@ -242,7 +371,7 @@ object CloudFormationTemplates {
     }
   }
 
-  private def attributeDefinitions(table: DynamoDb.TableWithIndex): JsArray = {
+  private def attributeDefinitions(table: TableWithIndex): JsArray = {
     def toJson(name: String, `type`: String): JsObject = Json.obj(
       "AttributeName" → name,
       "AttributeType" → `type`
@@ -267,7 +396,7 @@ object CloudFormationTemplates {
     objects.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def keySchemaToJson(hashKey: DynamoDb.HashKey, rangeKey: Option[DynamoDb.RangeKey]): JsArray = {
+  private def keySchemaToJson(hashKey: HashKey, rangeKey: Option[RangeKey]): JsArray = {
     val hashKeyJson = Json.obj(
       "AttributeName" → hashKey.name,
       "KeyType" → "HASH"
@@ -284,7 +413,7 @@ object CloudFormationTemplates {
     list.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def statementsToJson(statements: List[Policies.Statements]): JsArray = {
+  private def statementsToJson(statements: List[Statements]): JsArray = {
     statements.map { statement ⇒
       Json.obj(
         "Effect" → "Allow",
@@ -294,13 +423,13 @@ object CloudFormationTemplates {
     }.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def rolesToJson(roles: List[Policies.Role]): JsArray = {
+  private def rolesToJson(roles: List[Role]): JsArray = {
     roles.map { role ⇒
       Json.obj("Ref" → role.ref)
     }.foldLeft(Json.arr())((arr, a) ⇒ arr ++ Json.arr(a))
   }
 
-  private def indexesToJson(gsis: List[DynamoDb.GlobalSecondaryIndex]): JsArray = {
+  private def indexesToJson(gsis: List[GlobalSecondaryIndex]): JsArray = {
     val objects: List[JsObject] = gsis.map { index ⇒
       Json.obj(
         "IndexName" → index.indexName,
@@ -318,28 +447,7 @@ object CloudFormationTemplates {
   }
 }
 
-trait ServerlessParameter
-
-object ServerlessParameters {
-  def ref(param: ServerlessParameter): JsObject = {
-    Json.obj("Ref" -> param.toString)
-  }
-
-  /**
-    * 'AWS::ApiGateway::RestApi' eg. 'gm3vkzgx9b'
-    */
-  case object ServerlessRestApi extends ServerlessParameter
-
-  /**
-    * 'AWS::ApiGateway::Stage' eg. 'Prod'
-    */
-  case object ServerlessRestApiProdStage extends ServerlessParameter
-
-}
-
-
 trait PseudoParameter
-
 object PseudoParameters {
   /**
     * Returns the param
@@ -417,6 +525,50 @@ object CloudFormation {
   def getAtt(logicalName: String, attributeName: String): JsObject = {
     Json.obj("Fn::GetAtt" -> Json.arr(logicalName, attributeName))
   }
+
+  /**
+    * Substitutes variables in an input string with their associated values at runtime.
+    * Variables can be template parameter names, resource logical IDs or resource attributes.
+    */
+  def subst(input: String): JsObject = Json.obj("Fn::Sub" -> input)
+
+  /**
+    * Returns the AWS account id eg '123456789012'
+    */
+  def accountId: JsObject = subst("${AWS::AccountId}")
+
+  /**
+    * Returns the AWS region eg: 'us-east-2'
+    */
+  def region: JsObject = subst("${AWS::Region}")
+
+  /**
+    * Returns the stack id eg: 'arn:aws:cloudformation:us-east-1:123456789012:stack/MyStack/1c2fa620-982a-11e3-aff7-50e2416294e0'
+    */
+  def stackId: JsObject = subst("${AWS::StackId}")
+
+  /**
+    * Returns the stack name eg: 'MyStack'
+    */
+  def stackName: JsObject = subst("${AWS::StackName}")
+
+  /**
+    * Returns the arn of an sns topic by means of subst
+    */
+  def snsArn(topicName: String): JsObject = {
+    // arn:aws:sns:eu-west-1:123456789:sam-dynamodb-seed-dnvriend-person-received
+    val snsInput = "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:" + topicName
+    subst(snsInput)
+  }
+
+  /**
+    * Returns the arn of a kinesis stream by means of subst
+    */
+  def kinesisArn(streamName: String): JsObject = {
+    // arn:aws:kinesis:eu-west-1:123456789:stream/sam-seed-test1-person-received
+    val kinesisInput = "arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/" + streamName
+    subst(kinesisInput)
+  }
 }
 
 object Cognito {
@@ -429,18 +581,16 @@ object Cognito {
     /**
       * Returns a CloudFormation configuration based on the ProjectConfiguration
       */
-    def resource(config: ProjectConfiguration): JsObject  = config.cognito match {
-
-      case Some(authPool) =>
-        Json.obj(
-          logicalResourceId(config) -> (Json.obj(
-            "Type" -> "AWS::Cognito::UserPool"
-          ) ++ CloudFormation.properties(
-            propUserPoolName(authPool),
-            propAdminCreateUserConfig(config),
-            propPolicies(authPool.passwordPolicies),
-          ))
-        )
+    def resource(config: ProjectConfiguration): JsObject = config.authpool match {
+      case Some(authPool) => Json.obj(
+        logicalResourceId(config) -> (Json.obj(
+          "Type" -> "AWS::Cognito::UserPool"
+        ) ++ CloudFormation.properties(
+          propUserPoolName(authPool),
+          propAdminCreateUserConfig(config),
+          propPolicies(authPool.passwordPolicies),
+        ))
+      )
 
       case None => JsObject(Nil)
     }
@@ -455,7 +605,6 @@ object Cognito {
     /**
       * The type of configuration for creating a new user profile.
       */
-    //todo: fill in the details
     def propAdminCreateUserConfig(config: ProjectConfiguration): JsValue = {
       Json.obj("AdminCreateUserConfig" -> Json.obj(
         "AllowAdminCreateUserOnly" -> true,
@@ -466,15 +615,15 @@ object Cognito {
     /**
       * The policies associated with the Amazon Cognito user pool.
       */
-    def propPolicies(passwordPolicies: PasswordPolicies): JsValue = {
+    def propPolicies(pwPolicies: PasswordPolicies): JsValue = {
       Json.obj(
         "Policies" -> Json.obj(
           "PasswordPolicy" -> Json.obj(
-            "MinimumLength" -> passwordPolicies.minimumLength,
-            "RequireLowercase" -> passwordPolicies.requireLowercase,
-            "RequireNumbers" -> passwordPolicies.requireNumbers,
-            "RequireSymbols" -> passwordPolicies.requireSymbols,
-            "RequireUppercase" -> passwordPolicies.requireUppercase
+            "MinimumLength" -> pwPolicies.minimumLength,
+            "RequireLowercase" -> pwPolicies.requireLowercase,
+            "RequireNumbers" -> pwPolicies.requireNumbers,
+            "RequireSymbols" -> pwPolicies.requireSymbols,
+            "RequireUppercase" -> pwPolicies.requireUppercase
           )
         )
       )
@@ -519,9 +668,8 @@ object Cognito {
       "ServerlessUserPoolClient"
     }
 
-    def resource(config: ProjectConfiguration): JsObject =  config.cognito match {
-      case Some(authPool) =>
-      Json.obj(
+    def resource(config: ProjectConfiguration): JsObject = config.authpool match {
+      case Some(authPool) => Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPoolClient",
           "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
@@ -531,6 +679,7 @@ object Cognito {
           propUserPoolId(config),
         ))
       )
+
       case None => JsObject(Nil)
     }
 
@@ -627,7 +776,7 @@ object Swagger {
       Parts.swaggerVersion,
       Parts.info(config),
       Parts.paths(config),
-      Parts.securityDefinitions(config),
+//      Parts.securityDefinitions(config),
     )
   }
 
@@ -654,23 +803,21 @@ object Swagger {
       * Required: The available paths and operations for the API.
       */
     def paths(config: ProjectConfiguration): JsValue = {
-      val handlers: Set[HttpHandler] = config.lambdas.collect {
+      val httpHandlers: Set[HttpHandler] = config.lambdas.collect {
         case h: HttpHandler => h
       }
-      Json.obj("paths" -> handlers.map(handler => path(config, handler)).foldMap(identity)(JsMonoids.jsObjectMerge))
+      val handersByPath: Map[String, Set[HttpHandler]] = httpHandlers.groupBy(_.httpConf.path)
+      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(config, resourcePath, handlers) }.toList
+      Json.obj("paths" -> pathsWithOperations.foldMap(identity)(JsMonoids.jsObjectMerge))
     }
 
     /**
       * A relative path to an individual endpoint. The field name MUST begin with a slash.
       * The path is appended to the basePath in order to construct the full URL.
       */
-    def path(config: ProjectConfiguration, handler: HttpHandler): JsValue = {
-      val path: String = handler.httpConf.path
-      Json.obj(
-        path -> merge(
-          operation(config, handler),
-        )
-      )
+    def path(config: ProjectConfiguration, path: String, handlersForPath: Set[HttpHandler]): JsValue = {
+      val operations = handlersForPath.map(handler => operation(config, handler)).toList
+      Json.obj(path -> merge(operations:_*))
     }
 
     /**
@@ -680,8 +827,8 @@ object Swagger {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
           AmazonApiGatewayIntegration.swaggerExtension(config, handler),
-        security(handler.httpConf.authorization),
-        responses,
+          responses,
+          security(handler.httpConf.authorization),
         )
       )
     }
@@ -705,10 +852,7 @@ object Swagger {
             "x-amazon-apigateway-authorizer" -> Json.obj(
               "type" -> "cognito_user_pools",
               "providerARNs" -> Json.arr(
-                Json.obj(
-                "Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")
-                )
-              ),
+                Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
             )
           )
         )
@@ -736,6 +880,7 @@ object Swagger {
       * An object to hold responses that can be used across operations.
       */
     val responses = Json.obj("responses" -> Json.obj())
+
 
   } // end parts
 

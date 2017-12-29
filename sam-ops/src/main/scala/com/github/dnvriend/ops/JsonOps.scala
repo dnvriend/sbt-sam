@@ -14,24 +14,16 @@
 
 package com.github.dnvriend.ops
 
-import java.io.OutputStream
-
 import play.api.libs.json._
 
-import scalaz._
 import scalaz.Scalaz._
+import scalaz._
 
 trait JsonOps {
   implicit def ToJsonOpsImpl(that: JsValue): JsonOpsImpl = new JsonOpsImpl(that)
-  implicit def ToOutputStreamOps[A <: Product: Writes](that: A) = new JsonToOutputStreamOps(that)
 }
 
 class JsonOpsImpl(that: JsValue) extends StringOps {
-  def resp: JsValue = {
-    println(s"Response\n${Json.prettyPrint(that)}")
-    that
-  }
-
   def escapedJson: JsValue = {
     Json.toJson(that.toString)
   }
@@ -57,17 +49,5 @@ class JsonOpsImpl(that: JsValue) extends StringOps {
       dropNullKeys = true,
       mappingStyle = io.circe.yaml.Printer.FlowStyle.Block
     ).pretty(jsonAST)
-  }
-
-  def validate[A: Reads]: Disjunction[Seq[(JsPath, Seq[JsonValidationError])], A] = {
-    that.validate[A].asEither.disjunction
-  }
-}
-
-class JsonToOutputStreamOps[A <: Product: Writes](that: A) extends StringOps with ByteArrayOps with AnyOps {
-  def write(os: OutputStream): Unit = {
-    val utf8EncodedArray: Array[Byte] = Json.toJson(that).toString().toUtf8Array.unwrap
-    os.write(utf8EncodedArray)
-    os.close()
   }
 }

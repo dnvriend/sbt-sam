@@ -147,22 +147,6 @@ final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: 
 
 final case class ServiceEndpoint(value: String)
 object SamStack {
-  implicit val show: Show[SamStack] = Show.shows(model => {
-    import model._
-    s"""
-       |====================
-       |Sam's State:
-       |====================
-       |Name: ${stack.getStackName}
-       |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
-       |Status: ${stack.getStackStatus}
-       |Status reason: ${Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")}
-       |Last updated: ${stack.getLastUpdatedTime}
-       |===================
-       |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
-       |===================
-     """.stripMargin
-  })
   def fromStack(stack: Stack): SamStack = {
     val outputs = stack.getOutputs.asScala.toList
     val serviceEndpoint: Option[ServiceEndpoint] =
@@ -255,7 +239,8 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def getStack(
     settings: DescribeStackSettings,
     client: AmazonCloudFormation): Option[Stack] = {
-    describeStack(settings, client).toOption.flatMap(_.getStacks.asScala.headOption)
+    val result = describeStack(settings, client)
+    result.toOption.flatMap(_.getStacks.asScala.headOption)
   }
 
   /**

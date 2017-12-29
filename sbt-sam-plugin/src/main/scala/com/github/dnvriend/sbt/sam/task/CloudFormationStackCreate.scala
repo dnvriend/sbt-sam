@@ -21,8 +21,7 @@ object CloudFormationStackCreate {
           CloudFormationTemplates.deploymentBucketTemplate(config),
           StackName(config.samCFTemplateName.value)),
         client
-      )
-
+      ).valueOr(t => throw t)
       CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)
     } else {
       log.info("Skipping creating cloud formation stack, it already exists")

@@ -23,6 +23,7 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
+import com.amazonaws.services.logs.AWSLogs
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.xray.AWSXRay
@@ -39,6 +40,7 @@ object AwsPluginKeys {
   lazy val clientKinesis = SettingKey[AmazonKinesis]("Returns the kinesis client")
   lazy val clientSns = SettingKey[AmazonSNS]("Returns the simple notification service client")
   lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
+  lazy val clientAwsLogs = SettingKey[AWSLogs]("Returns the amazon cloud watch logs client")
   lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
   lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
   lazy val clientCodeBuild = SettingKey[AWSCodeBuild]("AWS CodeBuild is a fully managed build service in the cloud. AWS CodeBuild compiles your source code, runs unit tests, and produces artifacts that are ready to deploy. AWS CodeBuild eliminates the need to provision, manage, and scale your own build servers")
@@ -46,7 +48,7 @@ object AwsPluginKeys {
 
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
-  lazy val lambdaGetFunction = inputKey[GetFunctionResult]("Returns the configuration information of the Lambda function")
+  lazy val lambdaGetFunction = inputKey[Option[GetFunctionResult]]("Returns the configuration information of the Lambda function")
   lazy val lambdaInvoke = inputKey[InvokeResult]("Invokes a specific Lambda function")
   lazy val lambdaMetrics = taskKey[LambdaMetrics]("Get metrics for all lambdas")
 
