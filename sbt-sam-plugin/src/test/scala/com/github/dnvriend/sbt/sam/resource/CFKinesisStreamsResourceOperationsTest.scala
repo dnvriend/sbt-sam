@@ -52,7 +52,7 @@ class CFKinesisStreamsResourceOperationsTest extends TestSpec {
           |     export = true
           |  }
           |}
-        """.stripMargin.tsc) shouldBe Set(
+        """.stripMargin.tsc) should contain allOf (
           KinesisStream(
             name = "people-stream",
             configName = "People",

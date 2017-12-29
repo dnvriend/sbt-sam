@@ -9,6 +9,7 @@ import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.mock.MockAWSCredentials
+import com.github.dnvriend.sbt.sam.resource.bucket.model.{S3Bucket, S3Website}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{GlobalSecondaryIndex, HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
@@ -23,7 +24,8 @@ trait Generators extends GenCFDynamoDBTable
   with GenTopic
   with GenGeneric
   with GenLambdaHandler
-  with GenTableWithIndex {
+  with GenTableWithIndex
+  with GenS3Bucket {
 
   val genSamS3BucketName = for {
     value <- Gen.const("sam-s3-deployment-bucket-name")
@@ -182,7 +184,7 @@ trait GenTopic extends GenGeneric {
 
 trait GenKinesisStream extends GenGeneric {
   val genKinesisStream = for {
-    name <- Gen.const("kinesisStreamName")
+    name <- Gen.const("kinesis-stream-name")
     configName <- genResourceConfName
     retensionPeriodHours <- Gen.posNum[Int]
     shardCount <- Gen.posNum[Int]
@@ -391,4 +393,29 @@ trait GenLambdaHandler extends GenGeneric {
   )
 
   val iterKinesisEventHandler: Iterator[KinesisEventHandler] = iterFor(genKinesisEventHandler)
+}
+
+trait GenS3Bucket extends GenGeneric {
+  val genS3Website = for {
+    indexDoc <- Gen.const("index.html")
+    errDoc <- Gen.const("error.html")
+  } yield S3Website(indexDoc, errDoc)
+
+  val genS3Bucket = for {
+    name <- Gen.const("S3BucketName")
+    accessControl <- Gen.const("Private")
+    configName <- genResourceConfName
+    website <- genS3Website
+  } yield S3Bucket(
+    name,
+    accessControl,
+    configName,
+    Some(website),
+    true,
+    true,
+    true,
+    true
+  )
+
+  val iterS3Bucket: Iterator[S3Bucket] = iterFor(genS3Bucket)
 }

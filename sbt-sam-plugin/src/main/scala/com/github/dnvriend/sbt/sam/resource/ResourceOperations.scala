@@ -1,8 +1,8 @@
 package com.github.dnvriend.sbt.sam.resource
 
 import sbt._
-
 import com.github.dnvriend.ops.FunctionalOps
+import com.github.dnvriend.sbt.sam.resource.bucket.S3BucketResourceOperations
 import com.github.dnvriend.sbt.sam.resource.dynamodb.DynamoDBResourceOperations
 import com.github.dnvriend.sbt.sam.resource.kinesis.KinesisResourceOperations
 import com.github.dnvriend.sbt.sam.resource.policy.PolicyResourceOperations
@@ -14,7 +14,8 @@ trait ResourceOperations extends FunctionalOps
   with DynamoDBResourceOperations
   with PolicyResourceOperations
   with SNSResourceOperations
-  with KinesisResourceOperations {
+  with KinesisResourceOperations
+  with S3BucketResourceOperations {
   /**
    * Loads the resource configuration from base path
    */

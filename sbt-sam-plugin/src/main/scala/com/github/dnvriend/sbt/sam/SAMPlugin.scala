@@ -120,6 +120,12 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveStreams(config)
     },
 
+    bucketResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveBuckets(config)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -135,7 +141,8 @@ object SAMPlugin extends AutoPlugin {
           dynamoDbTableResources.value,
           policyResources.value,
           topicResources.value,
-          streamResources.value
+          streamResources.value,
+          bucketResources.value,
         )
       )
     },
@@ -150,6 +157,7 @@ object SAMPlugin extends AutoPlugin {
         clientSns.value,
         clientKinesis.value,
         clientAwsLambda.value,
+        clientS3.value,
         streams.value.log
       )
     },

@@ -62,6 +62,20 @@ object S3Operations extends AwsProgressListenerOps {
   }
 
   /**
+   * Gets the geographical region where Amazon S3 stores the specified bucket.
+   */
+  def getBucketLocation(bucketId: BucketName, client: AmazonS3): Option[String] = {
+    Try(client.getBucketLocation(bucketId.value)).toOption
+  }
+
+  /**
+   * Each bucket and object in Amazon S3 has an ACL that defines its access control policy.
+   */
+  def getBucketACL(bucketId: BucketName, client: AmazonS3): Option[AccessControlList] = {
+    Try(client.getBucketAcl(bucketId.value)).toOption
+  }
+
+  /**
    * Creates a new Amazon S3 bucket with the specified name in the region that the client was created in. If no region or AWS S3 endpoint was specified when creating the client, the bucket will be created within the default (US) region, Region.US_Standard.
    */
   def createBucket(bucketId: BucketName, client: AmazonS3): Try[BucketName] = {

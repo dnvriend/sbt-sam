@@ -18,7 +18,10 @@ case class HttpConf(
                      path: String = "/",
                      method: String = "get",
                      authorization: Boolean = false,
-                   )
+                   ) {
+  require(path.startsWith("/"), s"field 'path', with value: '$path', must start with a '/'.")
+  require(List("get", "put", "post", "patch", "options", "head", "delete").contains(method.toLowerCase), s"""Field 'method' with value '$method', must be one of "get", "put", "post", "patch", "options", "head", "delete".""")
+}
 
 case class DynamoConf(
                        tableName: String = "",

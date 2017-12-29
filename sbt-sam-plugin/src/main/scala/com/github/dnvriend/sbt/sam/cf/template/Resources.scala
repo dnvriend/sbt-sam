@@ -1,7 +1,7 @@
 package com.github.dnvriend.sbt.sam.cf.template
 
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
-import com.github.dnvriend.sbt.sam.cf.resource.s3.S3Bucket
+import com.github.dnvriend.sbt.sam.cf.resource.s3.CFS3Bucket
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{ Json, Writes }
 
@@ -14,7 +14,7 @@ object Resources {
     Json.obj("Resources" -> resources.foldMap(Json.toJson(_))(JsMonoids.jsObjectMerge))
   })
 
-  def fromResources(s3Bucket: S3Bucket, resources: List[Resource] = List.empty): Resources = {
+  def fromResources(s3Bucket: CFS3Bucket, resources: List[Resource] = List.empty): Resources = {
     Resources(NonEmptyList(s3Bucket, resources: _*))
   }
 }

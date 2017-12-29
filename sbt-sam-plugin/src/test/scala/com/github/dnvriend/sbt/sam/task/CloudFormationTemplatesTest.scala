@@ -3,6 +3,7 @@ package com.github.dnvriend.sbt.sam.task
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.generators.Generators
+import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.TableWithIndex
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
@@ -36,19 +37,23 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val stream: KinesisStream = iterKinesisStream.next()
     val table: TableWithIndex = iterTableWithIndex.next()
     val topic: Topic = iterTopic.next()
+    val bucket: S3Bucket = iterS3Bucket.next()
     val jarName = "jarName"
     val latestVersion = "latestVersion"
     val conf = pc.copy(
       streams = List(stream),
       topics = List(topic),
       tables = List(table),
-      lambdas = List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler)
+      lambdas = List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
+      buckets = List(bucket)
     )
     val updateTemplate = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
+    val templateJsonString = Json.prettyPrint(template)
+    //    println(templateJsonString)
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]
-    resources.keys.size shouldBe 10 // stream, topic, table, 5x handler + 1 bucket + api
+    resources.keys.size shouldBe 11 // stream, topic, table, 5x handler + 2 bucket + api
   }
 }

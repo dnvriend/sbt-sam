@@ -13,10 +13,11 @@ import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.dynamodb.DynamoDBEve
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.kinesis.KinesisEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.schedule.ScheduledEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.sns.SnsEventSource
-import com.github.dnvriend.sbt.sam.cf.resource.s3.S3Bucket
+import com.github.dnvriend.sbt.sam.cf.resource.s3.{ CFS3Bucket, CFS3WebsiteConfiguration, S3AccessControl, VersioningConfigurationOption }
 import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
 import com.github.dnvriend.sbt.sam.cf.template._
 import com.github.dnvriend.sbt.sam.cf.template.output.ServerlessApiOutput
+import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{ HashKey, RangeKey, TableWithIndex }
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
@@ -32,7 +33,7 @@ object CloudFormationTemplates {
     val template: CloudFormationTemplate = CloudFormationTemplate(
       Description(config.samCFTemplateName.value),
       Resources.fromResources(
-        S3Bucket.deploymentBucket(
+        CFS3Bucket.deploymentBucket(
           config.samS3BucketName.value,
           ResourceTag.projectTags(
             config.projectName,
@@ -71,6 +72,7 @@ object CloudFormationTemplates {
         snsResources(projectName, stage, config.topics) ++
         dynamoDBResources(projectName, projectVersion, stage, config.tables) ++
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
+        bucketResources(projectName, projectVersion, stage, config.buckets) ++
         apiGatewayResource(projectName, stage, config.httpHandlers)
     }
 
@@ -115,11 +117,32 @@ object CloudFormationTemplates {
   /**
    * Determine the SAM S3 deployment bucket CloudFormation resource
    */
-  def samDeploymentBucket(projectName: String, projectVersion: String, stage: String, samS3BucketName: String): S3Bucket = {
-    S3Bucket.deploymentBucket(
+  def samDeploymentBucket(projectName: String, projectVersion: String, stage: String, samS3BucketName: String): CFS3Bucket = {
+    CFS3Bucket.deploymentBucket(
       samS3BucketName,
       ResourceTag.projectTags(projectName, projectVersion, stage)
     )
+  }
+
+  /**
+   * Determine S3 bucket resource
+   */
+  def bucketResource(projectName: String, projectVersion: String, stage: String, bucket: S3Bucket): Resource = {
+    CFS3Bucket(
+      bucket.configName,
+      S3AccessControl.fromName(bucket.accessControl),
+      createResourceName(projectName, stage, bucket.name),
+      VersioningConfigurationOption.fromBoolean(bucket.versioningEnabled),
+      ResourceTag.projectTags(projectName, projectVersion, stage),
+      bucket.website.map(website => CFS3WebsiteConfiguration(website.indexDocument, website.errorDocument))
+    )
+  }
+
+  /**
+   * Determine S3 bucket resources
+   */
+  def bucketResources(projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
+    buckets.map(bucket => bucketResource(projectName, projectVersion, stage, bucket))
   }
 
   /**

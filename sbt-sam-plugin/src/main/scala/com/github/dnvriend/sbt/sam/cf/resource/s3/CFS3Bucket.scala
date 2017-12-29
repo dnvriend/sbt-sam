@@ -3,7 +3,11 @@ package com.github.dnvriend.sbt.sam.cf.resource.s3
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
+import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{JsObject, JsValue, Json, Writes}
+
+import scalaz._
+import scalaz.Scalaz._
 
 object CorsRule {
   val writes: Writes[CorsRule] = Writes.apply(model => {
@@ -37,6 +41,10 @@ case class CorsRule(
   */
 trait S3AccessControl
 object S3AccessControl {
+
+  def fromName(name: String): S3AccessControl = name.toLowerCase.trim match {
+    case "private" => Private
+  }
 
   /**
     * Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.
@@ -89,27 +97,44 @@ object S3AccessControl {
   */
 trait VersioningConfigurationOption
 object VersioningConfigurationOption {
+  def fromBoolean(bool: Boolean): VersioningConfigurationOption = {
+    if(bool) Enabled else Suspended
+  }
   case object Enabled extends VersioningConfigurationOption
   case object Suspended extends VersioningConfigurationOption
 }
 
-object S3Bucket {
-  implicit val writes: Writes[S3Bucket] = Writes.apply(model => {
+object CFS3WebsiteConfiguration {
+  implicit val writes: Writes[CFS3WebsiteConfiguration] = Writes.apply(model => {
     import model._
+    Json.obj("WebsiteConfiguration" -> Json.obj(
+      "ErrorDocument" -> errorDocument,
+      "IndexDocument" -> indexDocument
+    ))
+  })
+}
+
+case class CFS3WebsiteConfiguration(indexDocument: String, errorDocument: String)
+
+object CFS3Bucket {
+  implicit val writes: Writes[CFS3Bucket] = Writes.apply(model => {
+    import model._
+    val properties: JsValue = NonEmptyList(
+      Json.obj("AccessControl" -> accessControl.toString),
+      Json.obj("BucketName" -> bucketName),
+      Json.obj( "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)),
+      Json.toJson(websiteConfiguration),
+    ).foldMap(identity)(JsMonoids.jsObjectMerge)
     Json.obj(
       logicalName -> Json.obj(
         "Type" -> "AWS::S3::Bucket",
-        "Properties" -> Json.obj(
-          "AccessControl" -> accessControl.toString,
-          "BucketName" -> bucketName,
-          "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)
-        )
+        "Properties" -> properties
       )
     )
   })
 
-  def deploymentBucket(bucketName: String, tags: List[ResourceTag]): S3Bucket = {
-    S3Bucket(
+  def deploymentBucket(bucketName: String, tags: List[ResourceTag]): CFS3Bucket = {
+    CFS3Bucket(
       "SbtSamDeploymentBucket",
       S3AccessControl.BucketOwnerFullControl,
       bucketName,
@@ -126,14 +151,14 @@ object S3Bucket {
   * To control how AWS CloudFormation handles the bucket when the stack is deleted, you can set a deletion policy
   * for your bucket. For Amazon S3 buckets, you can choose to retain the bucket or to delete the bucket.
   */
-final case class S3Bucket(
+final case class CFS3Bucket(
                            logicalName: String,
                            accessControl: S3AccessControl,
                            bucketName: String,
                            versioningConfiguration: VersioningConfigurationOption,
                            tags: List[ResourceTag] = List.empty,
-                           corsRules: List[CorsRule] = List.empty,
-                         ) extends Resource {
+                           websiteConfiguration: Option[CFS3WebsiteConfiguration] = None,
+                           ) extends Resource {
   require(tags.lengthCompare(8) < 0, "No more than 7 tags are allowed")
 
   def ref: JsValue = CloudFormation.ref(logicalName)

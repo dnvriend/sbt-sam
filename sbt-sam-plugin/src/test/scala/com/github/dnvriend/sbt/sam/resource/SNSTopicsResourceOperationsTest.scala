@@ -50,7 +50,7 @@ class SNSTopicsResourceOperationsTest extends TestSpec {
           |    export = true
           |  }
           |}
-        """.stripMargin.tsc) shouldBe Set(
+        """.stripMargin.tsc) should contain allOf (
           Topic(
             name = "people-stream",
             configName = "People",
