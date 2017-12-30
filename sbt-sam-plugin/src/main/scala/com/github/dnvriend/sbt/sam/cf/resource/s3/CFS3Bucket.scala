@@ -10,10 +10,9 @@ import scalaz._
 import scalaz.Scalaz._
 
 object CorsRule {
-  val writes: Writes[CorsRule] = Writes.apply(model => {
+  implicit val writes: Writes[CorsRule] = Writes.apply(model => {
     import model._
     Json.obj(
-      "Id" -> id,
       "MaxAge" -> maxAge,
       "AllowedHeaders" -> allowedHeaders,
       "AllowedMethods" -> allowedMethods,
@@ -21,6 +20,16 @@ object CorsRule {
       "ExposedHeaders" -> exposedHeaders,
     )
   })
+
+  final val AllowAllForWebsiteBucketCorsRules: List[CorsRule] = List(
+    CorsRule(
+      3000,
+      List("*"),
+      List("GET", "POST", "PUT", "HEAD"),
+      List("*"),
+      List.empty[String],
+    )
+  )
 }
 
 /**
@@ -28,13 +37,47 @@ object CorsRule {
   *
   */
 case class CorsRule(
-                     id: String,
+                     /**
+                       * The time in seconds that your browser is to cache the preflight response for the specified resource.
+                       */
                      maxAge: Int,
+
+                     /**
+                       * Headers that are specified in the Access-Control-Request-Headers header. These headers are allowed
+                       * in a preflight OPTIONS request. In response to any preflight OPTIONS request, Amazon S3 returns
+                       * any requested headers that are allowed.
+                       */
                      allowedHeaders: List[String],
+
+                     /**
+                       * An HTTP method that you allow the origin to execute. The valid values are GET, PUT, HEAD, POST, and DELETE.
+                       */
                      allowedMethods: List[String],
+
+                     /**
+                       * An origin that you allow to send cross-domain requests.
+                       */
                      allowedOrigins: List[String],
+
+                     /**
+                       * One or more headers in the response that are accessible to client applications
+                       * (for example, from a JavaScript XMLHttpRequest object).
+                       */
                      exposedHeaders: List[String],
                    )
+
+
+object CorsRules {
+  implicit val writes: Writes[CorsRules] = Writes.apply(model => {
+    import model._
+      Json.obj("CorsConfiguration" -> Json.obj(
+        "CorsRules" -> Json.toJson(corsRules)
+      )
+    )
+  })
+}
+
+case class CorsRules(corsRules: List[CorsRule])
 
 /**
   * A canned access control list (ACL) that grants predefined permissions to the bucket.
@@ -123,6 +166,7 @@ object CFS3Bucket {
       Json.obj("AccessControl" -> accessControl.toString),
       Json.obj("BucketName" -> bucketName),
       Json.obj( "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)),
+      Json.toJson(corsRules),
       Json.toJson(websiteConfiguration),
     ).foldMap(identity)(JsMonoids.jsObjectMerge)
     Json.obj(
@@ -139,7 +183,9 @@ object CFS3Bucket {
       S3AccessControl.BucketOwnerFullControl,
       bucketName,
       VersioningConfigurationOption.Enabled,
-      tags
+      tags,
+      Option.empty,
+      Option.empty
     )
   }
 }
@@ -158,6 +204,7 @@ final case class CFS3Bucket(
                            versioningConfiguration: VersioningConfigurationOption,
                            tags: List[ResourceTag] = List.empty,
                            websiteConfiguration: Option[CFS3WebsiteConfiguration] = None,
+                           corsRules: Option[CorsRules] = None,
                            ) extends Resource {
   require(tags.lengthCompare(8) < 0, "No more than 7 tags are allowed")
 

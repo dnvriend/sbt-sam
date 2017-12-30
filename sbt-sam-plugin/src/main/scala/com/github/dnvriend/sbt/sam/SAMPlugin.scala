@@ -126,6 +126,12 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveBuckets(config)
     },
 
+    s3FirehoseResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveS3Firehose(config)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -143,6 +149,7 @@ object SAMPlugin extends AutoPlugin {
           topicResources.value,
           streamResources.value,
           bucketResources.value,
+          s3FirehoseResources.value,
         )
       )
     },

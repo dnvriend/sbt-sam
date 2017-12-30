@@ -1,9 +1,10 @@
 package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
-import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody }
+import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody}
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
@@ -13,16 +14,18 @@ import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.dynamodb.DynamoDBEve
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.kinesis.KinesisEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.schedule.ScheduledEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.sns.SnsEventSource
-import com.github.dnvriend.sbt.sam.cf.resource.s3.{ CFS3Bucket, CFS3WebsiteConfiguration, S3AccessControl, VersioningConfigurationOption }
+import com.github.dnvriend.sbt.sam.cf.resource.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
 import com.github.dnvriend.sbt.sam.cf.template._
-import com.github.dnvriend.sbt.sam.cf.template.output.ServerlessApiOutput
+import com.github.dnvriend.sbt.sam.cf.template.output.{GenericOutput, ServerlessApiOutput}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
-import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{ HashKey, RangeKey, TableWithIndex }
+import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{HashKey, RangeKey, TableWithIndex}
+import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import play.api.libs.json._
 
+import scalaz._
 import scalaz.Scalaz._
 
 object CloudFormationTemplates {
@@ -55,7 +58,7 @@ object CloudFormationTemplates {
    * resource namespace.
    */
   def createResourceName(projectName: String, stage: String, resourceName: String): String = {
-    s"$projectName-$stage-$resourceName".toLowerCase
+    s"$projectName-$stage-$resourceName".toLowerCase.trim
   }
 
   /**
@@ -83,7 +86,15 @@ object CloudFormationTemplates {
         resources
       ),
       Option(Transform.samTransform),
-      determineOutputs(config.existHttpHandlers, stage)
+      determineOutputs(
+        projectName,
+        stage,
+        config.topics,
+        config.buckets,
+        config.streams,
+        config.s3Firehoses,
+        config.existHttpHandlers,
+      )
     )
     TemplateBody.fromJson(Json.toJson(template))
   }
@@ -134,7 +145,8 @@ object CloudFormationTemplates {
       createResourceName(projectName, stage, bucket.name),
       VersioningConfigurationOption.fromBoolean(bucket.versioningEnabled),
       ResourceTag.projectTags(projectName, projectVersion, stage),
-      bucket.website.map(website => CFS3WebsiteConfiguration(website.indexDocument, website.errorDocument))
+      bucket.website.map(website => CFS3WebsiteConfiguration(website.indexDocument, website.errorDocument)),
+      if(bucket.corsEnabled) Option(CorsRules(CorsRule.AllowAllForWebsiteBucketCorsRules)) else None
     )
   }
 
@@ -287,7 +299,65 @@ object CloudFormationTemplates {
   /**
    * Determine CloudFormation outputs
    */
-  def determineOutputs(existsLambdaHandlers: Boolean, stage: String): Option[Outputs] = {
-    if (existsLambdaHandlers) Option(Outputs(List(ServerlessApiOutput(stage)))) else None
+  def determineOutputs(
+                      projectName: String,
+                      stage: String,
+                      topics: List[Topic],
+                      buckets: List[S3Bucket],
+                      streams: List[KinesisStream],
+                      s3Firehoses: List[S3Firehose],
+                      exposeApiEndpoint: Boolean,
+                       ): Option[Outputs] = {
+    val endpointOutput = determineApiEndpointOutput(stage, exposeApiEndpoint)
+    val topicOutputs = topics.map(topic => determineTopicOuput(projectName, stage, topic))
+    val bucketsOutput = buckets.map(bucket => determineBucketOutput(projectName, stage, bucket))
+    val streamsOutput = streams.map(stream => determineStreamOutput(projectName, stage, stream))
+    val s3FirehosesOutput = s3Firehoses.map(s3Firehose => determineS3FirehoseOutput(projectName, stage, s3Firehose))
+
+    val listOfValidatedOutputs = (endpointOutput +: topicOutputs) ++ bucketsOutput ++ streamsOutput ++ s3FirehosesOutput
+    val validated = listOfValidatedOutputs.sequenceU
+    if(validated.isFailure) {
+      val message: String = validated.swap.foldMap(_.intercalate1(","))
+      println(message)
+    }
+    listOfValidatedOutputs.flatMap(_.toOption).toNel.map(nel => Outputs(nel.toList))
+  }
+
+  def determineApiEndpointOutput(stage: String, exposeApiEndpoint: Boolean): ValidationNel[String, Output] = {
+    Validation.lift(!exposeApiEndpoint)(identity, "No Api endpoint to expose").map { _ =>
+      ServerlessApiOutput(stage)
+    }.toValidationNel
+  }
+
+  def determineTopicOuput(projectName: String, stage: String, topic: Topic): ValidationNel[String, Output] = {
+    val topicName: String = createResourceName(projectName, stage, topic.name)
+    Validation.lift(!topic.export)(identity, s"SNS Topic: '$topicName, is not exported").map { _ =>
+      val description: String = s"SNS Topic export for project: '$projectName', for stage: '$stage'"
+      GenericOutput(description, topicName, CloudFormation.snsArn(topicName))
+    }.toValidationNel
+  }
+
+  def determineBucketOutput(projectName: String, stage: String, bucket: S3Bucket): ValidationNel[String, Output] = {
+    val bucketName: String = createResourceName(projectName, stage, bucket.name)
+    Validation.lift(!bucket.export)(identity, s"S3 Bucket: '$bucketName, is not exported").map { _ =>
+      val description: String = s"S3 Bucket export for project: '$projectName', for stage: '$stage'"
+      GenericOutput(description, bucketName, JsString(S3Bucket.arn(bucketName)))
+    }.toValidationNel
+  }
+
+  def determineStreamOutput(projectName: String, stage: String, stream: KinesisStream): ValidationNel[String, Output] = {
+    val streamName: String = createResourceName(projectName, stage, stream.name)
+    Validation.lift(!stream.export)(identity, s"Kinesis Stream: '$streamName, is not exported").map { _ =>
+      val description: String = s"Kinesis Stream export for project: '$projectName', for stage: '$stage'"
+      GenericOutput(description, streamName, CloudFormation.kinesisArn(streamName))
+    }.toValidationNel
+  }
+
+  def determineS3FirehoseOutput(projectName: String, stage: String, s3Firehose: S3Firehose): ValidationNel[String, Output] = {
+    val s3FirehoseName: String = createResourceName(projectName, stage, s3Firehose.name)
+    Validation.lift(!s3Firehose.export)(identity, s"S3 Firehose: '$s3FirehoseName, is not exported").map { _ =>
+      val description: String = s"Kinesis Stream export for project: '$projectName', for stage: '$stage'"
+      GenericOutput(description, s3FirehoseName, CloudFormation.firehoseDeliveryStreamArn(s3FirehoseName))
+    }.toValidationNel
   }
 }

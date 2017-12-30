@@ -11,6 +11,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.mock.MockAWSCredentials
 import com.github.dnvriend.sbt.sam.resource.bucket.model.{S3Bucket, S3Website}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{GlobalSecondaryIndex, HashKey, RangeKey, TableWithIndex}
+import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import com.github.dnvriend.sbt.sam.task._
@@ -25,7 +26,8 @@ trait Generators extends GenCFDynamoDBTable
   with GenGeneric
   with GenLambdaHandler
   with GenTableWithIndex
-  with GenS3Bucket {
+  with GenS3Bucket
+  with GenS3Firehose {
 
   val genSamS3BucketName = for {
     value <- Gen.const("sam-s3-deployment-bucket-name")
@@ -155,44 +157,6 @@ trait Generators extends GenCFDynamoDBTable
   implicit val arbProjectConfiguration: Arbitrary[ProjectConfiguration] = Arbitrary.apply(genProjectConfiguration)
 
   val iterProjectConfig: Iterator[ProjectConfiguration] = Stream.continually(genProjectConfiguration.sample).collect { case Some(x) => x }.iterator
-}
-
-trait GenGeneric {
-  val genResourceConfName = for {
-    logicalName <- Gen.const("ResourceConfigurationName").flatMap(name => Gen.uuid.map(id => s"$name-$id"))
-  } yield logicalName
-
-  val genAlphaNonEmpty = for {
-    value <- Gen.alphaStr.suchThat(_.nonEmpty)
-  } yield value
-
-  def iterFor[A](gen: Gen[A]): Iterator[A] = Stream.continually(gen.sample).collect { case Some(x) => x }.iterator
-}
-
-trait GenTopic extends GenGeneric {
-  val genTopic = for {
-    name <- Gen.const("snsTopicName")
-    configName <- genResourceConfName
-    displayName <- Gen.const("displayName")
-    topicName <- Gen.const("topicName")
-  } yield Topic(name, configName, displayName)
-
-  implicit val arbTopic: Arbitrary[Topic] = Arbitrary.apply(genTopic)
-
-  val iterTopic: Iterator[Topic] = iterFor(genTopic)
-}
-
-trait GenKinesisStream extends GenGeneric {
-  val genKinesisStream = for {
-    name <- Gen.const("kinesis-stream-name")
-    configName <- genResourceConfName
-    retensionPeriodHours <- Gen.posNum[Int]
-    shardCount <- Gen.posNum[Int]
-  } yield KinesisStream(name, configName, retensionPeriodHours, shardCount)
-
-  implicit val arbKinesisStream: Arbitrary[KinesisStream] = Arbitrary.apply(genKinesisStream)
-
-  val iterKinesisStream: Iterator[KinesisStream] = iterFor(genKinesisStream)
 }
 
 object GenCFDynamoDBTable extends GenCFDynamoDBTable
@@ -418,4 +382,69 @@ trait GenS3Bucket extends GenGeneric {
   )
 
   val iterS3Bucket: Iterator[S3Bucket] = iterFor(genS3Bucket)
+}
+
+trait GenGeneric {
+  val genResourceConfName = for {
+    logicalName <- Gen.const("ResourceConfigurationName").flatMap(name => Gen.uuid.map(id => s"$name-$id"))
+  } yield logicalName
+
+  val genAlphaNonEmpty = for {
+    value <- Gen.alphaStr.suchThat(_.nonEmpty)
+  } yield value
+
+  def iterFor[A](gen: Gen[A]): Iterator[A] = Stream.continually(gen.sample).collect { case Some(x) => x }.iterator
+}
+
+trait GenTopic extends GenGeneric {
+  val genTopic = for {
+    name <- Gen.const("snsTopicName")
+    configName <- genResourceConfName
+    displayName <- Gen.const("displayName")
+    topicName <- Gen.const("topicName")
+  } yield Topic(name, configName, displayName, true)
+
+  implicit val arbTopic: Arbitrary[Topic] = Arbitrary.apply(genTopic)
+
+  val iterTopic: Iterator[Topic] = iterFor(genTopic)
+}
+
+trait GenKinesisStream extends GenGeneric {
+  val genKinesisStream = for {
+    name <- Gen.const("kinesis-stream-name")
+    configName <- genResourceConfName
+    retensionPeriodHours <- Gen.posNum[Int]
+    shardCount <- Gen.posNum[Int]
+  } yield KinesisStream(name, configName, retensionPeriodHours, shardCount, true)
+
+  implicit val arbKinesisStream: Arbitrary[KinesisStream] = Arbitrary.apply(genKinesisStream)
+
+  val iterKinesisStream: Iterator[KinesisStream] = iterFor(genKinesisStream)
+}
+
+trait GenS3Firehose extends GenGeneric {
+  val genS3Firehose = for {
+    name <- Gen.const("s3-kinesis-firehose-delivery-stream-name")
+    bucketName <- Gen.const("s3-bucket-name")
+    configName <- genResourceConfName
+    roleArn <- Gen.const("role-arn")
+    kinesisStreamSource <- Gen.const("kinesis-stream-name")
+    compression <- Gen.const("uncompressed")
+    encryptionKeyArn <- Gen.const("encryption-key-arn")
+  } yield S3Firehose(
+    name,
+    bucketName,
+    configName,
+    roleArn,
+    Some(kinesisStreamSource),
+    Some(compression),
+    Some(encryptionKeyArn),
+    300,
+    5,
+    true
+  )
+
+  implicit val arbS3Firehose: Arbitrary[S3Firehose] = Arbitrary.apply(genS3Firehose)
+
+  val iterS3Firehose: Iterator[S3Firehose] = iterFor(genS3Firehose)
 }

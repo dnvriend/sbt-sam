@@ -12,6 +12,7 @@ import com.amazonaws.services.s3.model.{ AccessControlList, Bucket }
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import sbt.util.Logger
 
 import scala.collection.JavaConverters._
@@ -121,10 +122,10 @@ object CloudFormationStackInfo {
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No topics configured")
     }
 
-    val bucketsSummary: String = {
+    val s3BucketsSummary: String = {
       def report(bucket: Bucket, location: String, acl: AccessControlList) = {
         import bucket._
-        val arn: String = s"arn:aws:s3:::$getName"
+        val arn: String = S3Bucket.arn(getName)
         val grants = acl.getGrantsAsList.asScala.toList.foldMap(_.getPermission.toString)
         s"""
            |  - BucketArn: $arn
@@ -145,6 +146,19 @@ object CloudFormationStackInfo {
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report _ tupled)
           s"* ${Console.GREEN}${bucket.name}: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No buckets configured")
+    }
+
+    val s3FirehoseSummary: String = {
+      def report(str: String) = {
+        str
+      }
+      config.s3Firehoses.map { s3Firehose =>
+        (s3Firehose, Option.empty[String])
+      }.map {
+        case (s3Firehose, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${s3Firehose.name}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No S3 Firehose Data Delivery Streams configured")
     }
 
     val tablesSummary: String = {
@@ -280,8 +294,10 @@ object CloudFormationStackInfo {
         |$snsTopicsSummary
         |Kinesis Streams:
         |$kinesisStreamsSummary
-        |Buckets:
-        |$bucketsSummary
+        |S3 Firehose Data Delivery Streams:
+        |$s3FirehoseSummary
+        |S3 Buckets:
+        |$s3BucketsSummary
         |Endpoints:
         |$endpointSummary
       """.stripMargin

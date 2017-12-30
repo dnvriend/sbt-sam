@@ -4,6 +4,7 @@ import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
+import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.resource.policy.model._
@@ -31,6 +32,7 @@ case class SamResources(lambdas: Set[LambdaHandler],
                         topics: Set[Topic],
                         streams: Set[KinesisStream],
                         buckets: Set[S3Bucket],
+                        s3Firehoses: Set[S3Firehose],
                        )
 object ProjectConfiguration {
   def fromConfig(
@@ -61,6 +63,7 @@ object ProjectConfiguration {
       samResources.topics.toList,
       samResources.streams.toList,
       samResources.buckets.toList,
+      samResources.s3Firehoses.toList,
     )
   }
 }
@@ -79,6 +82,7 @@ case class ProjectConfiguration(
     topics: List[Topic] = List.empty,
     streams: List[KinesisStream] = List.empty,
     buckets: List[S3Bucket] = List.empty,
+    s3Firehoses: List[S3Firehose] = List.empty,
 ) {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty

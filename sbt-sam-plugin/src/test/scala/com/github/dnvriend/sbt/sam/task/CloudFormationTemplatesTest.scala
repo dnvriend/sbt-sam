@@ -5,6 +5,7 @@ import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.generators.Generators
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.TableWithIndex
+import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import com.github.dnvriend.test.TestSpec
@@ -35,6 +36,7 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val kinesisEventHandler: KinesisEventHandler = iterKinesisEventHandler.next()
     val dynamoHandler: DynamoHandler = iterDynamoHandler.next()
     val stream: KinesisStream = iterKinesisStream.next()
+    val s3Firehose: S3Firehose = iterS3Firehose.next()
     val table: TableWithIndex = iterTableWithIndex.next()
     val topic: Topic = iterTopic.next()
     val bucket: S3Bucket = iterS3Bucket.next()
@@ -45,12 +47,13 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
       topics = List(topic),
       tables = List(table),
       lambdas = List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
-      buckets = List(bucket)
+      buckets = List(bucket),
+      s3Firehoses = List(s3Firehose)
     )
     val updateTemplate = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
-    //    println(templateJsonString)
+    println(templateJsonString)
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]

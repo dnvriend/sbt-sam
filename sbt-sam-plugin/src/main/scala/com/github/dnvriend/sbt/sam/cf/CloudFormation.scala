@@ -80,4 +80,10 @@ object CloudFormation {
     val kinesisInput = "arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/" + streamName
     subst(kinesisInput)
   }
+
+  def firehoseDeliveryStreamArn(deliveryStreamName: String): JsObject = {
+    //  arn:aws:firehose:us-east-2:123456789012:deliverystream/delivery-stream-name
+    val firehoseDeliveryStreamInput = "arn:aws:firehose:${AWS::Region}:${AWS::AccountId}:deliverystream/" + deliveryStreamName
+    subst(firehoseDeliveryStreamInput)
+  }
 }

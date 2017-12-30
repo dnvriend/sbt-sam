@@ -12,7 +12,7 @@ class S3FirehoseResourceOperationsTest extends TestSpec {
     ResourceOperations
       .retrieveS3Firehose(
         """
-          |s3firehose {
+          |s3firehoses {
           |   ButtonClicked {
           |    name = "button-clicked-firehose" // A name for the delivery stream.
           |    buffering-interval-in-seconds = 100 // min=60, max 900; default 300

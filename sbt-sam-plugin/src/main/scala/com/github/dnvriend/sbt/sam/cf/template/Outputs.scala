@@ -1,6 +1,6 @@
 package com.github.dnvriend.sbt.sam.cf.template
 
-import com.github.dnvriend.sbt.sam.cf.template.output.ServerlessApiOutput
+import com.github.dnvriend.sbt.sam.cf.template.output.{ GenericOutput, ServerlessApiOutput }
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{ Json, Writes }
 
@@ -10,6 +10,7 @@ import scalaz.syntax.foldable._
 object Output {
   implicit val writes: Writes[Output] = Writes.apply {
     case out: ServerlessApiOutput => ServerlessApiOutput.writes.writes(out)
+    case out: GenericOutput       => GenericOutput.writes.writes(out)
   }
 }
 
@@ -22,4 +23,6 @@ object Outputs {
   })
 }
 
-case class Outputs(outputs: List[Output])
+case class Outputs(outputs: List[Output]) {
+  require(outputs.size <= 60, s"The number of outputs must be <= 60, this component defines '${outputs.size}' outputs")
+}
