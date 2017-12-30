@@ -49,7 +49,7 @@ trait Generators extends GenCFDynamoDBTable
     path <- genAlphaNonEmpty
     userName <- genAlphaNonEmpty
     userId <- genAlphaNonEmpty
-    arn <- genAlphaNonEmpty
+    arn <- Gen.const("arn:aws:iam::0123456789:user/dnvriend-git")
     createDate <- Gen.calendar.map(_.getTime)
   } yield new User(path, userName, userId, arn, createDate)
 
@@ -86,11 +86,11 @@ trait Generators extends GenCFDynamoDBTable
   } yield CredentialsRegionAndUser(credsProfileAndRegion, user)
 
   val genPartition = for {
-    value <- genAlphaNonEmpty
+    value <- Gen.const("aws")
   } yield Partition(value)
 
   val genService = for {
-    value <- genAlphaNonEmpty
+    value <- Gen.const("iam")
   } yield Service(value)
 
   val genRegion = for {
@@ -98,15 +98,15 @@ trait Generators extends GenCFDynamoDBTable
   } yield Region(region.getName)
 
   val genAccountId = for {
-    value <- genAlphaNonEmpty
+    value <- Gen.const("0123456789")
   } yield AccountId(value)
 
   val genResourceType = for {
-    value <- genAlphaNonEmpty
+    value <- Gen.const("user")
   } yield ResourceType(value)
 
   val genResource = for {
-    value <- genAlphaNonEmpty
+    value <- Gen.const("dnvriend-git")
   } yield Resource(value)
 
   val genArn = for {
@@ -116,7 +116,7 @@ trait Generators extends GenCFDynamoDBTable
     accountId <- genAccountId
     resourceType <- genResourceType
     resource <- genResource
-    arnString <- genAlphaNonEmpty
+    arnString <- Gen.const("arn:aws:iam::0123456789:user/dnvriend-git")
   } yield Arn(partition, service, region, accountId, resourceType, resource, arnString)
 
   val genDRegions = for {
@@ -434,9 +434,9 @@ trait GenS3Firehose extends GenGeneric {
   } yield S3Firehose(
     name,
     bucketName,
-    configName,
     roleArn,
-    Some(kinesisStreamSource),
+    kinesisStreamSource,
+    configName,
     Some(compression),
     Some(encryptionKeyArn),
     300,

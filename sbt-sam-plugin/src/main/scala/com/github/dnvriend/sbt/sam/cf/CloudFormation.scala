@@ -81,9 +81,26 @@ object CloudFormation {
     subst(kinesisInput)
   }
 
+  /**
+   * Returns the arn of a kinesis data firehose delivery stream
+   */
   def firehoseDeliveryStreamArn(deliveryStreamName: String): JsObject = {
     //  arn:aws:firehose:us-east-2:123456789012:deliverystream/delivery-stream-name
     val firehoseDeliveryStreamInput = "arn:aws:firehose:${AWS::Region}:${AWS::AccountId}:deliverystream/" + deliveryStreamName
     subst(firehoseDeliveryStreamInput)
+  }
+
+  /**
+   * Returns the arn of a role
+   */
+  def roleArn(accountId: String, roleName: String): String = {
+    s"arn:aws:iam::$accountId:role/$roleName"
+  }
+
+  /**
+   * Returns the arn of an s3 bucket
+   */
+  def bucketArn(bucketName: String): String = {
+    s"arn:aws:s3:::$bucketName"
   }
 }

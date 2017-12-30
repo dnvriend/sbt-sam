@@ -19,7 +19,15 @@ object ServerlessFunction {
             "Key" -> jarName,
             "Version" -> latestVersion
           ),
-          "Policies" -> Json.arr("AmazonDynamoDBFullAccess", "CloudWatchFullAccess", "CloudWatchLogsFullAccess", "AmazonSNSFullAccess", "AmazonKinesisFullAccess", "AWSKeyManagementServicePowerUser"),
+          "Policies" -> Json.arr(
+            "AmazonDynamoDBFullAccess",
+            "CloudWatchFullAccess",
+            "CloudWatchLogsFullAccess",
+            "AmazonSNSFullAccess",
+            "AmazonKinesisFullAccess",
+            "AWSKeyManagementServicePowerUser",
+            "AmazonKinesisFirehoseFullAccess",
+          ),
           "Description" -> description,
           "MemorySize" -> memorySize,
           "Timeout" -> timeout,

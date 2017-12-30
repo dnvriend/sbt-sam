@@ -57,6 +57,6 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]
-    resources.keys.size shouldBe 11 // stream, topic, table, 5x handler + 2 bucket + api
+    resources.keys.size shouldBe 12 // stream, firehose, topic, table, 5x handler + 2 bucket + api
   }
 }

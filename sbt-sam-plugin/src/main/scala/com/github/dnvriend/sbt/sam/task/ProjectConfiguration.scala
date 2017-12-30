@@ -1,7 +1,9 @@
 package com.github.dnvriend.sbt.sam.task
 
+import com.amazonaws.regions.Regions
+import com.github.dnvriend.ops.AnyOps
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
-import com.github.dnvriend.sbt.aws.task.AmazonUser
+import com.github.dnvriend.sbt.aws.task.{AmazonUser, Arn}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
@@ -83,11 +85,13 @@ case class ProjectConfiguration(
     streams: List[KinesisStream] = List.empty,
     buckets: List[S3Bucket] = List.empty,
     s3Firehoses: List[S3Firehose] = List.empty,
-) {
+) extends AnyOps {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty
   def scheduledEventHandlers: List[ScheduledEventHandler] = lambdas.collect({case h: ScheduledEventHandler => h})
   def snsEventHandlers: List[SNSEventHandler] = lambdas.collect({case h: SNSEventHandler => h})
   def dynamoHandlers: List[DynamoHandler] = lambdas.collect({case h: DynamoHandler => h})
   def kinesisEventHandlers: List[KinesisEventHandler] = lambdas.collect({case h: KinesisEventHandler => h})
+  def userArn: Arn = Arn.fromArnString(credentialsRegionAndUser.user.getArn.wrap[Arn])
+  def getRegion: Regions = credentialsRegionAndUser.credentialsAndRegion.region
 }

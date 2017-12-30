@@ -1,11 +1,13 @@
 package com.github.dnvriend.sbt.sam.task
 
-import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.amazonaws.regions.Regions
+import com.github.dnvriend.sbt.aws.task.{AccountId, TemplateBody}
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody}
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
+import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
@@ -76,6 +78,7 @@ object CloudFormationTemplates {
         dynamoDBResources(projectName, projectVersion, stage, config.tables) ++
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
         bucketResources(projectName, projectVersion, stage, config.buckets) ++
+        s3FirehoseResources(projectName, projectVersion, stage, config.userArn.accountId, config.getRegion, config.s3Firehoses) ++
         apiGatewayResource(projectName, stage, config.httpHandlers)
     }
 
@@ -155,6 +158,39 @@ object CloudFormationTemplates {
    */
   def bucketResources(projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
     buckets.map(bucket => bucketResource(projectName, projectVersion, stage, bucket))
+  }
+
+  /**
+    * Determine S3 Kinesis Data Firehose Resource
+    */
+  def s3FirehoseResource(projectName: String,
+                         projectVersion: String,
+                         stage: String,
+                         accountId: AccountId,
+                         regions: Regions,
+                         firehose: S3Firehose): Resource = {
+    CFS3Firehose(
+      firehose.configName,
+      CFS3FirehoseDeliveryStreamName(createResourceName(projectName, stage, firehose.name)),
+      CFS3FirehoseBucketArn.fromConfig(createResourceName(projectName, stage, firehose.bucketName)),
+      CFS3FirehoseKinesisStreamSourceConfiguration.fromConfig(accountId.value, regions.getName, createResourceName(projectName, stage, firehose.kinesisStreamSource), firehose.roleArn),
+      CFS3FirehoseKinesisStreamBufferingHints(firehose.bufferingIntervalInSeconds, firehose.bufferingSize),
+      None,
+      None,
+      None
+    )
+  }
+
+  /**
+    * Determine S3 Kinesis Data Firehose resources
+    */
+  def s3FirehoseResources(projectName: String,
+                          projectVersion: String,
+                          stage: String,
+                          accountId: AccountId,
+                          regions: Regions,
+                          s3Firehoses: List[S3Firehose]): List[Resource] = {
+    s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName, projectVersion, stage, accountId, regions, s3Firehose))
   }
 
   /**

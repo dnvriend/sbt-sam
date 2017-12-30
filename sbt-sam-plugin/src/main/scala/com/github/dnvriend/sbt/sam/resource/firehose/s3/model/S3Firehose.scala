@@ -3,9 +3,9 @@ package com.github.dnvriend.sbt.sam.resource.firehose.s3.model
 case class S3Firehose(
                      name: String,
                      bucketName: String,
-                     configName: String = "",
                      roleArn: String,
-                     kinesisStreamSource: Option[String] = None,
+                     kinesisStreamSource: String,
+                     configName: String = "",
                      compression: Option[String] = None,
                      encryptionKey: Option[String] = None,
                      bufferingIntervalInSeconds: Int = 300,

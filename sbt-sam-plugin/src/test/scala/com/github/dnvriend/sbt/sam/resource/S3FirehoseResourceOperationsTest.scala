@@ -29,9 +29,9 @@ class S3FirehoseResourceOperationsTest extends TestSpec {
           S3Firehose(
             "button-clicked-firehose",
             "name-of-existing-bucket",
-            "ButtonClicked",
             "role-arn",
-            Some("arn-of-kinesis-stream"),
+            "arn-of-kinesis-stream",
+            "ButtonClicked",
             Some("uncompressed"),
             Some("arn-of-cmk"),
             100,

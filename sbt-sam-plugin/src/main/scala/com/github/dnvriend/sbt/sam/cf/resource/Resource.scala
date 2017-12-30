@@ -13,7 +13,7 @@ object Resource {
   implicit val writes: Writes[Resource] = Writes.apply {
     case resource: CFS3Bucket         => CFS3Bucket.writes.writes(resource)
     case resource: CFKinesisStream    => CFKinesisStream.writes.writes(resource)
-    case resource: CFS3Firehose    => CFS3Firehose.writes.writes(resource)
+    case resource: CFS3Firehose       => CFS3Firehose.writes.writes(resource)
     case resource: CFTopic            => CFTopic.writes.writes(resource)
     case resource: CFDynamoDBTable    => CFDynamoDBTable.writes.writes(resource)
     case resource: ServerlessApi      => ServerlessApi.writes.writes(resource)
