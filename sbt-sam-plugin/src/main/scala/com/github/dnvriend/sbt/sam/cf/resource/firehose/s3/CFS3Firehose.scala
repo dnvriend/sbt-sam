@@ -1,11 +1,7 @@
 package com.github.dnvriend.sbt.sam.cf.resource.firehose.s3
 
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
-import com.github.dnvriend.sbt.util.JsMonoids
-import play.api.libs.json.{JsValue, Json, Writes}
-
-import scalaz.Scalaz._
-import scalaz._
+import play.api.libs.json.{Json, Writes}
 
 object CFS3FirehoseDeliveryStreamProcessor {
   implicit val writes: Writes[CFS3FirehoseDeliveryStreamProcessor] = Writes.apply(model => {
@@ -33,7 +29,6 @@ case class CFS3FirehoseDeliveryStreamProcessor(
 
 object CFS3FirehoseProcessingConfiguration {
   implicit val writes: Writes[CFS3FirehoseProcessingConfiguration] = Writes.apply(model => {
-    import model._
     Json.obj(
       "ProcessingConfiguration" -> Json.obj(
         "Enabled" -> true,
@@ -44,53 +39,6 @@ object CFS3FirehoseProcessingConfiguration {
 }
 
 case class CFS3FirehoseProcessingConfiguration(deliveryStreamProcessor: CFS3FirehoseDeliveryStreamProcessor)
-
-object CFS3FirehoseBucketArn {
-  implicit val writes: Writes[CFS3FirehoseBucketArn] = Writes.apply(model => {
-    import model._
-    Json.obj("BucketARN" -> bucketArn)
-  })
-
-  def fromConfig(bucketName: String): CFS3FirehoseBucketArn = {
-    CFS3FirehoseBucketArn(s"arn:aws:s3:::$bucketName")
-  }
-}
-
-case class CFS3FirehoseBucketArn(bucketArn: String)
-
-object CFS3FirehoseDeliveryStreamType {
-  implicit val writes: Writes[CFS3FirehoseDeliveryStreamType] = Writes.apply(model => {
-    Json.obj("DeliveryStreamType" -> "KinesisStreamAsSource")
-  })
-}
-
-case class CFS3FirehoseDeliveryStreamType(deliveryStreamType: String = "KinesisStreamAsSource")
-
-object CFS3FirehoseKinesisStreamSourceConfiguration {
-  implicit val writes: Writes[CFS3FirehoseKinesisStreamSourceConfiguration] = Writes.apply(model => {
-    import model._
-      Json.obj(
-        "KinesisStreamARN" -> kinesisStreamArn,
-        "RoleARN" -> roleArn
-      )
-  })
-
-  def fromConfig(accountId: String, region: String, streamName: String, roleArn: String): CFS3FirehoseKinesisStreamSourceConfiguration = {
-    val kinesisStreamArn = s"arn:aws:kinesis:$region:$accountId:stream/$streamName"
-    CFS3FirehoseKinesisStreamSourceConfiguration(kinesisStreamArn, roleArn)
-  }
-}
-
-case class CFS3FirehoseKinesisStreamSourceConfiguration(
-                                                         /**
-                                                           * The Amazon Resource Name (ARN) of the source Kinesis stream.
-                                                           */
-                                                         kinesisStreamArn: String,
-                                                         /**
-                                                           * The Amazon Resource Name (ARN) of the role that provides
-                                                           * access to the source Kinesis stream.
-                                                           */
-                                                         roleArn: String)
 
 object CFS3FirehoseKinesisStreamBufferingHints {
   implicit val writes: Writes[CFS3FirehoseKinesisStreamBufferingHints] = Writes.apply(model => {
@@ -123,17 +71,6 @@ case class CFS3FirehoseKinesisStreamBufferingHints(
                                                       */
                                                     bufferingSize: Int)
 
-object CFS3FirehoseCompressionFormat {
-  implicit val writes: Writes[CFS3FirehoseCompressionFormat] = Writes.apply(model => {
-    import model._
-    Json.obj("CompressionFormat" -> compression)
-  })
-}
-
-case class CFS3FirehoseCompressionFormat(compression: String) {
-  require(List("uncompressed", "gzip", "zip", "snappy").contains(compression.toLowerCase))
-}
-
 object CFS3FirehoseEncryptionConfiguration {
   implicit val writes: Writes[CFS3FirehoseEncryptionConfiguration] = Writes.apply(model => {
     import model._
@@ -164,23 +101,28 @@ case class CFS3FirehoseEncryptionConfiguration(encryptionKeyArn: String)
 object CFS3Firehose {
   implicit val writes: Writes[CFS3Firehose] = Writes.apply(model => {
     import model._
-    val firehoseArn: String = kinesisStreamSourceConfiguration.roleArn
     Json.obj(
       logicalName -> Json.obj(
         "Type" -> "AWS::KinesisFirehose::DeliveryStream",
         "Properties" -> Json.obj(
+          "DependsOn" -> dependsOnLogicalNames,
           "DeliveryStreamName" -> deliveryStreamName,
           "DeliveryStreamType" -> "KinesisStreamAsSource",
-          "KinesisStreamSourceConfiguration" -> Json.toJson(kinesisStreamSourceConfiguration),
-          "ExtendedS3DestinationConfiguration" -> List(
-            Json.obj("RoleARN" -> firehoseArn),
-            Json.obj("Prefix" -> ""),
-            Json.obj("S3BackupMode" -> "Disabled"),
-            Json.toJson(bucketArn),
-            Json.toJson(compression),
-            Json.toJson(encryptionConfiguration),
-            Json.toJson(streamBufferingHints)
-          ).foldMap(identity)(JsMonoids.jsObjectMerge)
+          "KinesisStreamSourceConfiguration" ->  Json.obj(
+            "KinesisStreamARN" -> kinesisStreamArn,
+            "RoleARN" -> roleArn
+          ),
+          "ExtendedS3DestinationConfiguration" -> Json.obj(
+            "RoleARN" -> roleArn,
+            "Prefix" -> "",
+            "S3BackupMode" -> "Disabled",
+            "BucketARN" -> bucketArn,
+            "CompressionFormat" -> compression,
+            "BufferingHints" -> Json.obj(
+              "IntervalInSeconds" -> bufferingIntervalInSeconds,
+              "SizeInMBs" -> bufferingSize
+            )
+          )
         )
       )
     )
@@ -195,39 +137,38 @@ case class CFS3Firehose(
                          deliveryStreamName: String,
 
                          /**
-                           * The Amazon Resource Name (ARN) of the Amazon S3 bucket.
+                           * Depends on S3 bucket, Kinesis Stream, IAM Policy
                            */
-                         bucketArn: CFS3FirehoseBucketArn,
+                         dependsOnLogicalNames: List[String],
 
                          /**
-                           * When a Kinesis stream is used as the source for the delivery stream,
-                           * a Kinesis Data Firehose DeliveryStream KinesisStreamSourceConfiguration
-                           * containing the Kinesis stream ARN and the role ARN for the source stream.
+                           * Arn of the Kinesis stream
                            */
-                         kinesisStreamSourceConfiguration: CFS3FirehoseKinesisStreamSourceConfiguration,
+                         kinesisStreamArn: String,
+
+                         /**
+                           * Arn of the role to assume in order to provide the service in
+                           * the AWS account.
+                           */
+                         roleArn: String,
+
+                         /**
+                           * The Amazon Resource Name (ARN) of the Amazon S3 bucket.
+                           */
+                         bucketArn: String,
 
                          /**
                            * The BufferingHints property type specifies how Amazon Kinesis Firehose (Kinesis Firehose)
                            * buffers incoming data before delivering it to the destination. The first buffer condition
                            * that is satisfied triggers Kinesis Firehose to deliver the data.
                            */
-                         streamBufferingHints: CFS3FirehoseKinesisStreamBufferingHints,
+                         bufferingIntervalInSeconds: Int,
 
-                         /**
-                           * The data processing configuration for the Kinesis Firehose delivery stream.
-                           */
-                         deliveryStreamProcessor: Option[CFS3FirehoseDeliveryStreamProcessor] = None,
+                         bufferingSize: Int,
 
                          /**
                            * The compression format for the Kinesis Firehose delivery stream.
                            */
-                         compression: CFS3FirehoseCompressionFormat = CFS3FirehoseCompressionFormat("uncompressed"),
-
-                         /**
-                           * The Amazon Resource Name (ARN) of the AWS KMS encryption key that Amazon S3
-                           * uses to encrypt data delivered by the Kinesis Firehose stream.
-                           * The key must belong to the same region as the
-                           */
-                         encryptionConfiguration: Option[CFS3FirehoseEncryptionConfiguration] = None,
+                         compression: String,
 
                        ) extends Resource

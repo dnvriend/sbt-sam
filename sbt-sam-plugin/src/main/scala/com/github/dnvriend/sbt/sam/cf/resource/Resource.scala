@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.cf.resource
 
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.ServerlessApi
+import com.github.dnvriend.sbt.sam.cf.resource.codebuild.CFCBProject
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb.CFDynamoDBTable
 import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3.CFS3Firehose
 import com.github.dnvriend.sbt.sam.cf.resource.iam.policy.CFIamRole
@@ -20,6 +21,7 @@ object Resource {
     case resource: ServerlessApi      => ServerlessApi.writes.writes(resource)
     case resource: ServerlessFunction => ServerlessFunction.writes.writes(resource)
     case resource: CFIamRole          => CFIamRole.writes.writes(resource)
+    case resource: CFCBProject        => CFCBProject.writes.writes(resource)
   }
 }
 trait Resource

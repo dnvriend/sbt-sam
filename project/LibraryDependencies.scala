@@ -2,7 +2,7 @@ import sbt._
 
 object LibraryDependencies {
   // libraries
-  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.255"
+  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.256"
   val libAwsDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.255"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
   val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.0.2"

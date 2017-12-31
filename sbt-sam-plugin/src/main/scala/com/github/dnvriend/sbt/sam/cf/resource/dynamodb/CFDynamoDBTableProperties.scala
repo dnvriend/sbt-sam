@@ -1,17 +1,15 @@
 package com.github.dnvriend.sbt.sam.cf.resource.dynamodb
 
-import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{Json, Writes}
 
 import scalaz.NonEmptyList
-import scalaz.Scalaz._
+import scalaz.syntax.all._
 
 object CFDynamoDBTableProperties {
   implicit val writes: Writes[CFDynamoDBTableProperties] = Writes.apply(model => {
     import model._
-    Json.obj(
-      "Properties" -> NonEmptyList(
+      NonEmptyList(
         Json.toJson(tableName),
         Json.toJson(keySchema),
         Json.toJson(attributeDefinitions),
@@ -20,7 +18,6 @@ object CFDynamoDBTableProperties {
         Json.toJson(gsi),
         Json.toJson(tags),
       ).foldMap(identity)(JsMonoids.jsObjectMerge)
-    )
   })
 }
 
