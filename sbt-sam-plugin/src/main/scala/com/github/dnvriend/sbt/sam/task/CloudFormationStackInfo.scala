@@ -2,14 +2,21 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.{ Stack, StackResource }
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider
+import com.amazonaws.services.cognitoidp.model.UserPoolDescriptionType
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.TableDescription
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
+import com.amazonaws.services.identitymanagement.model.GetRoleResult
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.FunctionConfiguration
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.{ AccessControlList, Bucket }
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import sbt.util.Logger
 
 import scala.collection.JavaConverters._
@@ -44,6 +51,9 @@ object CloudFormationStackInfo {
     snsClient: AmazonSNS,
     kinesisClient: AmazonKinesis,
     lambdaClient: AWSLambda,
+    s3Client: AmazonS3,
+    iamClient: AmazonIdentityManagement,
+    cognitoIdpClient: AWSCognitoIdentityProvider,
     log: Logger
   ): Unit = {
 
@@ -62,7 +72,7 @@ object CloudFormationStackInfo {
         val statusReason: String = Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")
         val description: String = Option(stack.getDescription).filter(_ != "null").getOrElse("No description")
         val stackStatus = if (stack.getStackStatus.contains("COMPLETE")) Console.GREEN + stack.getStackStatus else stack.getStackStatus
-        val lastUpdated: String = stack.getLastUpdatedTime.toString
+        val lastUpdated: String = Option(stack.getLastUpdatedTime).foldMap(_.toString)
         s"""Name: $stackName
            |Description: $description
            |Status: $stackStatus
@@ -99,7 +109,7 @@ object CloudFormationStackInfo {
         case (stream, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
           s"* ${Console.GREEN}${stream.name}: ${Console.RESET}$info"
-      }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No streams configured")
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No streams configured")
     }
 
     val snsTopicsSummary: String = {
@@ -115,7 +125,88 @@ object CloudFormationStackInfo {
         case (topic, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
           s"* ${Console.GREEN}${topic.name}: ${Console.RESET}$info"
-      }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No topics configured")
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No topics configured")
+    }
+
+    val s3BucketsSummary: String = {
+      def report(bucket: Bucket, location: String, acl: AccessControlList) = {
+        import bucket._
+        val arn: String = S3Bucket.arn(getName)
+        val grants = acl.getGrantsAsList.asScala.toList.foldMap(_.getPermission.toString)
+        s"""
+           |  - BucketArn: $arn
+           |  - BucketName: $getName
+           |  - grants: $grants
+           |  - Location: $location
+           |  - CreationDate: $getCreationDate""".stripMargin
+      }
+      config.buckets.map { bucket =>
+        val bucketName = BucketName(s"$projectName-$stage-${bucket.name}")
+        val s3bucket: ValidationNel[String, Bucket] = S3Operations.getBucket(bucketName, s3Client).toSuccessNel(s"S3 bucket not found for name '${bucketName.value}'")
+        val location: ValidationNel[String, String] = S3Operations.getBucketLocation(bucketName, s3Client).toSuccessNel(s"S3 location not found for name '${bucketName.value}'")
+        val acl: ValidationNel[String, AccessControlList] = S3Operations.getBucketACL(bucketName, s3Client).toSuccessNel(s"S3 bucket acl not found for name '${bucketName.value}'")
+        val bucketInfo = (s3bucket |@| location |@| acl)((_, _, _)).toOption
+        (bucket, bucketInfo)
+      }.map {
+        case (bucket, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report _ tupled)
+          s"* ${Console.GREEN}${bucket.name}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No buckets configured")
+    }
+
+    val s3FirehoseSummary: String = {
+      def report(str: String) = {
+        str
+      }
+      config.s3Firehoses.map { s3Firehose =>
+        (s3Firehose, Option.empty[String])
+      }.map {
+        case (s3Firehose, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${s3Firehose.name}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No S3 Firehose Data Delivery Streams configured")
+    }
+
+    val iamRolesSummary: String = {
+      def report(info: GetRoleResult) = {
+        val role = info.getRole
+        import role._
+        s"""
+           |  - RoleArn: $getArn
+           |  - RoleId: $getRoleId
+           |  - CreationDate: $getCreateDate
+           |  - Description: $getDescription
+         """.stripMargin
+      }
+      config.iamRoles.map { iamRole =>
+        val roleName = s"$projectName-$stage-${iamRole.name}"
+        val roleInfo = IamOperations.getRole(roleName, iamClient)
+        (iamRole, roleInfo)
+      }.map {
+        case (iamRole, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${iamRole.name}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No IAM roles configured")
+    }
+
+    val authpoolSummary: String = {
+      def report(info: UserPoolDescriptionType) = {
+        import info._
+        s"""
+           |  - Name: $getName
+           |  - CreationDate: $getCreationDate
+           |  - LastModified: $getLastModifiedDate
+         """.stripMargin
+      }
+      config.authpool.map { authPool =>
+        val userPoolName = s"$projectName-$stage-${authPool.name}"
+        val userPoolInfo = CognitoIdpOperations.findUserPool(userPoolName, cognitoIdpClient)
+        (authPool, userPoolInfo)
+      }.map {
+        case (authPool, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${authPool.name}: ${Console.RESET}$info"
+      }.getOrElse(Console.YELLOW + "No Authentication Pool configured")
     }
 
     val tablesSummary: String = {
@@ -145,7 +236,7 @@ object CloudFormationStackInfo {
         case (table, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
           s"* ${Console.GREEN}${table.name}: ${Console.RESET}$info"
-      }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No tables configured")
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No tables configured")
     }
 
     val lambdaSummary: String = {
@@ -171,9 +262,10 @@ object CloudFormationStackInfo {
             val handlerName: String = handler.lambdaConfig.simpleClassName
             val handlerPath: String = handler.httpConf.path
             val handlerMethod: String = handler.httpConf.method.toUpperCase
-            val handlerInfo: String = s"$handlerName: ($handlerMethod -> '$handlerPath')"
+            val securityStatus: String = handler.httpConf.authorization.option("secured").toRight("public").merge
+            val handlerInfo: String = s"$handlerName: ($handlerMethod -> '$handlerPath' -> $securityStatus)"
             s"* ${Console.GREEN}$handlerInfo: ${Console.RESET}$projectionStatus"
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Api Http Event handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Api Http Event handlers configured")
       }
       val dynamoHandlers: String = {
         config.lambdas.collect({ case h: DynamoHandler => h }).map { handler =>
@@ -183,7 +275,7 @@ object CloudFormationStackInfo {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No DynamoDB handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No DynamoDB handlers configured")
       }
       val scheduledEventHandlers: String = {
         config.lambdas.collect({ case h: ScheduledEventHandler => h }).map { handler =>
@@ -193,7 +285,7 @@ object CloudFormationStackInfo {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No scheduled event handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No scheduled event handlers configured")
       }
       val kinesisEventHandlers: String = {
         config.lambdas.collect({ case h: KinesisEventHandler => h }).map { handler =>
@@ -203,7 +295,7 @@ object CloudFormationStackInfo {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No kinesis event handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No kinesis event handlers configured")
       }
       val snsEventHandlers: String = {
         config.lambdas.collect({ case h: SNSEventHandler => h }).map { handler =>
@@ -213,7 +305,7 @@ object CloudFormationStackInfo {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No SNS event handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No SNS event handlers configured")
       }
       s"""Lambdas:
         |Api Http Event Handlers:
@@ -245,12 +337,20 @@ object CloudFormationStackInfo {
         |====================
         |$stackSummary
         |$lambdaSummary
+        |IAM Roles:
+        |$iamRolesSummary
         |DynamoDbTables:
         |$tablesSummary
         |SNS Topics:
         |$snsTopicsSummary
         |Kinesis Streams:
         |$kinesisStreamsSummary
+        |S3 Firehose Data Delivery Streams:
+        |$s3FirehoseSummary
+        |S3 Buckets:
+        |$s3BucketsSummary
+        |Authentication Pool:
+        |$authpoolSummary
         |Endpoints:
         |$endpointSummary
       """.stripMargin

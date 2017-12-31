@@ -18,7 +18,7 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
-import com.github.dnvriend.sbt.resource.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
 import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._
@@ -108,6 +108,12 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrievePolicies(config)
     },
 
+    iamRolesResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveRoles(config)
+    },
+
     topicResources := {
       val baseDir: File = baseDirectory.value
       val config = ResourceOperations.readConfig(baseDir)
@@ -127,10 +133,23 @@ object SAMPlugin extends AutoPlugin {
     },
 
 
+    bucketResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveBuckets(config)
+    },
+
+    s3FirehoseResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveS3Firehose(config)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
         version.value,
+        description.value,
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
@@ -138,12 +157,15 @@ object SAMPlugin extends AutoPlugin {
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
         SamResources(
+          cognitoResources.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
           policyResources.value,
           topicResources.value,
           streamResources.value,
-          cognitoResources.value
+          bucketResources.value,
+          s3FirehoseResources.value,
+          iamRolesResources.value,
         )
       )
     },
@@ -158,6 +180,9 @@ object SAMPlugin extends AutoPlugin {
         clientSns.value,
         clientKinesis.value,
         clientAwsLambda.value,
+        clientS3.value,
+        clientIam.value,
+        clientCognitoIdp.value,
         streams.value.log
       )
     },

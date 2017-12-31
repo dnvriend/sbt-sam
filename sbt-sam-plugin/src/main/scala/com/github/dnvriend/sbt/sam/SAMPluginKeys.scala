@@ -16,11 +16,14 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
-import com.github.dnvriend.sbt.resource.cognito.model.Authpool
-import com.github.dnvriend.sbt.resource.dynamodb.model._
-import com.github.dnvriend.sbt.resource.kinesis.model._
-import com.github.dnvriend.sbt.resource.sns.model._
-import com.github.dnvriend.sbt.resource.policy.model._
+import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
+import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
+import com.github.dnvriend.sbt.sam.resource.kinesis.model._
+import com.github.dnvriend.sbt.sam.resource.policy.model._
+import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
+import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -52,9 +55,12 @@ object SAMPluginKeys {
   // resource tasks
   lazy val dynamoDbTableResources = taskKey[Set[TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
   lazy val policyResources = taskKey[Set[Policy]]("Retrieves a set of policies, which are configured in the Lightbend Config.")
+  lazy val iamRolesResources = taskKey[Set[IamRole]]("Retrieves a set of iam roles, which are configured in the Lightbend Config.")
   lazy val topicResources = taskKey[Set[Topic]]("Retrieves a set of topics, which are configured in the Lightbend Config.")
   lazy val streamResources = taskKey[Set[KinesisStream]]("Retrieves a set of streams, which are configured in the Lightbend Config.")
   lazy val cognitoResources = taskKey[Option[Authpool]]("Tries to retrieve a cognito configuration, specified in the Lightbend Config .")
+  lazy val bucketResources = taskKey[Set[S3Bucket]]("Retrieves a set of s3 buckets, which are configured in the Lightbend Config.")
+  lazy val s3FirehoseResources = taskKey[Set[S3Firehose]]("Retrieves a set of s3 firehose data delivery streams, which are configured in the Lightbend Config.")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")

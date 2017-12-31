@@ -19,7 +19,11 @@ object CloudFormationStackCreate {
       CloudFormationOperations.createStack(
         CreateStackSettings(
           CloudFormationTemplates.deploymentBucketTemplate(config),
-          StackName(config.samCFTemplateName.value)),
+          StackName(config.samCFTemplateName.value),
+          "sbt:sam:projectName" -> config.projectName,
+          "sbt:sam:projectVersion" -> config.projectVersion,
+          "sbt:sam:stage" -> config.samStage.value
+        ),
         client
       ).valueOr(t => throw t)
       CloudFormationOperations.waitForCloudFormation(StackName(config.samCFTemplateName.value), client, log)

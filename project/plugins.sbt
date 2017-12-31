@@ -13,4 +13,7 @@ addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.2")
 // code coverage
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
 
+// I know this because build.sbt knows this
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.7.0")
+
 libraryDependencies += "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value
