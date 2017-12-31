@@ -33,7 +33,8 @@ object CloudFormationStackUpdate {
         CloudFormationTemplates.updateTemplate(config, jarName, latestVersion.get.value),
         StackName(config.samCFTemplateName.value),
         ChangeSetName(changeSetName),
-        Capability.CAPABILITY_IAM
+        //        Capability.CAPABILITY_IAM
+        Capability.CAPABILITY_NAMED_IAM // enabled to allow creating (custom-named) roles
       )
 
       val changeSetResult = CloudFormationOperations.createChangeSet(settings, client).valueOr(t => throw t)

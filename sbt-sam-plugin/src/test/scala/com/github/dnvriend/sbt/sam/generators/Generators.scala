@@ -13,6 +13,7 @@ import com.github.dnvriend.sbt.sam.resource.bucket.model.{S3Bucket, S3Website}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{GlobalSecondaryIndex, HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
+import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import com.github.dnvriend.sbt.sam.task._
 import org.scalacheck.{Arbitrary, _}
@@ -27,7 +28,8 @@ trait Generators extends GenCFDynamoDBTable
   with GenLambdaHandler
   with GenTableWithIndex
   with GenS3Bucket
-  with GenS3Firehose {
+  with GenS3Firehose
+  with GenIamRole {
 
   val genSamS3BucketName = for {
     value <- Gen.const("sam-s3-deployment-bucket-name")
@@ -449,4 +451,23 @@ trait GenS3Firehose extends GenGeneric {
   implicit val arbS3Firehose: Arbitrary[S3Firehose] = Arbitrary.apply(genS3Firehose)
 
   val iterS3Firehose: Iterator[S3Firehose] = iterFor(genS3Firehose)
+}
+
+trait GenIamRole extends GenGeneric {
+  val genIamRole = for {
+    configName <- genResourceConfName
+    name <- Gen.const("iam-role")
+    principalServiceName <- Gen.const("principal-service-name")
+    managedPolicyArns <- Gen.containerOfN[List, String](3, Gen.alphaStr)
+  } yield IamRole(
+    name,
+    configName,
+    principalServiceName,
+    managedPolicyArns,
+    true
+  )
+
+  implicit val arbIamRole: Arbitrary[IamRole] = Arbitrary.apply(genIamRole)
+
+  val iterIamRole: Iterator[IamRole] = iterFor(genIamRole)
 }

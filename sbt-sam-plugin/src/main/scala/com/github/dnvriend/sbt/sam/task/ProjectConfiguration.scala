@@ -10,6 +10,7 @@ import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.resource.policy.model._
+import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 
 import scala.util.matching.Regex
 
@@ -35,6 +36,7 @@ case class SamResources(lambdas: Set[LambdaHandler],
                         streams: Set[KinesisStream],
                         buckets: Set[S3Bucket],
                         s3Firehoses: Set[S3Firehose],
+                        iamRoles: Set[IamRole],
                        )
 object ProjectConfiguration {
   def fromConfig(
@@ -68,6 +70,7 @@ object ProjectConfiguration {
       samResources.streams.toList,
       samResources.buckets.toList,
       samResources.s3Firehoses.toList,
+      samResources.iamRoles.toList,
     )
   }
 }
@@ -88,6 +91,7 @@ case class ProjectConfiguration(
     streams: List[KinesisStream] = List.empty,
     buckets: List[S3Bucket] = List.empty,
     s3Firehoses: List[S3Firehose] = List.empty,
+    iamRoles: List[IamRole] = List.empty,
 ) extends AnyOps {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty

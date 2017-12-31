@@ -1,4 +1,4 @@
-package com.github.dnvriend.sbt.sam.cf.resource.role
+package com.github.dnvriend.sbt.sam.cf.resource.iam.role
 
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{JsValue, Json, Writes}

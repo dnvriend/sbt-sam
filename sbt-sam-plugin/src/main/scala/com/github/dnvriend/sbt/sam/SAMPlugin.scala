@@ -108,6 +108,12 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrievePolicies(config)
     },
 
+    iamRolesResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveRoles(config)
+    },
+
     topicResources := {
       val baseDir: File = baseDirectory.value
       val config = ResourceOperations.readConfig(baseDir)
@@ -151,6 +157,7 @@ object SAMPlugin extends AutoPlugin {
           streamResources.value,
           bucketResources.value,
           s3FirehoseResources.value,
+          iamRolesResources.value,
         )
       )
     },
@@ -166,6 +173,7 @@ object SAMPlugin extends AutoPlugin {
         clientKinesis.value,
         clientAwsLambda.value,
         clientS3.value,
+        clientIam.value,
         streams.value.log
       )
     },

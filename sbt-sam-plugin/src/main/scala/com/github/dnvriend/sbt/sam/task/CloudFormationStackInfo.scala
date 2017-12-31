@@ -4,6 +4,8 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.{ Stack, StackResource }
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.TableDescription
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
+import com.amazonaws.services.identitymanagement.model.GetRoleResult
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.FunctionConfiguration
@@ -48,6 +50,7 @@ object CloudFormationStackInfo {
     kinesisClient: AmazonKinesis,
     lambdaClient: AWSLambda,
     s3Client: AmazonS3,
+    iamClient: AmazonIdentityManagement,
     log: Logger
   ): Unit = {
 
@@ -159,6 +162,28 @@ object CloudFormationStackInfo {
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
           s"* ${Console.GREEN}${s3Firehose.name}: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No S3 Firehose Data Delivery Streams configured")
+    }
+
+    val iamRolesSummary: String = {
+      def report(info: GetRoleResult) = {
+        val role = info.getRole
+        import role._
+        s"""
+           |  - RoleArn: $getArn
+           |  - RoleId: $getRoleId
+           |  - CreationDate: $getCreateDate
+           |  - Description: $getDescription
+         """.stripMargin
+      }
+      config.iamRoles.map { iamRole =>
+        val roleName = s"$projectName-$stage-${iamRole.name}"
+        val roleInfo = IamOperations.getRole(roleName, iamClient)
+        (iamRole, roleInfo)
+      }.map {
+        case (iamRole, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${iamRole.name}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No IAM roles configured")
     }
 
     val tablesSummary: String = {
@@ -288,6 +313,8 @@ object CloudFormationStackInfo {
         |====================
         |$stackSummary
         |$lambdaSummary
+        |IAM Roles:
+        |$iamRolesSummary
         |DynamoDbTables:
         |$tablesSummary
         |SNS Topics:

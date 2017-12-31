@@ -8,6 +8,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody}
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3._
+import com.github.dnvriend.sbt.sam.cf.resource.iam.policy._
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
@@ -24,6 +25,7 @@ import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
+import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import play.api.libs.json._
 
@@ -79,6 +81,7 @@ object CloudFormationTemplates {
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
         bucketResources(projectName, projectVersion, stage, config.buckets) ++
         s3FirehoseResources(projectName, projectVersion, stage, config.userArn.accountId, config.getRegion, config.s3Firehoses) ++
+        iamRolesResources(projectName, projectVersion, stage, config.iamRoles) ++
         apiGatewayResource(projectName, stage, config.httpHandlers)
     }
 
@@ -158,6 +161,27 @@ object CloudFormationTemplates {
    */
   def bucketResources(projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
     buckets.map(bucket => bucketResource(projectName, projectVersion, stage, bucket))
+  }
+
+  /**
+    * Determine Iam Role resource
+    */
+  def iamRoleResource(projectName: String, projectVersion: String, stage: String, role: IamRole): Resource = {
+    CFIamRole(
+      role.configName,
+      createResourceName(projectName, stage, role.name),
+      CFIamPolicyDocument(List(
+        CFIamStatement.allowAssumeRole(CFPrincipal(role.principalServiceName))
+      )),
+      role.managedPolicyArns
+    )
+  }
+
+  /**
+    * determine Iam Roles resources
+    */
+  def iamRolesResources(projectName: String, projectVersion: String, stage: String, roles: List[IamRole]): List[Resource] = {
+    roles.map(role => iamRoleResource(projectName, projectVersion, stage, role))
   }
 
   /**

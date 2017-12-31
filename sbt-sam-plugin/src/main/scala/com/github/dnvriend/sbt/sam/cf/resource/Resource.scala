@@ -3,6 +3,7 @@ package com.github.dnvriend.sbt.sam.cf.resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.ServerlessApi
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb.CFDynamoDBTable
 import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3.CFS3Firehose
+import com.github.dnvriend.sbt.sam.cf.resource.iam.policy.CFIamRole
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.s3.CFS3Bucket
@@ -18,6 +19,7 @@ object Resource {
     case resource: CFDynamoDBTable    => CFDynamoDBTable.writes.writes(resource)
     case resource: ServerlessApi      => ServerlessApi.writes.writes(resource)
     case resource: ServerlessFunction => ServerlessFunction.writes.writes(resource)
+    case resource: CFIamRole          => CFIamRole.writes.writes(resource)
   }
 }
 trait Resource
