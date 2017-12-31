@@ -339,6 +339,11 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.7 (2017-12-31)
+- Merged PR #61 - Added cognito support, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)! 
+  - Support for [AWS Cognito](https://aws.amazon.com/cognito/) [user pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html)
+  - Support for AWS Cognito Secured API Gateway Endpoints, backed by AWS Lambda  
+
 ## 1.0.6 (2017-12-27)
 - Support for AWS Encryption SDK
 - Two new ApiGatewayHandlers: `JsonApiGatewayHandler` and `JsonDApiGatewayHandler`
