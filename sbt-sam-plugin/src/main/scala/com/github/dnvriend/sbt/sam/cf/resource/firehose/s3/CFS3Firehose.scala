@@ -149,17 +149,31 @@ object CFS3FirehoseEncryptionConfiguration {
 
 case class CFS3FirehoseEncryptionConfiguration(encryptionKeyArn: String)
 
+/**
+  * Must be its own script, using dependsOn to wait for the bucket, stream, lambda and role to be created
+  * ie. a CFS3Firehose will generate dependent resources as a whole, ie. CFS3Firehose will be used
+  * but will need dependent logicalNames. The S3Firehose is a primitive, but the things that glues them
+  * together will be a 'kappa' resource, and if found, will generate the following script:
+  *
+  * - S3 bucket
+  * - Kinesis Stream
+  * - Optional Lambda
+  * - Role
+  * - Extended S3 Firehose
+  */
 object CFS3Firehose {
   implicit val writes: Writes[CFS3Firehose] = Writes.apply(model => {
     import model._
+    val firehoseArn: String = kinesisStreamSourceConfiguration.roleArn
     Json.obj(
       logicalName -> Json.obj(
         "Type" -> "AWS::KinesisFirehose::DeliveryStream",
         "Properties" -> Json.obj(
           "DeliveryStreamName" -> deliveryStreamName,
+          "DeliveryStreamType" -> "KinesisStreamAsSource",
           "KinesisStreamSourceConfiguration" -> Json.toJson(kinesisStreamSourceConfiguration),
           "ExtendedS3DestinationConfiguration" -> List(
-            Json.obj("RoleARN" -> ""),
+            Json.obj("RoleARN" -> firehoseArn),
             Json.obj("Prefix" -> ""),
             Json.obj("S3BackupMode" -> "Disabled"),
             Json.toJson(bucketArn),
