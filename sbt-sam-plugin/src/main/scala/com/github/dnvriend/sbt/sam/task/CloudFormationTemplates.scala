@@ -781,7 +781,7 @@ object Swagger {
       Parts.swaggerVersion,
       Parts.info(config),
       Parts.paths(config),
-      //      Parts.securityDefinitions(config),
+      Parts.securityDefinitions(config),
     )
   }
 
@@ -833,7 +833,7 @@ object Swagger {
       Json.obj(method -> merge(
         AmazonApiGatewayIntegration.swaggerExtension(config, handler),
         responses,
-        security(handler.httpConf.authorization),
+        security(handler.httpConf.authorization, config.authpool.map(_.name).getOrElse("auth_pool")),
       )
       )
     }
@@ -846,10 +846,10 @@ object Swagger {
       * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
       * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       */
-    def securityDefinitions(config: ProjectConfiguration): JsValue = {
-      Json.obj(
+    def securityDefinitions(config: ProjectConfiguration): JsValue = config.authpool match  {
+      case Some(authPool) => Json.obj(
         "securityDefinitions" -> Json.obj(
-          "auth_pool" -> Json.obj(
+          authPool.name -> Json.obj(
             "type" -> "apiKey",
             "name" -> "Authorization",
             "in" -> "header",
@@ -863,14 +863,15 @@ object Swagger {
           )
         )
       )
+      case None => JsObject(Nil)
     }
 
     /**
       * A declaration of which security schemes are applied for the API as a whole.
       */
-    def security(authorized: Boolean): JsValue = authorized match {
+    def security(authorized: Boolean, authpoolName: String): JsValue = authorized match {
       case false => JsNull
-      case true => Json.obj("security" -> Json.arr(Json.obj("auth_pool" -> Json.arr())))
+      case true => Json.obj("security" -> Json.arr(Json.obj(authpoolName -> Json.arr())))
     }
 
     /**
