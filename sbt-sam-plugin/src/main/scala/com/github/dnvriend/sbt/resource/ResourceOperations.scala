@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.resource
 
 import com.github.dnvriend.ops.FunctionalOps
+import com.github.dnvriend.sbt.resource.cognito.CognitoResourceOperations
 import com.github.dnvriend.sbt.resource.dynamodb.DynamoDBResourceOperations
 import com.github.dnvriend.sbt.resource.kinesis.KinesisResourceOperations
 import com.github.dnvriend.sbt.resource.policy.PolicyResourceOperations
@@ -13,7 +14,8 @@ trait ResourceOperations extends FunctionalOps
   with DynamoDBResourceOperations
   with PolicyResourceOperations
   with SNSResourceOperations
-  with KinesisResourceOperations {
+  with KinesisResourceOperations
+  with CognitoResourceOperations {
   /**
    * Loads the resource configuration from base path
    */

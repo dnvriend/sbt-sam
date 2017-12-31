@@ -2,6 +2,7 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.AmazonUser
+import com.github.dnvriend.sbt.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.resource.dynamodb.model._
 import com.github.dnvriend.sbt.resource.kinesis.model._
 import com.github.dnvriend.sbt.resource.sns.model._
@@ -25,7 +26,8 @@ case class SamResources(lambdas: Set[LambdaHandler],
                         tables: Set[TableWithIndex],
                         policies: Set[Policy],
                         topics: Set[Topic],
-                        streams: Set[KinesisStream]
+                        streams: Set[KinesisStream],
+                        authpool: Option[Authpool],
                        )
 object ProjectConfiguration {
   def fromConfig(
@@ -54,7 +56,8 @@ object ProjectConfiguration {
       samResources.tables,
       samResources.policies,
       samResources.topics,
-      samResources.streams
+      samResources.streams,
+      samResources.authpool,
     )
   }
 }
@@ -71,5 +74,7 @@ case class ProjectConfiguration(
     tables: Set[TableWithIndex],
     policies: Set[Policy],
     topics: Set[Topic],
-    streams: Set[KinesisStream]
+    streams: Set[KinesisStream],
+    authpool: Option[Authpool]
+
 )

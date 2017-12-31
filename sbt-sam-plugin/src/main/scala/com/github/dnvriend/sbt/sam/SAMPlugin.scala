@@ -120,6 +120,13 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveStreams(config)
     },
 
+    cognitoResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveAuthPool(config)
+    },
+
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -135,7 +142,8 @@ object SAMPlugin extends AutoPlugin {
           dynamoDbTableResources.value,
           policyResources.value,
           topicResources.value,
-          streamResources.value
+          streamResources.value,
+          cognitoResources.value
         )
       )
     },

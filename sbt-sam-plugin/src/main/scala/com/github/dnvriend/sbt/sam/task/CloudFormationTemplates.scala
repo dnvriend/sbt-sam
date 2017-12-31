@@ -1,14 +1,15 @@
 package com.github.dnvriend.sbt.sam.task
 
+import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.resource.cognito.model.{Authpool, PasswordPolicies}
 import com.github.dnvriend.sbt.resource.dynamodb.model._
 import com.github.dnvriend.sbt.resource.kinesis.model._
-import com.github.dnvriend.sbt.resource.sns.model._
 import com.github.dnvriend.sbt.resource.policy.model._
-import com.github.dnvriend.sbt.aws.task.TemplateBody
+import com.github.dnvriend.sbt.resource.sns.model._
 import play.api.libs.json._
 
-import scalaz._
 import scalaz.Scalaz._
+import scalaz._
 
 object JsMonoids {
   val jsObjectMerge: Monoid[JsValue] = Monoid.instance({
@@ -45,9 +46,9 @@ object CloudFormationTemplates {
           parseTopicResource(config),
           parseStreamResource(config),
           ServerlessApi.resource(config),
-//          Cognito.UserPool.resource(config),
-//          Cognito.UserPoolClient.resource(config),
-//          parsePolicies(config.policies),
+          Cognito.UserPool.resource(config),
+          Cognito.UserPoolClient.resource(config),
+          //          parsePolicies(config.policies),
         )
         ++ outputs(config)
     )
@@ -183,7 +184,7 @@ object CloudFormationTemplates {
           "Timeout" → config.timeout,
           "Tracing" → "Active",
           "Environment" -> Json.obj(
-              "Variables" -> Json.obj(
+            "Variables" -> Json.obj(
               "STAGE" -> cfg.samStage.value,
               "PROJECT_NAME" -> cfg.projectName,
               "VERSION" -> cfg.projectVersion,
@@ -284,6 +285,7 @@ object CloudFormationTemplates {
         )
       )
     }
+
     config.topics.foldMap(topic => mapTopicResource(topic))(JsMonoids.jsObjectMerge)
   }
 
@@ -306,6 +308,7 @@ object CloudFormationTemplates {
         )
       )
     }
+
     config.streams.foldMap(stream => mapStreamResource(stream))(JsMonoids.jsObjectMerge)
   }
 
@@ -447,6 +450,7 @@ object CloudFormationTemplates {
 }
 
 trait PseudoParameter
+
 object PseudoParameters {
   /**
     * Returns the param
@@ -580,23 +584,25 @@ object Cognito {
     /**
       * Returns a CloudFormation configuration based on the ProjectConfiguration
       */
-    def resource(config: ProjectConfiguration): JsObject = {
-      Json.obj(
+    def resource(config: ProjectConfiguration): JsObject = config.authpool match {
+      case Some(authPool) => Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPool"
         ) ++ CloudFormation.properties(
-          propUserPoolName(config),
+          propUserPoolName(authPool),
           propAdminCreateUserConfig(config),
-          propPolicies(config),
+          propPolicies(authPool.passwordPolicies),
         ))
       )
+
+      case None => JsObject(Nil)
     }
 
     /**
       * A string used to name the user pool.
       */
-    def propUserPoolName(config: ProjectConfiguration): JsValue = {
-      Json.obj("UserPoolName" -> "auth_pool")
+    def propUserPoolName(authpool: Authpool): JsValue = {
+      Json.obj("UserPoolName" -> authpool.name)
     }
 
     /**
@@ -612,15 +618,15 @@ object Cognito {
     /**
       * The policies associated with the Amazon Cognito user pool.
       */
-    def propPolicies(config: ProjectConfiguration): JsValue = {
+    def propPolicies(pwPolicies: PasswordPolicies): JsValue = {
       Json.obj(
         "Policies" -> Json.obj(
           "PasswordPolicy" -> Json.obj(
-            "MinimumLength" -> 6,
-            "RequireLowercase" -> true,
-            "RequireNumbers" -> false,
-            "RequireSymbols" -> false,
-            "RequireUppercase" -> false
+            "MinimumLength" -> pwPolicies.minimumLength,
+            "RequireLowercase" -> pwPolicies.requireLowercase,
+            "RequireNumbers" -> pwPolicies.requireNumbers,
+            "RequireSymbols" -> pwPolicies.requireSymbols,
+            "RequireUppercase" -> pwPolicies.requireUppercase
           )
         )
       )
@@ -665,8 +671,8 @@ object Cognito {
       "ServerlessUserPoolClient"
     }
 
-    def resource(config: ProjectConfiguration): JsObject = {
-      Json.obj(
+    def resource(config: ProjectConfiguration): JsObject = config.authpool match {
+      case Some(authPool) => Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Cognito::UserPoolClient",
           "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
@@ -676,6 +682,8 @@ object Cognito {
           propUserPoolId(config),
         ))
       )
+
+      case None => JsObject(Nil)
     }
 
     /**
@@ -702,6 +710,7 @@ object Cognito {
       Json.obj("UserPoolId" -> Cognito.UserPool.logicalId(config))
     }
   }
+
 }
 
 object ServerlessApi {
@@ -736,7 +745,7 @@ object ServerlessApi {
       Json.obj(
         logicalResourceId(config) -> (Json.obj(
           "Type" -> "AWS::Serverless::Api",
-//          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
+          //          "DependsOn" -> Cognito.UserPool.logicalResourceId(config),
         ) ++ properties(
           propStageName(config),
           propDefinitionBody(config)
@@ -766,12 +775,13 @@ object Swagger {
   private def merge(parts: JsValue*): JsValue = {
     parts.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
+
   def spec(config: ProjectConfiguration): JsValue = {
     merge(
       Parts.swaggerVersion,
       Parts.info(config),
       Parts.paths(config),
-//      Parts.securityDefinitions(config),
+      Parts.securityDefinitions(config),
     )
   }
 
@@ -787,12 +797,12 @@ object Swagger {
     def info(config: ProjectConfiguration): JsValue = {
       val title = s"${config.projectName}-${config.samStage.value}"
       Json.obj(
-      "info" -> Json.obj(
-        "version" -> "2017-02-24T04:09:00Z",
-        "title" -> title
+        "info" -> Json.obj(
+          "version" -> "2017-02-24T04:09:00Z",
+          "title" -> title
+        )
       )
-    )
-  }
+    }
 
     /**
       * Required: The available paths and operations for the API.
@@ -812,7 +822,7 @@ object Swagger {
       */
     def path(config: ProjectConfiguration, path: String, handlersForPath: Set[HttpHandler]): JsValue = {
       val operations = handlersForPath.map(handler => operation(config, handler)).toList
-      Json.obj(path -> merge(operations:_*))
+      Json.obj(path -> merge(operations: _*))
     }
 
     /**
@@ -821,10 +831,10 @@ object Swagger {
     def operation(config: ProjectConfiguration, handler: HttpHandler) = {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
-          AmazonApiGatewayIntegration.swaggerExtension(config, handler),
-          responses,
-//          security,
-        )
+        AmazonApiGatewayIntegration.swaggerExtension(config, handler),
+        responses,
+        security(handler.httpConf.authorization, config.authpool.map(_.name).getOrElse("auth_pool")),
+      )
       )
     }
 
@@ -836,10 +846,10 @@ object Swagger {
       * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
       * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       */
-    def securityDefinitions(config: ProjectConfiguration): JsValue = {
-      Json.obj(
+    def securityDefinitions(config: ProjectConfiguration): JsValue = config.authpool match  {
+      case Some(authPool) => Json.obj(
         "securityDefinitions" -> Json.obj(
-          "auth_pool" -> Json.obj(
+          authPool.name -> Json.obj(
             "type" -> "apiKey",
             "name" -> "Authorization",
             "in" -> "header",
@@ -847,12 +857,21 @@ object Swagger {
             "x-amazon-apigateway-authorizer" -> Json.obj(
               "type" -> "cognito_user_pools",
               "providerARNs" -> Json.arr(
-                "arn:aws:cognito-idp:eu-west-1:015242279314:userpool/eu-west-1_V0UvYaYoz" //todo: replace hardcoded cognito arn with the one configured in the project
-              ),
+                Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
+              )
             )
           )
         )
       )
+      case None => JsObject(Nil)
+    }
+
+    /**
+      * A declaration of which security schemes are applied for the API as a whole.
+      */
+    def security(authorized: Boolean, authpoolName: String): JsValue = authorized match {
+      case false => JsNull
+      case true => Json.obj("security" -> Json.arr(Json.obj(authpoolName -> Json.arr())))
     }
 
     /**
@@ -869,10 +888,7 @@ object Swagger {
       */
     val responses = Json.obj("responses" -> Json.obj())
 
-    /**
-      * A declaration of which security schemes are applied for the API as a whole.
-      */
-    val security = Json.obj("security" -> Json.arr(Json.obj("auth_pool" -> Json.arr())))
+
   } // end parts
 
   /**
@@ -908,4 +924,5 @@ object Swagger {
       Json.obj("uri" -> Json.obj("Fn::Sub" -> lambdaUri))
     }
   }
+
 }
