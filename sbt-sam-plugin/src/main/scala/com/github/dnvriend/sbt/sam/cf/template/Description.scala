@@ -4,14 +4,14 @@ import com.github.dnvriend.sbt.sam.SbtSamPluginBuildInfo
 import play.api.libs.json.{ Json, Writes }
 
 object Description {
-  def description(text: String): String = {
+  def description(text: String): Description = {
     val buildAt = SbtSamPluginBuildInfo.builtAtString
     val version = SbtSamPluginBuildInfo.version
-    s"$text - $buildAt - $version"
+    Description(s"$text - $buildAt - $version")
   }
 
   implicit val writes: Writes[Description] = {
-    Writes.apply(model => Json.obj("Description" -> description(model.value)))
+    Writes.apply(model => Json.obj("Description" -> model.value))
   }
 }
 

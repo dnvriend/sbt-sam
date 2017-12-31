@@ -16,6 +16,12 @@ object GlobalSettings extends AutoPlugin {
     organization := "com.github.dnvriend",
     description := "A plugin for creating enterprise cloud application leveraging serverless compute and managed resources",
     startYear := Some(2017),
+    scmInfo := Some(ScmInfo(new java.net.URL("https://github.com/dnvriend/sbt-sam"), "git@github.com:dnvriend/sbt-sam.git")),
+    developers := List(
+      Developer("martijnvdgrift", "Martijn van de Grift", "", new java.net.URL("https://github.com/martijnvdgrift")),
+      Developer("kkessels", "Kevin Kessels", "", new java.net.URL("https://github.com/kkessels")),
+      Developer("dnvriend", "Dennis Vriend", "", new java.net.URL("https://github.com/dnvriend"))
+    )
   ) ++ headerSettings ++ scalariFormSettings ++ resolverSettings ++ compilerSettings ++ publishSourcesAndDocsSettings
 
   lazy val scalariFormSettings = Seq(

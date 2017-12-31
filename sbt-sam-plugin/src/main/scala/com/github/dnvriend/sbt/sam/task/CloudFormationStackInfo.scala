@@ -66,7 +66,7 @@ object CloudFormationStackInfo {
         val statusReason: String = Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")
         val description: String = Option(stack.getDescription).filter(_ != "null").getOrElse("No description")
         val stackStatus = if (stack.getStackStatus.contains("COMPLETE")) Console.GREEN + stack.getStackStatus else stack.getStackStatus
-        val lastUpdated: String = stack.getLastUpdatedTime.toString
+        val lastUpdated: String = Option(stack.getLastUpdatedTime).foldMap(_.toString)
         s"""Name: $stackName
            |Description: $description
            |Status: $stackStatus

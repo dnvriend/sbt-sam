@@ -6,7 +6,7 @@ case class S3Firehose(
                      roleArn: String,
                      kinesisStreamSource: String,
                      configName: String = "",
-                     compression: Option[String] = None,
+                     compression: String = "uncompressed",
                      encryptionKey: Option[String] = None,
                      bufferingIntervalInSeconds: Int = 300,
                      bufferingSize: Int = 5,

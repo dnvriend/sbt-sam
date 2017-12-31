@@ -26,9 +26,11 @@ final case class TemplateBody(value: String) {
 object CreateStackSettings {
   implicit val toRequest: Converter[CreateStackSettings, CreateStackRequest] =
     Converter.instance(settings => {
+      val tags: Seq[Tag] = settings.tags.map({ case (key, value) => new com.amazonaws.services.cloudformation.model.Tag().withKey(key).withValue(value) })
       new CreateStackRequest()
         .withStackName(settings.stackName.value)
         .withTemplateBody(settings.template.value)
+        .withTags(tags: _*)
     })
 }
 
@@ -40,7 +42,7 @@ final case class ChangeSetName(value: String) {
   require(value.nonEmpty, "change set name should not be empty")
 }
 
-final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
+final case class CreateStackSettings(template: TemplateBody, stackName: StackName, tags: (String, String)*)
 
 object CreateStackResponse {
   val zero = CreateStackResponse(None, None)

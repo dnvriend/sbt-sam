@@ -40,6 +40,7 @@ object ProjectConfiguration {
   def fromConfig(
     projectName: String,
     projectVersion: String,
+    projectDescription: String,
     samS3BucketName: String,
     samCFTemplateName: String,
     samResourcePrefixName: String,
@@ -53,6 +54,7 @@ object ProjectConfiguration {
     ProjectConfiguration(
       projectName,
       projectVersion,
+      projectDescription,
       SamS3BucketName(s3BucketName),
       SamCFTemplateName(cfTemplateName),
       SamStage(samStage),
@@ -72,6 +74,7 @@ object ProjectConfiguration {
 case class ProjectConfiguration(
     projectName: String,
     projectVersion: String,
+    projectDescription: String,
     samS3BucketName: SamS3BucketName,
     samCFTemplateName: SamCFTemplateName,
     samStage: SamStage,

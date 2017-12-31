@@ -32,7 +32,7 @@ class S3FirehoseResourceOperationsTest extends TestSpec {
             "role-arn",
             "arn-of-kinesis-stream",
             "ButtonClicked",
-            Some("uncompressed"),
+            "uncompressed",
             Some("arn-of-cmk"),
             100,
             1,

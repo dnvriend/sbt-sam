@@ -132,6 +132,7 @@ trait Generators extends GenCFDynamoDBTable
   val genProjectConfiguration = for {
     projectName <- Gen.const("projectName")
     projectVersion <- Gen.const("projectVersion")
+    projectDescription <- Gen.const("projectDescription")
     bucketName <- genSamS3BucketName
     templateName <- genSamCFTemplateName
     stage <- genSamStage
@@ -141,6 +142,7 @@ trait Generators extends GenCFDynamoDBTable
   } yield ProjectConfiguration(
     projectName,
     projectVersion,
+    projectDescription,
     bucketName,
     templateName,
     stage,
@@ -437,7 +439,7 @@ trait GenS3Firehose extends GenGeneric {
     roleArn,
     kinesisStreamSource,
     configName,
-    Some(compression),
+    compression,
     Some(encryptionKeyArn),
     300,
     5,

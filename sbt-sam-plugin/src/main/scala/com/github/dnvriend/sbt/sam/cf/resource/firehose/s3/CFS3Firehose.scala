@@ -58,15 +58,6 @@ object CFS3FirehoseBucketArn {
 
 case class CFS3FirehoseBucketArn(bucketArn: String)
 
-object CFS3FirehoseDeliveryStreamName {
-  implicit val writes: Writes[CFS3FirehoseDeliveryStreamName] = Writes.apply(model => {
-    import model._
-    Json.obj("DeliveryStreamName" -> deliveryStreamName)
-  })
-}
-
-case class CFS3FirehoseDeliveryStreamName(deliveryStreamName: String)
-
 object CFS3FirehoseDeliveryStreamType {
   implicit val writes: Writes[CFS3FirehoseDeliveryStreamType] = Writes.apply(model => {
     Json.obj("DeliveryStreamType" -> "KinesisStreamAsSource")
@@ -132,14 +123,16 @@ case class CFS3FirehoseKinesisStreamBufferingHints(
                                                       */
                                                     bufferingSize: Int)
 
-object CFS3FirehoseCompression {
-  implicit val writes: Writes[CFS3FirehoseCompression] = Writes.apply(model => {
+object CFS3FirehoseCompressionFormat {
+  implicit val writes: Writes[CFS3FirehoseCompressionFormat] = Writes.apply(model => {
     import model._
-    Json.obj("Compression" -> compression)
+    Json.obj("CompressionFormat" -> compression)
   })
 }
 
-case class CFS3FirehoseCompression(compression: String)
+case class CFS3FirehoseCompressionFormat(compression: String) {
+  require(List("uncompressed", "gzip", "zip", "snappy").contains(compression.toLowerCase))
+}
 
 object CFS3FirehoseEncryptionConfiguration {
   implicit val writes: Writes[CFS3FirehoseEncryptionConfiguration] = Writes.apply(model => {
@@ -163,9 +156,12 @@ object CFS3Firehose {
       logicalName -> Json.obj(
         "Type" -> "AWS::KinesisFirehose::DeliveryStream",
         "Properties" -> Json.obj(
+          "DeliveryStreamName" -> deliveryStreamName,
           "KinesisStreamSourceConfiguration" -> Json.toJson(kinesisStreamSourceConfiguration),
           "ExtendedS3DestinationConfiguration" -> List(
-            Json.toJson(deliveryStreamName),
+            Json.obj("RoleARN" -> ""),
+            Json.obj("Prefix" -> ""),
+            Json.obj("S3BackupMode" -> "Disabled"),
             Json.toJson(bucketArn),
             Json.toJson(compression),
             Json.toJson(encryptionConfiguration),
@@ -182,7 +178,7 @@ case class CFS3Firehose(
                          /**
                            * A name for the delivery stream.
                            */
-                         deliveryStreamName: CFS3FirehoseDeliveryStreamName,
+                         deliveryStreamName: String,
 
                          /**
                            * The Amazon Resource Name (ARN) of the Amazon S3 bucket.
@@ -211,7 +207,7 @@ case class CFS3Firehose(
                          /**
                            * The compression format for the Kinesis Firehose delivery stream.
                            */
-                         compression: Option[CFS3FirehoseCompression] = None,
+                         compression: CFS3FirehoseCompressionFormat = CFS3FirehoseCompressionFormat("uncompressed"),
 
                          /**
                            * The Amazon Resource Name (ARN) of the AWS KMS encryption key that Amazon S3

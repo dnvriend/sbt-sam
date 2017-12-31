@@ -36,7 +36,7 @@ object CloudFormationTemplates {
    */
   def deploymentBucketTemplate(config: ProjectConfiguration): TemplateBody = {
     val template: CloudFormationTemplate = CloudFormationTemplate(
-      Description(config.samCFTemplateName.value),
+      Description.description(config.projectDescription),
       Resources.fromResources(
         CFS3Bucket.deploymentBucket(
           config.samS3BucketName.value,
@@ -171,12 +171,12 @@ object CloudFormationTemplates {
                          firehose: S3Firehose): Resource = {
     CFS3Firehose(
       firehose.configName,
-      CFS3FirehoseDeliveryStreamName(createResourceName(projectName, stage, firehose.name)),
+      createResourceName(projectName, stage, firehose.name),
       CFS3FirehoseBucketArn.fromConfig(createResourceName(projectName, stage, firehose.bucketName)),
       CFS3FirehoseKinesisStreamSourceConfiguration.fromConfig(accountId.value, regions.getName, createResourceName(projectName, stage, firehose.kinesisStreamSource), firehose.roleArn),
       CFS3FirehoseKinesisStreamBufferingHints(firehose.bufferingIntervalInSeconds, firehose.bufferingSize),
       None,
-      None,
+      CFS3FirehoseCompressionFormat(firehose.compression),
       None
     )
   }
