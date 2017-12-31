@@ -11,14 +11,16 @@ import scalaz.Disjunction
 import scalaz.Scalaz._
 
 object PolicyResourceOperations extends PolicyResourceOperations
+
 trait PolicyResourceOperations extends FunctionalOps {
   def retrievePolicies(conf: Config): Set[Policy] = {
     val policiesConfigAttempt: Disjunction[Throwable, Config] = conf.getConfig("policies").safe
 
-    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policy]] = policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
-      case (cName, conf) =>
-        loadConfig[Policy](conf).map(_.copy(configName = cName)).disjunction
-    }.sequenceU
+    def extractPolicies(policies: Config): Disjunction[ConfigReaderFailures, List[Policy]] =
+      policies.root().keySet().asScala.toList.map(name => (name, policies.getConfig(name))).map {
+        case (cName, conf) =>
+          loadConfig[Policy](conf).map(_.copy(configName = cName)).disjunction
+      }.sequenceU
 
     (for {
       policiesConfig ← policiesConfigAttempt

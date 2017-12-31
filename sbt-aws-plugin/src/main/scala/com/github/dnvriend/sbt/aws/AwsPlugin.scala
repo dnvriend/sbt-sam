@@ -44,6 +44,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientCloudFormation := CloudFormationOperations.client(),
     clientCodeBuild := CodeBuildOperations.client(),
     clientXRay := XRayOperations.client(),
+    clientCognitoIdp := CognitoIdpOperations.client(),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),

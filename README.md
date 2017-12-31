@@ -1,6 +1,6 @@
 ![Logo image](img/sbtscalasamlogo_small.png)
 
-# sbt-serverless-plugin
+# sbt-sam
 [![Build Status](https://travis-ci.org/dnvriend/sbt-sam.svg?branch=master)](https://travis-ci.org/dnvriend/sbt-sam)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/36f71fd0aff3488a922db7f8e0c9008b)](https://www.codacy.com/app/dnvriend/sbt-sam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dnvriend/sbt-sam&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/dnvriend/sbt-sam/branch/master/graph/badge.svg)](https://codecov.io/gh/dnvriend/sbt-sam)
@@ -338,6 +338,11 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+
+## 1.0.7 (2017-12-31)
+- Merged PR #61 - Added cognito support, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)! 
+  - Support for [AWS Cognito](https://aws.amazon.com/cognito/) [user pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html)
+  - Support for AWS Cognito Secured API Gateway Endpoints, backed by AWS Lambda  
 
 ## 1.0.6 (2017-12-27)
 - Support for AWS Encryption SDK

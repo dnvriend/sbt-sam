@@ -1,8 +1,9 @@
 package com.github.dnvriend.sbt.sam.cf.resource.apigw.swagger
 
-import com.github.dnvriend.sbt.sam.task.{HttpHandler, ProjectConfiguration}
+import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.task.HttpHandler
 import com.github.dnvriend.sbt.util.JsMonoids
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 
 import scalaz.Scalaz._
 
@@ -14,12 +15,12 @@ object Swagger {
   private def merge(parts: JsValue*): JsValue = {
     parts.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
-  def spec(projectName: String, stage: String, httpHandlers: List[HttpHandler]): JsValue = {
+  def spec(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
     merge(
       Parts.swaggerVersion,
       Parts.info(projectName, stage),
-      Parts.paths(httpHandlers),
-      //      Parts.securityDefinitions(config),
+      Parts.paths(httpHandlers, authpool),
+      Parts.securityDefinitions(authpool)
     )
   }
 
@@ -45,9 +46,9 @@ object Swagger {
     /**
       * Required: The available paths and operations for the API.
       */
-    def paths(httpHandlers: List[HttpHandler]): JsValue = {
+    def paths(httpHandlers: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
       val handersByPath: Map[String, List[HttpHandler]] = httpHandlers.groupBy(_.httpConf.path)
-      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(resourcePath, handlers) }.toList
+      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(resourcePath, handlers, authpool) }.toList
       Json.obj("paths" -> pathsWithOperations.foldMap(identity)(JsMonoids.jsObjectMerge))
     }
 
@@ -55,20 +56,20 @@ object Swagger {
       * A relative path to an individual endpoint. The field name MUST begin with a slash.
       * The path is appended to the basePath in order to construct the full URL.
       */
-    def path(path: String, handlersForPath: List[HttpHandler]): JsValue = {
-      val operations = handlersForPath.map(handler => operation(handler))
-      Json.obj(path -> merge(operations:_*))
+    def path(path: String, handlersForPath: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
+      val operations = handlersForPath.map(handler => operation(handler, authpool))
+      Json.obj(path -> merge(operations: _*))
     }
 
     /**
       * add swagger operation and AWS ApiGateway extensions
       */
-    def operation(handler: HttpHandler) = {
+    def operation(handler: HttpHandler, authpool: Option[Authpool]) = {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
         AmazonApiGatewayIntegration.swaggerExtension(handler),
         responses,
-        //          security,
+        security(handler.httpConf.authorization, authpool.map(_.name).getOrElse("auth_pool")),
       )
       )
     }
@@ -81,10 +82,10 @@ object Swagger {
       * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
       * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       */
-    def securityDefinitions(config: ProjectConfiguration): JsValue = {
-      Json.obj(
+    def securityDefinitions(authpool: Option[Authpool]): JsValue = authpool match  {
+      case Some(authPool) => Json.obj(
         "securityDefinitions" -> Json.obj(
-          "auth_pool" -> Json.obj(
+          authPool.name -> Json.obj(
             "type" -> "apiKey",
             "name" -> "Authorization",
             "in" -> "header",
@@ -92,12 +93,21 @@ object Swagger {
             "x-amazon-apigateway-authorizer" -> Json.obj(
               "type" -> "cognito_user_pools",
               "providerARNs" -> Json.arr(
-                "arn:aws:cognito-idp:eu-west-1:015242279314:userpool/eu-west-1_V0UvYaYoz" //todo: replace hardcoded cognito arn with the one configured in the project
-              ),
+                Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
+              )
             )
           )
         )
       )
+      case None => JsObject(Nil)
+    }
+
+    /**
+      * A declaration of which security schemes are applied for the API as a whole.
+      */
+    def security(authorized: Boolean, authpoolName: String): JsValue = authorized match {
+      case false => JsNull
+      case true => Json.obj("security" -> Json.arr(Json.obj(authpoolName -> Json.arr())))
     }
 
     /**
@@ -114,10 +124,6 @@ object Swagger {
       */
     val responses = Json.obj("responses" -> Json.obj())
 
-    /**
-      * A declaration of which security schemes are applied for the API as a whole.
-      */
-    val security = Json.obj("security" -> Json.arr(Json.obj("auth_pool" -> Json.arr())))
   } // end parts
 
   /**

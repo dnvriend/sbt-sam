@@ -6,6 +6,7 @@ import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody}
+import com.github.dnvriend.sbt.sam.cf.resource.cognito.userpool.{UserPool, UserPoolClient}
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.iam.policy._
@@ -22,6 +23,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
 import com.github.dnvriend.sbt.sam.cf.template._
 import com.github.dnvriend.sbt.sam.cf.template.output.{GenericOutput, ServerlessApiOutput}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
@@ -80,9 +82,10 @@ object CloudFormationTemplates {
         dynamoDBResources(projectName, projectVersion, stage, config.tables) ++
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
         bucketResources(projectName, projectVersion, stage, config.buckets) ++
-        s3FirehoseResources(projectName, projectVersion, stage, config.userArn.accountId, config.getRegion, config.s3Firehoses) ++
+//        s3FirehoseResources(projectName, projectVersion, stage, config.userArn.accountId, config.getRegion, config.s3Firehoses) ++
         iamRolesResources(projectName, projectVersion, stage, config.iamRoles) ++
-        apiGatewayResource(projectName, stage, config.httpHandlers)
+        userpoolResource(projectName, stage, config.authpool) ++
+        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool)
     }
 
     val template: CloudFormationTemplate = CloudFormationTemplate(
@@ -193,16 +196,17 @@ object CloudFormationTemplates {
                          accountId: AccountId,
                          regions: Regions,
                          firehose: S3Firehose): Resource = {
-    CFS3Firehose(
-      firehose.configName,
-      createResourceName(projectName, stage, firehose.name),
-      CFS3FirehoseBucketArn.fromConfig(createResourceName(projectName, stage, firehose.bucketName)),
-      CFS3FirehoseKinesisStreamSourceConfiguration.fromConfig(accountId.value, regions.getName, createResourceName(projectName, stage, firehose.kinesisStreamSource), firehose.roleArn),
-      CFS3FirehoseKinesisStreamBufferingHints(firehose.bufferingIntervalInSeconds, firehose.bufferingSize),
-      None,
-      CFS3FirehoseCompressionFormat(firehose.compression),
-      None
-    )
+//    CFS3Firehose(
+//      firehose.configName,
+//      createResourceName(projectName, stage, firehose.name),
+//      CFS3FirehoseBucketArn.fromConfig(createResourceName(projectName, stage, firehose.bucketName)),
+//      CFS3FirehoseKinesisStreamSourceConfiguration.fromConfig(accountId.value, regions.getName, createResourceName(projectName, stage, firehose.kinesisStreamSource), firehose.roleArn),
+//      CFS3FirehoseKinesisStreamBufferingHints(firehose.bufferingIntervalInSeconds, firehose.bufferingSize),
+//      None,
+//      CFS3FirehoseCompressionFormat(firehose.compression),
+//      None
+//    )
+    ???
   }
 
   /**
@@ -215,6 +219,20 @@ object CloudFormationTemplates {
                           regions: Regions,
                           s3Firehoses: List[S3Firehose]): List[Resource] = {
     s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName, projectVersion, stage, accountId, regions, s3Firehose))
+  }
+
+  /**
+    * Determines Cognito User Pool and User Pool Client resources
+    */
+  def userpoolResource(projectName: String, stage: String, authpool: Option[Authpool]): List[Resource] = {
+    authpool.toList.flatMap(authpool => {
+      val name = authpool.name
+      import authpool.passwordPolicies._
+      List(
+        UserPool(createResourceName(projectName, stage, name), minimumLength, requireLowercase, requireNumbers, requireSymbols, requireUppercase),
+        UserPoolClient("client")
+      )
+    })
   }
 
   /**
@@ -283,7 +301,7 @@ object CloudFormationTemplates {
   /**
    * Determine - the single - ServerlessAPI CloudFormation resource
    */
-  def apiGatewayResource(projectName: String, stage: String, httpHandlers: List[HttpHandler]): Option[ServerlessApi] = {
+  def apiGatewayResource(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool]): Option[ServerlessApi] = {
     httpHandlers.toNel.map { handlers =>
       ServerlessApi(
         ServerlessApiProperties(
@@ -291,7 +309,8 @@ object CloudFormationTemplates {
           ServerlessApiSwaggerDefinitionBody(
             projectName,
             stage,
-            handlers.toList
+            handlers.toList,
+            authpool
           )
         )
       )

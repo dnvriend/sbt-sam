@@ -2,6 +2,8 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.{ Stack, StackResource }
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider
+import com.amazonaws.services.cognitoidp.model.UserPoolDescriptionType
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.TableDescription
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
@@ -51,6 +53,7 @@ object CloudFormationStackInfo {
     lambdaClient: AWSLambda,
     s3Client: AmazonS3,
     iamClient: AmazonIdentityManagement,
+    cognitoIdpClient: AWSCognitoIdentityProvider,
     log: Logger
   ): Unit = {
 
@@ -186,6 +189,26 @@ object CloudFormationStackInfo {
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No IAM roles configured")
     }
 
+    val authpoolSummary: String = {
+      def report(info: UserPoolDescriptionType) = {
+        import info._
+        s"""
+           |  - Name: $getName
+           |  - CreationDate: $getCreationDate
+           |  - LastModified: $getLastModifiedDate
+         """.stripMargin
+      }
+      config.authpool.map { authPool =>
+        val userPoolName = s"$projectName-$stage-${authPool.name}"
+        val userPoolInfo = CognitoIdpOperations.findUserPool(userPoolName, cognitoIdpClient)
+        (authPool, userPoolInfo)
+      }.map {
+        case (authPool, optionalInfo) =>
+          val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${authPool.name}: ${Console.RESET}$info"
+      }.getOrElse(Console.YELLOW + "No Authentication Pool configured")
+    }
+
     val tablesSummary: String = {
       def report(conf: TableDescription): String = {
         import conf._
@@ -239,7 +262,8 @@ object CloudFormationStackInfo {
             val handlerName: String = handler.lambdaConfig.simpleClassName
             val handlerPath: String = handler.httpConf.path
             val handlerMethod: String = handler.httpConf.method.toUpperCase
-            val handlerInfo: String = s"$handlerName: ($handlerMethod -> '$handlerPath')"
+            val securityStatus: String = handler.httpConf.authorization.option("secured").toRight("public").merge
+            val handlerInfo: String = s"$handlerName: ($handlerMethod -> '$handlerPath' -> $securityStatus)"
             s"* ${Console.GREEN}$handlerInfo: ${Console.RESET}$projectionStatus"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Api Http Event handlers configured")
       }
@@ -325,6 +349,8 @@ object CloudFormationStackInfo {
         |$s3FirehoseSummary
         |S3 Buckets:
         |$s3BucketsSummary
+        |Authentication Pool:
+        |$authpoolSummary
         |Endpoints:
         |$endpointSummary
       """.stripMargin

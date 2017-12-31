@@ -5,12 +5,13 @@ import com.github.dnvriend.ops.AnyOps
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.{AmazonUser, Arn}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
-import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.resource.policy.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
+import com.github.dnvriend.sbt.sam.resource.sns.model._
 
 import scala.util.matching.Regex
 
@@ -29,10 +30,12 @@ case class SamResourcePrefixName(value: String)
 case class SamStage(value: String) {
   require(!List("-", ".", " ", "/").exists(char => value.contains(char)), s"sam stage with value '$value', should not contain '.', '-', '/' or spaces")
 }
-case class SamResources(lambdas: Set[LambdaHandler],
-                        tables: Set[TableWithIndex],
-                        policies: Set[Policy],
-                        topics: Set[Topic],
+case class SamResources(
+                         authpool: Option[Authpool],
+                         lambdas: Set[LambdaHandler],
+                         tables: Set[TableWithIndex],
+                         policies: Set[Policy],
+                         topics: Set[Topic],
                         streams: Set[KinesisStream],
                         buckets: Set[S3Bucket],
                         s3Firehoses: Set[S3Firehose],
@@ -63,6 +66,7 @@ object ProjectConfiguration {
       SamResourcePrefixName(samResourcePrefixName),
       credentialsRegionAndUser,
       amazonUser,
+      samResources.authpool,
       samResources.lambdas.toList,
       samResources.tables.toList,
       samResources.policies.toList,
@@ -75,23 +79,24 @@ object ProjectConfiguration {
   }
 }
 case class ProjectConfiguration(
-    projectName: String,
-    projectVersion: String,
-    projectDescription: String,
-    samS3BucketName: SamS3BucketName,
-    samCFTemplateName: SamCFTemplateName,
-    samStage: SamStage,
-    samResourcePrefixName: SamResourcePrefixName,
-    credentialsRegionAndUser: CredentialsRegionAndUser,
-    amazonUser: AmazonUser,
-    lambdas: List[LambdaHandler] = List.empty,
-    tables: List[TableWithIndex] = List.empty,
-    policies: List[Policy] = List.empty,
-    topics: List[Topic] = List.empty,
-    streams: List[KinesisStream] = List.empty,
-    buckets: List[S3Bucket] = List.empty,
-    s3Firehoses: List[S3Firehose] = List.empty,
-    iamRoles: List[IamRole] = List.empty,
+                                 projectName: String,
+                                 projectVersion: String,
+                                 projectDescription: String,
+                                 samS3BucketName: SamS3BucketName,
+                                 samCFTemplateName: SamCFTemplateName,
+                                 samStage: SamStage,
+                                 samResourcePrefixName: SamResourcePrefixName,
+                                 credentialsRegionAndUser: CredentialsRegionAndUser,
+                                 amazonUser: AmazonUser,
+                                 authpool: Option[Authpool] = Option.empty,
+                                 lambdas: List[LambdaHandler] = List.empty,
+                                 tables: List[TableWithIndex] = List.empty,
+                                 policies: List[Policy] = List.empty,
+                                 topics: List[Topic] = List.empty,
+                                 streams: List[KinesisStream] = List.empty,
+                                 buckets: List[S3Bucket] = List.empty,
+                                 s3Firehoses: List[S3Firehose] = List.empty,
+                                 iamRoles: List[IamRole] = List.empty,
 ) extends AnyOps {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty

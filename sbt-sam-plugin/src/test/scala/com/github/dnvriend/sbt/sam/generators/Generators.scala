@@ -10,6 +10,7 @@ import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.mock.MockAWSCredentials
 import com.github.dnvriend.sbt.sam.resource.bucket.model.{S3Bucket, S3Website}
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, PasswordPolicies}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{GlobalSecondaryIndex, HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
@@ -22,6 +23,7 @@ import scalaz.Scalaz._
 
 object Generators extends Generators
 trait Generators extends GenCFDynamoDBTable
+  with GenAuthpool
   with GenKinesisStream
   with GenTopic
   with GenGeneric
@@ -151,11 +153,6 @@ trait Generators extends GenCFDynamoDBTable
     resourcePrefixName,
     credentialsAndUser,
     amazonUser,
-    List.empty,
-    List.empty,
-    List.empty,
-    List.empty,
-    List.empty,
   )
 
   implicit val arbProjectConfiguration: Arbitrary[ProjectConfiguration] = Arbitrary.apply(genProjectConfiguration)
@@ -470,4 +467,31 @@ trait GenIamRole extends GenGeneric {
   implicit val arbIamRole: Arbitrary[IamRole] = Arbitrary.apply(genIamRole)
 
   val iterIamRole: Iterator[IamRole] = iterFor(genIamRole)
+}
+
+trait GenAuthpool extends GenGeneric {
+  val genPasswordPolicies = for {
+    minimumLength <- Gen.posNum[Int]
+    requireLowercase <- Gen.oneOf(true, false)
+    requireNumbers <- Gen.oneOf(true, false)
+    requireSymbols <- Gen.oneOf(true, false)
+    requireUppercase <- Gen.oneOf(true, false)
+  } yield PasswordPolicies(
+    minimumLength,
+    requireLowercase,
+    requireNumbers,
+    requireSymbols,
+    requireUppercase
+  )
+  val genAuthpool = for {
+    name <- Gen.const("cognito-user-pool")
+    policies <- genPasswordPolicies
+  } yield Authpool(
+    name,
+    policies
+  )
+
+  implicit val arbAuthpool: Arbitrary[Authpool] = Arbitrary.apply(genAuthpool)
+
+  val iterAuthpool: Iterator[Authpool] = iterFor(genAuthpool)
 }

@@ -126,6 +126,13 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveStreams(config)
     },
 
+    cognitoResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveAuthPool(config)
+    },
+
+
     bucketResources := {
       val baseDir: File = baseDirectory.value
       val config = ResourceOperations.readConfig(baseDir)
@@ -150,6 +157,7 @@ object SAMPlugin extends AutoPlugin {
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
         SamResources(
+          cognitoResources.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
           policyResources.value,
@@ -174,6 +182,7 @@ object SAMPlugin extends AutoPlugin {
         clientAwsLambda.value,
         clientS3.value,
         clientIam.value,
+        clientCognitoIdp.value,
         streams.value.log
       )
     },

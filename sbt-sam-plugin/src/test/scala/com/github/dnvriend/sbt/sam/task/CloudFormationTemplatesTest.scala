@@ -4,6 +4,7 @@ import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.generators.Generators
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.TableWithIndex
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
@@ -42,9 +43,11 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val topic: Topic = iterTopic.next()
     val bucket: S3Bucket = iterS3Bucket.next()
     val role: IamRole = iterIamRole.next()
+    val authPool: Authpool = iterAuthpool.next()
     val jarName = "jarName"
     val latestVersion = "latestVersion"
     val conf = pc.copy(
+      authpool = Option(authPool),
       streams = List(stream),
       topics = List(topic),
       tables = List(table),
@@ -56,10 +59,10 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val updateTemplate = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
-    println(templateJsonString)
+//    println(templateJsonString)
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]
-    resources.keys.size shouldBe 13 // stream, firehose, topic, role, table, 5x handler + 2 bucket + api
+    resources.keys.size shouldBe 14 // stream, topic, userpool, userpool-client, role, table, 5x handler + 2 bucket + api
   }
 }
