@@ -18,7 +18,8 @@ import com.github.dnvriend.sbt.aws.AwsPlugin
 import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
-import com.github.dnvriend.sbt.util.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
+import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.classpath.ClasspathUtilities
@@ -36,10 +37,14 @@ object SAMPlugin extends AutoPlugin {
   import autoImport._
 
   override def projectSettings = Seq(
-    samStage := "dev",
-    samS3BucketName := s"${organization.value}-${name.value}-${samStage.value}",
-    samCFTemplateName := s"${name.value}-${samStage.value}",
-    samResourcePrefixName := s"${name.value}-${samStage.value}",
+    samStageValue := {
+      val samStageProp: Option[String] = samStage.?.value
+      val samStageEnv: Option[String] = sys.env.get("SAM_STAGE")
+      samStageEnv.orElse(samStageProp).getOrElse(throw new RuntimeException("'SAM_STAGE' not set in environment or 'samStage' not set in project"))
+    },
+    samS3BucketName := s"${organization.value}-${name.value}-${samStageValue.value}",
+    samCFTemplateName := s"${organization.value}-${name.value}-${samStageValue.value}",
+    samResourcePrefixName := s"${name.value}-${samStageValue.value}",
     (assemblyJarName in assembly) := "codepackage.jar",
 
     samProjectClassLoader := {
@@ -67,7 +72,7 @@ object SAMPlugin extends AutoPlugin {
     discoveredLambdas := (discoveredLambdas triggeredBy discoveredClasses).value,
     discoveredLambdas := (discoveredLambdas keepAs discoveredLambdas).value,
 
-    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStage.value),
+    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStageValue.value),
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
@@ -93,36 +98,91 @@ object SAMPlugin extends AutoPlugin {
 
     dynamoDbTableResources := {
       val baseDir: File = baseDirectory.value
-      ResourceOperations.retrieveDynamoDbTables(baseDir)
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveDynamoDbTables(config)
     },
 
     policyResources := {
       val baseDir: File = baseDirectory.value
-      ResourceOperations.retrievePolicies(baseDir)
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrievePolicies(config)
+    },
+
+    iamRolesResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveRoles(config)
+    },
+
+    topicResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveTopics(config)
+    },
+
+    streamResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveStreams(config)
+    },
+
+    cognitoResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveAuthPool(config)
+    },
+
+
+    bucketResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveBuckets(config)
+    },
+
+    s3FirehoseResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveS3Firehose(config)
     },
 
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
+        version.value,
+        description.value,
         samS3BucketName.value,
         samCFTemplateName.value,
         samResourcePrefixName.value,
-        samStage.value,
+        samStageValue.value,
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,
         SamResources(
+          cognitoResources.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
-          policyResources.value
+          policyResources.value,
+          topicResources.value,
+          streamResources.value,
+          bucketResources.value,
+          s3FirehoseResources.value,
+          iamRolesResources.value,
         )
       )
     },
+    samProjectConfiguration := (samProjectConfiguration keepAs samProjectConfiguration).value,
 
     samInfo := {
       CloudFormationStackInfo.run(
         samProjectConfiguration.value,
         samDescribeCloudFormationStack.value,
         clientCloudFormation.value,
+        clientDynamoDb.value,
+        clientSns.value,
+        clientKinesis.value,
+        clientAwsLambda.value,
+        clientS3.value,
+        clientIam.value,
+        clientCognito.value,
         streams.value.log
       )
     },
@@ -194,6 +254,47 @@ object SAMPlugin extends AutoPlugin {
         DescribeStackSettings(StackName(config.samCFTemplateName.value)),
         clientCloudFormation.value
       )
+    },
+
+    samCreateUsers := {
+      CreateCognitoUsers.run(
+        samProjectConfiguration.value,
+        clientCognito.value,
+        streams.value.log
+      )
+    },
+
+    samCreateUserToken := {
+      CreateCognitoUsers.getIdToken(
+        samProjectConfiguration.value,
+        clientCognito.value,
+        streams.value.log
+      )
+    },
+
+    samLogs := {
+      val lambdaName = Defaults.getForParser(samProjectConfiguration)((state, config) => {
+        val strings: List[String] = config.toList.flatMap(_.lambdas.toList).map(_.lambdaConfig.simpleClassName)
+        Space ~> StringBasic.examples(strings: _*)
+      }).parsed
+      val logger = streams.value.log
+      val config = samProjectConfiguration.value
+      val lambdaClient = clientAwsLambda.value
+      val logsClient = clientAwsLogs.value
+      val projectName = config.projectName
+      val stage = config.samStage.value
+      val maybeLambdaConfig = config.lambdas.find(_.lambdaConfig.simpleClassName == lambdaName).map(_.lambdaConfig)
+      for {
+        lambdaConf <- maybeLambdaConfig
+        function <- AwsLambdaOperations.findFunction(lambdaConf.fqcn, projectName, stage, lambdaClient)
+        logGroup <- CloudWatchLogsOperations.findLogGroup(function.getFunctionName, logsClient)
+      } {
+        CloudWatchLogsOperations.getLogEvents(logGroup.getLogGroupName, logsClient).sortBy(_.timestamp).foreach {
+          case LogEvent(timestamp, ingestionTime, message) =>
+            def format(time: Long): String = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(new java.util.Date(time))
+            logger.info(s"${format(timestamp)} - $message")
+        }
+      }
     },
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,

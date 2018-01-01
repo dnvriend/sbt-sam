@@ -4,8 +4,9 @@ import com.amazonaws.services.cognitoidp.{ model, _ }
 import com.amazonaws.services.cognitoidp.model._
 
 import scala.collection.JavaConverters
-import scala.util.Random
+import scala.util.{ Random, Try }
 import scalaz.Disjunction
+import scala.collection.JavaConverters._
 
 /**
  * add-custom-attributes                    | admin-add-user-to-group
@@ -52,17 +53,37 @@ import scalaz.Disjunction
  * verify-user-attribute                    | help
  */
 
+final case class CognitoUserDetails(
+                                     userName: String,
+                                     password: String,
+                                     userPoolId: String,
+                                     clientId: String
+                                   )
+
+final case class ValidUser(
+                            userName: String,
+                            idToken: String
+                          )
+
+final case class UserPoolWithClients(
+                                      userPool: UserPoolDescriptionType,
+                                      userPoolClients: List[UserPoolClientDescription]
+                                    ) {
+  require(userPoolClients.nonEmpty, s"UserPoolClients for UserPool: '${userPool.getId}', should not be empty")
+}
+
 object AwsCognitoIdpOperations {
   def client(): AWSCognitoIdentityProvider = {
     AWSCognitoIdentityProviderClientBuilder.defaultClient()
   }
 
   def adminCreateAndAuthUser(
-    client: AWSCognitoIdentityProvider,
     userName: String,
     password: String,
     userPoolId: String,
-    clientId: String): Disjunction[String, AdminRespondToAuthChallengeResult] = {
+    clientId: String,
+    client: AWSCognitoIdentityProvider,
+                            ): Disjunction[String, AdminRespondToAuthChallengeResult] = {
     // generate random temp password
     val tempPassword: String = Random.alphanumeric.take(10).mkString
 
@@ -122,8 +143,74 @@ object AwsCognitoIdpOperations {
       e => s"adminRespondToAuthChallenge with user: $userName and newPassword: $newPassword error ==> ${e.toString}"
     )
   }
+
+  /**
+    * Returns the ID token, that must be used with the Authorization header
+    */
+  def getIdToken(
+                            username: String,
+                            password: String,
+                            userPoolId: String,
+                            clientId: String,
+                            client: AWSCognitoIdentityProvider): String = {
+    val result: AuthenticationResultType = {
+      client
+        .adminInitiateAuth(new AdminInitiateAuthRequest()
+          .withAuthFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
+          .withClientId(clientId)
+          .withUserPoolId(userPoolId)
+          .withAuthParameters(Map("USERNAME" -> username, "PASSWORD" -> password).asJava)
+        ).getAuthenticationResult
+    }
+    result.getIdToken
+  }
+
+  /**
+   * Create and authenticates users
+   */
+  def createValidUser(userList: List[CognitoUserDetails], client: AWSCognitoIdentityProvider): List[ValidUser] = {
+    val users: List[Disjunction[String, ValidUser]] = userList.map { user ⇒
+      adminCreateAndAuthUser(user.userName, user.password, user.userPoolId, user.clientId, client)
+        .map(response => ValidUser(user.userName, response.getAuthenticationResult.getIdToken))
+    }
+    users.filter(_.isRight).flatMap(_.toList)
+  }
+
+  def listUserPools(client: AWSCognitoIdentityProvider): List[UserPoolDescriptionType] = {
+    Try(client.listUserPools(new ListUserPoolsRequest().withMaxResults(25)).getUserPools.asScala.toList).getOrElse(Nil)
+  }
+
+  def findUserPool(userPoolName: String, client: AWSCognitoIdentityProvider): Option[UserPoolDescriptionType] = {
+    listUserPools(client).find(_.getName == userPoolName)
+  }
+
+  def findUserPoolWithClients(userPoolName: String, client: AWSCognitoIdentityProvider): Option[UserPoolWithClients] = for {
+    userPool <- findUserPool(userPoolName, client)
+  } yield UserPoolWithClients(userPool, listUserPoolClients(userPool.getId, client))
+
+  def listUserPoolClients(userPoolId: String, client: AWSCognitoIdentityProvider): List[UserPoolClientDescription] = Try {
+    val clients = client.listUserPoolClients(new ListUserPoolClientsRequest()
+      .withUserPoolId(userPoolId)
+      .withMaxResults(1))
+      .getUserPoolClients.asScala.toList
+    clients
+    }.recoverWith { case t: Throwable =>
+        println(t.getMessage)
+        scala.util.Failure(t)
+    }.getOrElse(Nil)
+
+  def describeUserPoolClient(userPoolId: String, userPoolClientId: String, client: AWSCognitoIdentityProvider): Option[DescribeUserPoolClientResult] = Try {
+    client.describeUserPoolClient(new DescribeUserPoolClientRequest()
+      .withUserPoolId(userPoolId)
+      .withUserPoolId(userPoolClientId))
+  }.recoverWith { case t: Throwable =>
+    println(t.getMessage)
+    scala.util.Failure(t)
+  }.toOption
+
+  def describeUserPool(userPoolId: String, client: AWSCognitoIdentityProvider): Option[DescribeUserPoolResult] = {
+    Try(client.describeUserPool(new DescribeUserPoolRequest()
+      .withUserPoolId(userPoolId)
+    )).toOption
+  }
 }
-
-case class CognitoUserDetails(userName: String, password: String, userPoolId: String, clientId: String)
-
-case class ValidUser(userName: String, idToken: String)

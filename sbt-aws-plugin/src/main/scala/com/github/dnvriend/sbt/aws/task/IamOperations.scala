@@ -4,7 +4,7 @@ import com.amazonaws.auth.{ AWSCredentials, DefaultAWSCredentialsProviderChain }
 import com.amazonaws.profile.path.cred.CredentialsDefaultLocationProvider
 import com.amazonaws.regions.{ DefaultAwsRegionProviderChain, Regions }
 import com.amazonaws.services.identitymanagement._
-import com.amazonaws.services.identitymanagement.model.User
+import com.amazonaws.services.identitymanagement.model.{ GetRolePolicyRequest, GetRoleRequest, User }
 import com.github.dnvriend.ops.{ AllOps, AnyOps, Converter }
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.{ AwsCredentials, CredentialsProfileAndRegion, CredentialsRegionAndUser, ProfileLocation }
 import sbt._
@@ -202,4 +202,11 @@ object IamOperations extends AllOps {
     (creds |@| user)((cred, user) => CredentialsRegionAndUser(cred, user.user)).leftMap(_.intercalate1(",")).disjunction
   }
 
+  /**
+   * Retrieves information about the specified role, including the role's path, GUID, ARN, and the role's trust policy
+   * that grants permission to assume the role.
+   */
+  def getRole(roleName: String, client: AmazonIdentityManagement) = {
+    Disjunction.fromTryCatchNonFatal(client.getRole(new GetRoleRequest().withRoleName(roleName))).toOption
+  }
 }

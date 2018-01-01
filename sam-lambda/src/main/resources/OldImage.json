@@ -1,0 +1,23 @@
+{
+  "Records": [
+    {
+      "eventID": "d0db2ab252e95821101fbd3fc7d0a783",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "eu-west-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1.5142329E9,
+        "Keys": {
+          "id": {
+            "S": "22b24955-619f-45fa-9722-587a946addf2"
+          }
+        },
+        "SequenceNumber": "122800000000019853233287",
+        "SizeBytes": 38,
+        "StreamViewType": "OLD_IMAGE"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dnvriend-people/stream/2017-12-25T20:13:01.805"
+    }
+  ]
+}

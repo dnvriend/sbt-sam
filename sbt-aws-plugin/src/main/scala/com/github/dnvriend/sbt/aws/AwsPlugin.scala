@@ -14,17 +14,12 @@
 
 package com.github.dnvriend.sbt.aws
 
-import com.amazonaws.services.cognitoidp.model.AdminRespondToAuthChallengeResult
 import com.github.dnvriend.ops.AllOps
-import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.aws.domain._
-import sbt.complete.DefaultParsers._
-import sbt._
+import com.github.dnvriend.sbt.aws.task._
 import sbt.Keys._
-
-import scalaz.std.AllInstances._
-
-import scalaz.Disjunction
+import sbt._
+import sbt.complete.DefaultParsers._
 
 object AwsPlugin extends AutoPlugin with AllOps {
 
@@ -42,14 +37,12 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientKinesis := KinesisOperations.client(),
     clientSns := SNSOperations.client(),
     clientCloudWatch := CloudWatchOperations.client(),
+    clientAwsLogs := CloudWatchLogsOperations.client(),
     clientIam := IamOperations.client(),
     clientCloudFormation := CloudFormationOperations.client(),
     clientCodeBuild := CodeBuildOperations.client(),
     clientXRay := XRayOperations.client(),
     clientCognito := AwsCognitoIdpOperations.client(),
-
-    // cognito users
-    usersToCreate := List(),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),
@@ -138,17 +131,6 @@ object AwsPlugin extends AutoPlugin with AllOps {
         clientCloudFormation.value
       ).bimap(t => DeleteStackResponse(None, Option(t)), result => DeleteStackResponse(Option(result), None))
         .merge
-    },
-
-    createValidUsers := {
-      val userList: List[CognitoUserDetails] = usersToCreate.value
-
-      val users: List[Disjunction[String, ValidUser]] = userList.map { user ⇒
-        AwsCognitoIdpOperations.adminCreateAndAuthUser(clientCognito.value, user.userName, user.password, user.userPoolId, user.clientId)
-          .map(response ⇒ ValidUser(user.userName, response.getAuthenticationResult.getIdToken))
-      }
-
-      users.filter(_.isRight).flatMap(_.toList)
     },
   )
 }

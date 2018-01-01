@@ -16,6 +16,12 @@ object GlobalSettings extends AutoPlugin {
     organization := "com.github.dnvriend",
     description := "A plugin for creating enterprise cloud application leveraging serverless compute and managed resources",
     startYear := Some(2017),
+    scmInfo := Some(ScmInfo(new java.net.URL("https://github.com/dnvriend/sbt-sam"), "git@github.com:dnvriend/sbt-sam.git")),
+    developers := List(
+      Developer("martijnvdgrift", "Martijn van de Grift", "", new java.net.URL("https://github.com/martijnvdgrift")),
+      Developer("kkessels", "Kevin Kessels", "", new java.net.URL("https://github.com/kkessels")),
+      Developer("dnvriend", "Dennis Vriend", "", new java.net.URL("https://github.com/dnvriend"))
+    )
   ) ++ headerSettings ++ scalariFormSettings ++ resolverSettings ++ compilerSettings ++ publishSourcesAndDocsSettings
 
   lazy val scalariFormSettings = Seq(
@@ -44,9 +50,15 @@ object GlobalSettings extends AutoPlugin {
     scalacOptions += "-Ydelambdafy:inline",
     scalacOptions += "-unchecked",
     scalacOptions += "-deprecation",
-    scalacOptions += "-language:higherKinds",
-    scalacOptions += "-language:implicitConversions",
     scalacOptions += "-feature",
+    scalacOptions ++= Seq(
+      "-encoding", "utf-8",                // Specify character encoding used by source files.
+      "-explaintypes",                     // Explain type errors in more detail.
+      "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
+      "-language:higherKinds",             // Allow higher-kinded types
+      "-language:implicitConversions",     // Allow definition of implicit functions called views
+      "-target:jvm-1.8",                   // Generate Java 8 byte code
+    )
   )
 
   lazy val publishSourcesAndDocsSettings = Seq(
@@ -64,6 +76,7 @@ object GlobalSettings extends AutoPlugin {
     libraryDependencies += libAvro4s,
     libraryDependencies += libCirceYaml,
     libraryDependencies += libPlayJson,
+    libraryDependencies += libScalaCheckTest % Test,
     libraryDependencies += libScalazScalaTest % Test,
     libraryDependencies += libScalaTest % Test
   )

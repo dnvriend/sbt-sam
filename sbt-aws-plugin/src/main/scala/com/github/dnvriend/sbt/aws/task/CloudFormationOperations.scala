@@ -26,9 +26,11 @@ final case class TemplateBody(value: String) {
 object CreateStackSettings {
   implicit val toRequest: Converter[CreateStackSettings, CreateStackRequest] =
     Converter.instance(settings => {
+      val tags: Seq[Tag] = settings.tags.map({ case (key, value) => new com.amazonaws.services.cloudformation.model.Tag().withKey(key).withValue(value) })
       new CreateStackRequest()
         .withStackName(settings.stackName.value)
         .withTemplateBody(settings.template.value)
+        .withTags(tags: _*)
     })
 }
 
@@ -40,7 +42,7 @@ final case class ChangeSetName(value: String) {
   require(value.nonEmpty, "change set name should not be empty")
 }
 
-final case class CreateStackSettings(template: TemplateBody, stackName: StackName)
+final case class CreateStackSettings(template: TemplateBody, stackName: StackName, tags: (String, String)*)
 
 object CreateStackResponse {
   val zero = CreateStackResponse(None, None)
@@ -147,22 +149,6 @@ final case class DescribeChangeSetSettings(stackName: StackName, changeSetName: 
 
 final case class ServiceEndpoint(value: String)
 object SamStack {
-  implicit val show: Show[SamStack] = Show.shows(model => {
-    import model._
-    s"""
-       |====================
-       |Sam's State:
-       |====================
-       |Name: ${stack.getStackName}
-       |Description: ${Option(stack.getDescription).filter(_ != "null").getOrElse("No description")}
-       |Status: ${stack.getStackStatus}
-       |Status reason: ${Option(stack.getStackStatusReason).filter(_ != "null").getOrElse("No status reason")}
-       |Last updated: ${stack.getLastUpdatedTime}
-       |===================
-       |ServiceEndpoint: ${serviceEndpoint.map(_.value).getOrElse("No endpoint")}
-       |===================
-     """.stripMargin
-  })
   def fromStack(stack: Stack): SamStack = {
     val outputs = stack.getOutputs.asScala.toList
     val serviceEndpoint: Option[ServiceEndpoint] =
@@ -255,7 +241,8 @@ object CloudFormationOperations extends AwsProgressListenerOps {
   def getStack(
     settings: DescribeStackSettings,
     client: AmazonCloudFormation): Option[Stack] = {
-    describeStack(settings, client).toOption.flatMap(_.getStacks.asScala.headOption)
+    val result = describeStack(settings, client)
+    result.toOption.flatMap(_.getStacks.asScala.headOption)
   }
 
   /**

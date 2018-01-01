@@ -1,0 +1,31 @@
+{
+  "Records": [
+    {
+      "eventID": "dbd193752212e027d02a859e211b705f",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "eu-west-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1.51423314E9,
+        "Keys": {
+          "id": {
+            "S": "3a2de85d-059e-4297-a8a6-ae183d2c555d"
+          }
+        },
+        "NewImage": {
+          "json": {
+            "S": "{\"name\":\"foo\",\"id\":\"3a2de85d-059e-4297-a8a6-ae183d2c555d\"}"
+          },
+          "id": {
+            "S": "3a2de85d-059e-4297-a8a6-ae183d2c555d"
+          }
+        },
+        "SequenceNumber": "141400000000019449549361",
+        "SizeBytes": 138,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:123456789:table/sam-dynamodb-streams-seed-dnvriend-people/stream/2017-12-25T20:17:55.951"
+    }
+  ]
+}

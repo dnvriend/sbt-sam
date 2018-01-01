@@ -18,7 +18,7 @@ import java.io.InputStream
 
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.ops.DisjunctionNel.DisjunctionNel
-import play.api.libs.json.{ JsValue, Json, Reads }
+import play.api.libs.json.{ JsNull, JsValue, Json, Reads }
 
 import scalaz._
 import scalaz.Scalaz._
@@ -30,7 +30,7 @@ object HttpRequest {
 }
 
 case class HttpRequest(request: JsValue) extends AllOps {
-  def body: JsValue = request("body")
+  def body: JsValue = Reads.StringReads.map(Json.parse).reads(request("body")).getOrElse(JsNull)
 
   def pathParameters: JsValue = request("pathParameters")
 
@@ -40,12 +40,10 @@ case class HttpRequest(request: JsValue) extends AllOps {
 
   def bodyAs[A: Reads](implicit validator: Validator[A] = null): DisjunctionNel[String, A] = {
     for {
-      data <- Json.parse(body.toString).as[A].safe.leftMap(t => s"Could not deserialize request:\n$request".wrapNel)
+      data <- body.as[A].safe.leftMap(t => s"Could not deserialize request:\n$request".wrapNel)
       validated <- (validator.? | Validator.empty).validate(data).disjunction
     } yield validated
   }
-
-  def bodyAsStringOpt: DisjunctionNel[String, String] = body.as[String].safe.leftMap(t => "Could not parse body to String".wrapNel)
 
   def pathParamsOpt[A: Reads]: Option[A] = pathParamAs.toOption
 
