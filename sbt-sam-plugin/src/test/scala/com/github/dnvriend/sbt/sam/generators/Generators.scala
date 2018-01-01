@@ -426,22 +426,18 @@ trait GenKinesisStream extends GenGeneric {
 trait GenS3Firehose extends GenGeneric {
   val genS3Firehose = for {
     name <- Gen.const("s3-kinesis-firehose-delivery-stream-name")
-    bucketName <- Gen.const("s3-bucket-name")
     configName <- genResourceConfName
-    roleArn <- Gen.const("role-arn")
-    kinesisStreamSource <- Gen.const("kinesis-stream-name")
     compression <- Gen.const("uncompressed")
     encryptionKeyArn <- Gen.const("encryption-key-arn")
   } yield S3Firehose(
     name,
-    bucketName,
-    roleArn,
-    kinesisStreamSource,
     configName,
     compression,
-    Some(encryptionKeyArn),
+    1,
+    24,
     300,
     5,
+    None,
     true
   )
 

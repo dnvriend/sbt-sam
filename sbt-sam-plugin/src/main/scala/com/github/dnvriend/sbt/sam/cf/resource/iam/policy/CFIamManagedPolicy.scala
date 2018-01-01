@@ -37,4 +37,11 @@ object CFIamManagedPolicy {
   case object AmazonKinesisFirehoseFullAccess extends CFIamManagedPolicy {
     def arn: String = getArn(this)
   }
+
+  /**
+   * Provides full access to CloudWatch.
+   */
+  case object CloudWatchFullAccess extends CFIamManagedPolicy {
+    def arn: String = getArn(this)
+  }
 }

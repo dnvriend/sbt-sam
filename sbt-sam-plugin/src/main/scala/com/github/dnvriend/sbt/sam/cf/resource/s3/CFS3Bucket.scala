@@ -87,6 +87,7 @@ object S3AccessControl {
 
   def fromName(name: String): S3AccessControl = name.toLowerCase.trim match {
     case "private" => Private
+    case "bucketownerfullcontrol" => BucketOwnerFullControl
   }
 
   /**

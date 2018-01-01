@@ -71,10 +71,12 @@ object CloudFormationTemplates {
    * Sbt SAM uses the SAM-Model, that needs a transform in order to use the SAM-DSL in CloudFormation templates.
    */
   def updateTemplate(config: ProjectConfiguration, jarName: String, latestVersion: String): TemplateBody = {
-    val projectName = config.projectName
-    val projectVersion = config.projectVersion
-    val stage = config.samStage.value
-    val deploymentBucketName = config.samS3BucketName.value
+    val projectName: String = config.projectName
+    val projectVersion: String = config.projectVersion
+    val region: String = config.credentialsRegionAndUser.credentialsAndRegion.region.getName
+    val accountId: String = config.userArn.accountId.value
+    val stage: String = config.samStage.value
+    val deploymentBucketName: String = config.samS3BucketName.value
 
     val resources: List[Resource] = {
       kinesisResources(projectName, projectVersion, stage, config.streams) ++
@@ -82,8 +84,8 @@ object CloudFormationTemplates {
         dynamoDBResources(projectName, projectVersion, stage, config.tables) ++
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
         bucketResources(projectName, projectVersion, stage, config.buckets) ++
-//        s3FirehoseResources(projectName, projectVersion, stage, config.userArn.accountId, config.getRegion, config.s3Firehoses) ++
-        iamRolesResources(projectName, projectVersion, stage, config.iamRoles) ++
+        s3FirehoseResources(projectName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
+        iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
         apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool)
     }
@@ -169,12 +171,12 @@ object CloudFormationTemplates {
   /**
     * Determine Iam Role resource
     */
-  def iamRoleResource(projectName: String, projectVersion: String, stage: String, role: IamRole): Resource = {
+  def iamRoleResource(projectName: String, projectVersion: String, stage: String, accountId: String, role: IamRole): Resource = {
     CFIamRole(
       role.configName,
       createResourceName(projectName, stage, role.name),
       CFIamPolicyDocument(List(
-        CFIamStatement.allowAssumeRole(CFPrincipal(role.principalServiceName))
+        CFIamStatement.allowAssumeRole(CFPrincipal(role.principalServiceName), accountId)
       )),
       role.managedPolicyArns
     )
@@ -183,8 +185,8 @@ object CloudFormationTemplates {
   /**
     * determine Iam Roles resources
     */
-  def iamRolesResources(projectName: String, projectVersion: String, stage: String, roles: List[IamRole]): List[Resource] = {
-    roles.map(role => iamRoleResource(projectName, projectVersion, stage, role))
+  def iamRolesResources(projectName: String, projectVersion: String, stage: String, accountId: String, roles: List[IamRole]): List[Resource] = {
+    roles.map(role => iamRoleResource(projectName, projectVersion, stage, accountId, role))
   }
 
   /**
@@ -193,20 +195,33 @@ object CloudFormationTemplates {
   def s3FirehoseResource(projectName: String,
                          projectVersion: String,
                          stage: String,
-                         accountId: AccountId,
-                         regions: Regions,
+                         accountId: String,
+                         region: String,
                          firehose: S3Firehose): Resource = {
-//    CFS3Firehose(
-//      firehose.configName,
-//      createResourceName(projectName, stage, firehose.name),
-//      CFS3FirehoseBucketArn.fromConfig(createResourceName(projectName, stage, firehose.bucketName)),
-//      CFS3FirehoseKinesisStreamSourceConfiguration.fromConfig(accountId.value, regions.getName, createResourceName(projectName, stage, firehose.kinesisStreamSource), firehose.roleArn),
-//      CFS3FirehoseKinesisStreamBufferingHints(firehose.bufferingIntervalInSeconds, firehose.bufferingSize),
-//      None,
-//      CFS3FirehoseCompressionFormat(firehose.compression),
-//      None
-//    )
-    ???
+
+    val firehoseName: String = firehose.firehoseName(projectName, stage)
+    val firehoseRoleName: String = firehose.roleName(projectName, stage)
+    val firehoseRoleLogicalName: String = firehose.roleLogicalName
+    val firehoseBucketName: String = firehose.bucketName(projectName, stage)
+    val firehoseBucketLogicalName: String = firehose.bucketLogicalName
+    val firehoseKinesisStreamName: String = firehose.streamName(projectName, stage)
+    val firehoseKinesisStreamLogicalName: String = firehose.streamLogicalName
+
+    val s3Firehose: Resource = {
+      CFS3Firehose(
+        firehose.configName,
+        firehoseName,
+        List(firehoseRoleLogicalName, firehoseBucketLogicalName, firehoseKinesisStreamLogicalName),
+        CloudFormation.kinesisArn(accountId, region, firehoseKinesisStreamName),
+        CloudFormation.roleArn(accountId, firehoseRoleName),
+        CloudFormation.bucketArn(firehoseBucketName),
+        firehose.bufferingIntervalInSeconds,
+        firehose.bufferingSize,
+        firehose.compression
+      )
+    }
+
+    s3Firehose
   }
 
   /**
@@ -215,10 +230,10 @@ object CloudFormationTemplates {
   def s3FirehoseResources(projectName: String,
                           projectVersion: String,
                           stage: String,
-                          accountId: AccountId,
-                          regions: Regions,
+                          accountId: String,
+                          region: String,
                           s3Firehoses: List[S3Firehose]): List[Resource] = {
-    s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName, projectVersion, stage, accountId, regions, s3Firehose))
+    s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName, projectVersion, stage, accountId, region, s3Firehose))
   }
 
   /**
