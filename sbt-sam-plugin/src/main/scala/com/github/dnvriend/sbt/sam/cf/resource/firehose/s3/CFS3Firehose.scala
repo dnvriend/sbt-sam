@@ -86,26 +86,14 @@ object CFS3FirehoseEncryptionConfiguration {
 
 case class CFS3FirehoseEncryptionConfiguration(encryptionKeyArn: String)
 
-/**
-  * Must be its own script, using dependsOn to wait for the bucket, stream, lambda and role to be created
-  * ie. a CFS3Firehose will generate dependent resources as a whole, ie. CFS3Firehose will be used
-  * but will need dependent logicalNames. The S3Firehose is a primitive, but the things that glues them
-  * together will be a 'kappa' resource, and if found, will generate the following script:
-  *
-  * - S3 bucket
-  * - Kinesis Stream
-  * - Optional Lambda
-  * - Role
-  * - Extended S3 Firehose
-  */
 object CFS3Firehose {
   implicit val writes: Writes[CFS3Firehose] = Writes.apply(model => {
     import model._
     Json.obj(
       logicalName -> Json.obj(
         "Type" -> "AWS::KinesisFirehose::DeliveryStream",
+        "DependsOn" -> dependsOnLogicalNames,
         "Properties" -> Json.obj(
-          "DependsOn" -> dependsOnLogicalNames,
           "DeliveryStreamName" -> deliveryStreamName,
           "DeliveryStreamType" -> "KinesisStreamAsSource",
           "KinesisStreamSourceConfiguration" ->  Json.obj(
@@ -158,12 +146,25 @@ case class CFS3Firehose(
                          bucketArn: String,
 
                          /**
-                           * The BufferingHints property type specifies how Amazon Kinesis Firehose (Kinesis Firehose)
-                           * buffers incoming data before delivering it to the destination. The first buffer condition
-                           * that is satisfied triggers Kinesis Firehose to deliver the data.
+                           * The length of time, in seconds, that Kinesis Firehose buffers incoming data before
+                           * delivering it to the destination. Buffer incoming data for the specified period of time,
+                           * in seconds, before delivering it to the destination. The default value is 300.
+                           *
+                           * Min=60, Max=900; default=300
                            */
                          bufferingIntervalInSeconds: Int,
 
+                         /**
+                           * The size of the buffer, in MBs, that Kinesis Firehose uses for incoming data before
+                           * delivering it to the destination. Buffer incoming data to the specified size, in MBs, before
+                           * delivering it to the destination. The default value is 5.
+                           *
+                           * We recommend setting this parameter to a value greater than the amount of data you typically
+                           * ingest into the delivery stream in 10 seconds. For example, if you typically ingest data at 1 MB/sec,
+                           * the value should be 10 MB or higher.
+                           *
+                           * Min=1, Max=128; default=5
+                           */
                          bufferingSize: Int,
 
                          /**

@@ -26,8 +26,20 @@ object CFKinesisStream {
   def fromConfig(
                          logicalName: String,
                          streamName: String,
+
+                         /**
+                           * 24 hours by default, up to 168 hours; 7 days
+                           * see: https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html
+                           */
                          retensionPeriodHours: Int,
+
+                         /**
+                           * The number of shards that the stream uses. For greater provisioned throughput,
+                           * increase the number of shards.
+                           * 1. Maximum value of 100.000, soft-limit 500 shards
+                           */
                          shardCount: Int,
+
                          projectName: String,
                          projectVersion: String,
                          samStage: String,

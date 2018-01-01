@@ -82,6 +82,13 @@ object CloudFormation {
   }
 
   /**
+   * Returns the arn of a kinesis stream by means of accountId and Region
+   */
+  def kinesisArn(accountId: String, region: String, streamName: String): String = {
+    s"arn:aws:kinesis:$region:$accountId:stream/$streamName"
+  }
+
+  /**
    * Returns the arn of a kinesis data firehose delivery stream
    */
   def firehoseDeliveryStreamArn(deliveryStreamName: String): JsObject = {

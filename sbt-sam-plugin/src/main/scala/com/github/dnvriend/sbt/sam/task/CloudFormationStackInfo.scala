@@ -326,8 +326,18 @@ object CloudFormationStackInfo {
           case HttpHandler(_, HttpConf(path, method, auth)) =>
             Console.GREEN + s"${method.toUpperCase} - ${endpoint.value}$path"
           case _ => ""
-        }.toList.toNel.map(_.intercalate("\n")).getOrElse("No http handlers configured")
+        }.toNel.map(_.intercalate("\n")).getOrElse("No http handlers configured")
       }.getOrElse(Console.YELLOW + "No service endpoint found")
+    }
+
+    val accountSummary: String = {
+      val creds = config.credentialsRegionAndUser
+      s"""* Region: ${Console.GREEN}'${creds.credentialsAndRegion.region.getName}'
+         |* IAM User:
+         |  - UserName: ${creds.user.getUserName}
+         |  - AccountId: ${config.accountId}
+         |  - Created on: ${creds.user.getCreateDate}
+         |  - Last used on: ${creds.user.getPasswordLastUsed}""".stripMargin
     }
 
     val report =
@@ -336,6 +346,8 @@ object CloudFormationStackInfo {
         |Stack State:
         |====================
         |$stackSummary
+        |Account:
+        |$accountSummary
         |$lambdaSummary
         |IAM Roles:
         |$iamRolesSummary

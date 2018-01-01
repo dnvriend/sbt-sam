@@ -13,6 +13,7 @@ import com.github.dnvriend.sbt.sam.resource.policy.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 
+import scala.collection.immutable
 import scala.util.matching.Regex
 
 case class SamCFTemplateName(value: String) {
@@ -56,6 +57,9 @@ object ProjectConfiguration {
     ): ProjectConfiguration = {
     val cfTemplateName = samCFTemplateName.replace(".", "-").replace(" ", "")
     val s3BucketName = samS3BucketName.replace(".", "-").replace(" ", "")
+    val streams: List[KinesisStream] = (samResources.streams ++ samResources.s3Firehoses.map(_.stream(projectName, samStage))).toList
+    val buckets: List[S3Bucket] = (samResources.buckets ++ samResources.s3Firehoses.map(_.bucket(projectName, samStage))).toList
+    val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role(projectName, samStage))).toList
     ProjectConfiguration(
       projectName,
       projectVersion,
@@ -71,10 +75,10 @@ object ProjectConfiguration {
       samResources.tables.toList,
       samResources.policies.toList,
       samResources.topics.toList,
-      samResources.streams.toList,
-      samResources.buckets.toList,
+      streams,
+      buckets,
       samResources.s3Firehoses.toList,
-      samResources.iamRoles.toList,
+      roles,
     )
   }
 }
@@ -105,5 +109,6 @@ case class ProjectConfiguration(
   def dynamoHandlers: List[DynamoHandler] = lambdas.collect({case h: DynamoHandler => h})
   def kinesisEventHandlers: List[KinesisEventHandler] = lambdas.collect({case h: KinesisEventHandler => h})
   def userArn: Arn = Arn.fromArnString(credentialsRegionAndUser.user.getArn.wrap[Arn])
+  def accountId: String = userArn.accountId.value
   def getRegion: Regions = credentialsRegionAndUser.credentialsAndRegion.region
 }
