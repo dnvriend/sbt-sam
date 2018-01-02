@@ -403,7 +403,7 @@ object CloudFormationTemplates {
                       exposeApiEndpoint: Boolean,
                        ): Option[Outputs] = {
     val endpointOutput = determineApiEndpointOutput(stage, exposeApiEndpoint)
-    val topicOutputs = topics.map(topic => determineTopicOuput(projectName, stage, topic))
+    val topicOutputs = topics.map(topic => determineTopicOutput(projectName, stage, topic))
     val bucketsOutput = buckets.map(bucket => determineBucketOutput(projectName, stage, bucket))
     val streamsOutput = streams.map(stream => determineStreamOutput(projectName, stage, stream))
     val s3FirehosesOutput = s3Firehoses.map(s3Firehose => determineS3FirehoseOutput(projectName, stage, s3Firehose))
@@ -423,7 +423,7 @@ object CloudFormationTemplates {
     }.toValidationNel
   }
 
-  def determineTopicOuput(projectName: String, stage: String, topic: Topic): ValidationNel[String, Output] = {
+  def determineTopicOutput(projectName: String, stage: String, topic: Topic): ValidationNel[String, Output] = {
     val topicName: String = createResourceName(projectName, stage, topic.name)
     Validation.lift(!topic.export)(identity, s"SNS Topic: '$topicName, is not exported").map { _ =>
       val description: String = s"SNS Topic export for project: '$projectName', for stage: '$stage'"

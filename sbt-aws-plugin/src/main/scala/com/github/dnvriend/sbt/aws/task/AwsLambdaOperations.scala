@@ -4,7 +4,8 @@ import com.amazonaws.services.lambda._
 import com.amazonaws.services.lambda.model._
 
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Try }
+import scala.collection.mutable
+import scala.util.{Failure, Try}
 
 /**
  * add-permission                           | create-alias
@@ -50,10 +51,11 @@ object AwsLambdaOperations {
 
   def findFunction(fqcn: String, projectName: String, stage: String, client: AWSLambda): Option[FunctionConfiguration] = {
     def predicate(conf: FunctionConfiguration): Boolean = {
-      val env = conf.getEnvironment.getVariables.asScala
+      val env: Option[mutable.Map[String, String]] = Option(conf.getEnvironment).map(_.getVariables.asScala)
       conf.getHandler.startsWith(s"$fqcn::handleRequest") &&
-        env.get("PROJECT_NAME").exists(_ == projectName) &&
-        env.get("STAGE").exists(_ == stage)
+        env.get("PROJECT_NAME").contains(projectName) &&
+        env.get("STAGE").contains(stage)
+
     }
     val result = for {
       functions <- Option(client.listFunctions().getFunctions)
