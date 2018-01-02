@@ -110,4 +110,5 @@ object CloudFormation {
   def bucketArn(bucketName: String): String = {
     s"arn:aws:s3:::$bucketName"
   }
+
 }
