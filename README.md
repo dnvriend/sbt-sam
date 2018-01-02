@@ -339,6 +339,9 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.9 (2018-01-02)
+- Merged PR #6: Support for creating & authorizing Cognito User Pool Users, thanks [Kevin Kessels](https://github.com/kkessels)!
+
 ## 1.0.8 (2018-01-01)
 - Support for creating IAM Roles
 
