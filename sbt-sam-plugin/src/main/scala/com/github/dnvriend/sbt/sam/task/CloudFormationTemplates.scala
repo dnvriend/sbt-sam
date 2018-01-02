@@ -1,7 +1,6 @@
 package com.github.dnvriend.sbt.sam.task
 
-import com.amazonaws.regions.Regions
-import com.github.dnvriend.sbt.aws.task.{AccountId, TemplateBody}
+import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
@@ -31,8 +30,8 @@ import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import play.api.libs.json._
 
-import scalaz._
 import scalaz.Scalaz._
+import scalaz._
 
 object CloudFormationTemplates {
   /**
@@ -104,7 +103,8 @@ object CloudFormationTemplates {
         config.buckets,
         config.streams,
         config.s3Firehoses,
-        config.existHttpHandlers,
+        config.authpool,
+        config.existHttpHandlers
       )
     )
     TemplateBody.fromJson(Json.toJson(template))
@@ -400,6 +400,7 @@ object CloudFormationTemplates {
                       buckets: List[S3Bucket],
                       streams: List[KinesisStream],
                       s3Firehoses: List[S3Firehose],
+                      authPoolO: Option[Authpool],
                       exposeApiEndpoint: Boolean,
                        ): Option[Outputs] = {
     val endpointOutput = determineApiEndpointOutput(stage, exposeApiEndpoint)
@@ -407,8 +408,9 @@ object CloudFormationTemplates {
     val bucketsOutput = buckets.map(bucket => determineBucketOutput(projectName, stage, bucket))
     val streamsOutput = streams.map(stream => determineStreamOutput(projectName, stage, stream))
     val s3FirehosesOutput = s3Firehoses.map(s3Firehose => determineS3FirehoseOutput(projectName, stage, s3Firehose))
+    val authPoolOutput = authPoolO.map(authPool => determineAuthpoolOutput(projectName, stage, authPool))
 
-    val listOfValidatedOutputs = (endpointOutput +: topicOutputs) ++ bucketsOutput ++ streamsOutput ++ s3FirehosesOutput
+    val listOfValidatedOutputs = (endpointOutput +: topicOutputs) ++ bucketsOutput ++ streamsOutput ++ s3FirehosesOutput ++ authPoolOutput
     val validated = listOfValidatedOutputs.sequenceU
     if(validated.isFailure) {
       val message: String = validated.swap.foldMap(_.intercalate1(","))
@@ -452,6 +454,14 @@ object CloudFormationTemplates {
     Validation.lift(!s3Firehose.export)(identity, s"S3 Firehose: '$s3FirehoseName, is not exported").map { _ =>
       val description: String = s"Kinesis Stream export for project: '$projectName', for stage: '$stage'"
       GenericOutput(description, s3FirehoseName, CloudFormation.firehoseDeliveryStreamArn(s3FirehoseName))
+    }.toValidationNel
+  }
+
+  def determineAuthpoolOutput(projectName: String, stage: String, authpool: Authpool): ValidationNel[String, Output] = {
+    val authpoolName: String = createResourceName(projectName, stage, authpool.name)
+    Validation.lift(!authpool.export)(identity, s"Authpool: '$authpoolName', is not exported").map { _ =>
+      val description: String = s"Authpool export for project: '$projectName', for stage: '$stage'"
+      GenericOutput(description, authpoolName, UserPool.arn)
     }.toValidationNel
   }
 }
