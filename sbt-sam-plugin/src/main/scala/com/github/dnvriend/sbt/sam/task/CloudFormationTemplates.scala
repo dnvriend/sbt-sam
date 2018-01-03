@@ -34,6 +34,8 @@ import scalaz.Scalaz._
 import scalaz._
 
 object CloudFormationTemplates {
+  final case class ComponentNameOrImport(componentName: Option[String], importName: Option[String])
+
   /**
    * Returns the basic cloud formation template to create the stack and deployment bucket
    */
@@ -52,6 +54,22 @@ object CloudFormationTemplates {
       )
     )
     TemplateBody.fromJson(Json.toJson(template))
+  }
+
+  /**
+    * Determines the scoped - resourceName or import-name from the name as configured on the resource
+    */
+  def resourceNameOrImport(resourceName: String, projectName: String, stage: String): ComponentNameOrImport = {
+    val componentName = if(!resourceName.startsWith("imports")) {
+      Option(createResourceName(projectName, stage, resourceName))
+    } else None
+    val importName = if(resourceName.startsWith("import")) {
+      val parts = resourceName.split(":")
+      val exportComponentName = parts.drop(1).head
+      val resourceNameToImport = parts.drop(2).head
+      Option(s"$exportComponentName-$stage-$resourceNameToImport")
+    } else None
+    ComponentNameOrImport(componentName, importName)
   }
 
   /**
@@ -343,9 +361,11 @@ object CloudFormationTemplates {
     case ScheduledEventHandler(lambdaConf, conf) =>
       ScheduledEventSource("ScheduledEventSource", conf.schedule)
     case SNSEventHandler(lambdaConf, conf) =>
-      SnsEventSource("SNSEventSource", createResourceName(projectName, stage, conf.topic))
+      val determined = resourceNameOrImport(conf.topic, projectName, stage)
+      SnsEventSource("SNSEventSource", determined.componentName, determined.importName)
     case KinesisEventHandler(lambdaConf, conf) =>
-      KinesisEventSource("KinesisEventSource", createResourceName(projectName, stage, conf.stream), conf.batchSize, conf.startingPosition)
+      val determined = resourceNameOrImport(conf.stream, projectName, stage)
+      KinesisEventSource("KinesisEventSource", determined.componentName, determined.importName, conf.batchSize, conf.startingPosition)
   }
 
   /**
