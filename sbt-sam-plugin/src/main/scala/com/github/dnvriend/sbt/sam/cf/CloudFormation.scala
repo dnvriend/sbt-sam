@@ -38,21 +38,21 @@ object CloudFormation {
   }
 
   /**
-    * The intrinsic function Fn::ImportValue returns the value of an output exported by another stack.
-    * You typically use this function to create cross-stack references.
-    *
-    * The following restrictions apply to cross-stack references:
-    *  - For each AWS account, Export names must be unique within a region.
-    *  - You can't create cross-stack references across regions. You can use the intrinsic function
-    *    Fn::ImportValue to import only values that have been exported within the same region.
-    *  - For outputs, the value of the Name property of an Export can't use Ref or GetAtt functions that
-    *    depend on a resource.
-    *  - Similarly, the ImportValue function can't include Ref or GetAtt functions that depend on a resource.
-    *  - You can't delete a stack if another stack references one of its outputs.
-    *  - You can't modify or remove an output value that is referenced by another stack.
-    *
-    * see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-importvalue.html
-    */
+   * The intrinsic function Fn::ImportValue returns the value of an output exported by another stack.
+   * You typically use this function to create cross-stack references.
+   *
+   * The following restrictions apply to cross-stack references:
+   *  - For each AWS account, Export names must be unique within a region.
+   *  - You can't create cross-stack references across regions. You can use the intrinsic function
+   *    Fn::ImportValue to import only values that have been exported within the same region.
+   *  - For outputs, the value of the Name property of an Export can't use Ref or GetAtt functions that
+   *    depend on a resource.
+   *  - Similarly, the ImportValue function can't include Ref or GetAtt functions that depend on a resource.
+   *  - You can't delete a stack if another stack references one of its outputs.
+   *  - You can't modify or remove an output value that is referenced by another stack.
+   *
+   * see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-importvalue.html
+   */
   def importValue(importName: String): JsValue = {
     Json.obj("Fn::ImportValue" -> importName)
   }

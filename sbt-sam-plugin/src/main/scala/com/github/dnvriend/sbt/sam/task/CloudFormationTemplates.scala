@@ -61,17 +61,16 @@ object CloudFormationTemplates {
     * Determines the scoped - resourceName or import-name from the name as configured on the resource
     */
   def resourceNameOrImport(resourceName: String, projectName: String, stage: String): ComponentNameOrImport = {
-    ComponentNameOrImport(
-      (!resourceName.startsWith("imports")).option[String](_ => {
-        createResourceName(projectName, stage, resourceName)
-      }),
-      resourceName.startsWith("import").option[String](_ => {
-        val parts = resourceName.split(":")
-        val exportComponentName = parts.drop(1).head
-        val resourceNameToImport = parts.drop(2).head
-        s"$exportComponentName-$stage-$resourceNameToImport"
-      })
-    )
+    val componentName = if(!resourceName.startsWith("imports")) {
+      Option(createResourceName(projectName, stage, resourceName))
+    } else None
+    val importName = if(resourceName.startsWith("import")) {
+      val parts = resourceName.split(":")
+      val exportComponentName = parts.drop(1).head
+      val resourceNameToImport = parts.drop(2).head
+      Option(s"$exportComponentName-$stage-$resourceNameToImport")
+    } else None
+    ComponentNameOrImport(componentName, importName)
   }
 
   /**
