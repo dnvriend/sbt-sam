@@ -108,7 +108,8 @@ object CloudFormationStackInfo {
       }.map {
         case (stream, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-          s"* ${Console.GREEN}${stream.name}: ${Console.RESET}$info"
+          val exportedText: String = stream.export.option(s" -> exported as '${CloudFormationTemplates.createResourceName(projectName, stage, stream.name)}'").getOrElse("")
+          s"* ${Console.GREEN}${stream.name}$exportedText: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No streams configured")
     }
 
@@ -124,7 +125,8 @@ object CloudFormationStackInfo {
       }.map {
         case (topic, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-          s"* ${Console.GREEN}${topic.name}: ${Console.RESET}$info"
+          val exportedText: String = topic.export.option(s" -> exported as '${CloudFormationTemplates.createResourceName(projectName, stage, topic.name)}'").getOrElse("")
+          s"* ${Console.GREEN}${topic.name}$exportedText: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No topics configured")
     }
 
@@ -150,7 +152,8 @@ object CloudFormationStackInfo {
       }.map {
         case (bucket, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report _ tupled)
-          s"* ${Console.GREEN}${bucket.name}: ${Console.RESET}$info"
+          val exportedText: String = bucket.export.option(s" -> exported as '${CloudFormationTemplates.createResourceName(projectName, stage, bucket.name)}'").getOrElse("")
+          s"* ${Console.GREEN}${bucket.name}$exportedText: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No buckets configured")
     }
 
@@ -301,7 +304,7 @@ object CloudFormationStackInfo {
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.kinesisConf.stream}): ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No kinesis event handlers configured")
       }
       val snsEventHandlers: String = {
@@ -311,7 +314,7 @@ object CloudFormationStackInfo {
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.snsConf.topic}): ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No SNS event handlers configured")
       }
       s"""Lambdas:
