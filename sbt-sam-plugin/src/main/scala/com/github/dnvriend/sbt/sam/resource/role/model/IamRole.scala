@@ -1,9 +1,15 @@
 package com.github.dnvriend.sbt.sam.resource.role.model
 
+case class IamPolicyAllow(
+                    name: String,
+                    actions: List[String],
+                    resources: List[String]
+                    )
+
 case class IamRole(
                     name: String,
                     configName: String = "",
-                    principalServiceName: String,
+                    allowAssumeRolePrincipal: String,
                     managedPolicyArns: List[String],
-                    export: Boolean = false,
+                    allow: List[IamPolicyAllow],
                   )

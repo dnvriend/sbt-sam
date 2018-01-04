@@ -8,7 +8,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessA
 import com.github.dnvriend.sbt.sam.cf.resource.cognito.userpool.{UserPool, UserPoolClient}
 import com.github.dnvriend.sbt.sam.cf.resource.dynamodb._
 import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3._
-import com.github.dnvriend.sbt.sam.cf.resource.iam.policy._
+import com.github.dnvriend.sbt.sam.cf.resource.iam.role.{CFIamRole, CFS3IamPolicy}
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
@@ -187,16 +187,15 @@ object CloudFormationTemplates {
   }
 
   /**
-    * Determine Iam Role resource
+    * Determine Iam Role resource to allow certain actions to certain resources, by default, any action is denied.
     */
   def iamRoleResource(projectName: String, projectVersion: String, stage: String, accountId: String, role: IamRole): Resource = {
     CFIamRole(
       role.configName,
       createResourceName(projectName, stage, role.name),
-      CFIamPolicyDocument(List(
-        CFIamStatement.allowAssumeRole(CFPrincipal(role.principalServiceName), accountId)
-      )),
-      role.managedPolicyArns
+      role.managedPolicyArns,
+      role.allow.map(allow => CFS3IamPolicy(allow.name, CFS3IamPolicy.allowAccessPolicyDocument(allow.actions, allow.resources))),
+      CFS3IamPolicy.assumeRolePolicyDocument(role.allowAssumeRolePrincipal, accountId)
     )
   }
 
@@ -217,12 +216,11 @@ object CloudFormationTemplates {
                          region: String,
                          firehose: S3Firehose): Resource = {
 
-    val firehoseName: String = firehose.firehoseName(projectName, stage)
-    val firehoseRoleName: String = firehose.roleName(projectName, stage)
+    val firehoseName: String = createResourceName(projectName, stage, firehose.name)
     val firehoseRoleLogicalName: String = firehose.roleLogicalName
-    val firehoseBucketName: String = firehose.bucketName(projectName, stage)
+    val firehoseBucketName: String = createResourceName(projectName, stage, firehose.bucketName)
     val firehoseBucketLogicalName: String = firehose.bucketLogicalName
-    val firehoseKinesisStreamName: String = firehose.streamName(projectName, stage)
+    val firehoseKinesisStreamName: String = createResourceName(projectName, stage, firehose.streamName)
     val firehoseKinesisStreamLogicalName: String = firehose.streamLogicalName
 
     val s3Firehose: Resource = {
@@ -231,7 +229,7 @@ object CloudFormationTemplates {
         firehoseName,
         List(firehoseRoleLogicalName, firehoseBucketLogicalName, firehoseKinesisStreamLogicalName),
         CloudFormation.kinesisArn(accountId, region, firehoseKinesisStreamName),
-        CloudFormation.roleArn(accountId, firehoseRoleName),
+        CloudFormation.roleArn(accountId, createResourceName(projectName, stage, firehose.roleName)),
         CloudFormation.bucketArn(firehoseBucketName),
         firehose.bufferingIntervalInSeconds,
         firehose.bufferingSize,
@@ -354,16 +352,16 @@ object CloudFormationTemplates {
    * Determine the event sources that will be attached to a CloudFormation Serverless::Function
    */
   def determineEventSourceForLambdaHandler(projectName: String, stage: String, handler: LambdaHandler): EventSource = handler match {
-    case HttpHandler(lambdaConf, conf) =>
+    case HttpHandler(_, conf) =>
       ApiGatewayEventSource("ApiGatewayEventSource", conf.path, conf.method)
-    case DynamoHandler(lambdaConf, conf) =>
+    case DynamoHandler(_, conf) =>
       DynamoDBEventSource("DynamoDBEventSource", conf.tableName, conf.batchSize, conf.startingPosition)
-    case ScheduledEventHandler(lambdaConf, conf) =>
+    case ScheduledEventHandler(_, conf) =>
       ScheduledEventSource("ScheduledEventSource", conf.schedule)
-    case SNSEventHandler(lambdaConf, conf) =>
+    case SNSEventHandler(_, conf) =>
       val determined = resourceNameOrImport(conf.topic, projectName, stage)
       SnsEventSource("SNSEventSource", determined.componentName, determined.importName)
-    case KinesisEventHandler(lambdaConf, conf) =>
+    case KinesisEventHandler(_, conf) =>
       val determined = resourceNameOrImport(conf.stream, projectName, stage)
       KinesisEventSource("KinesisEventSource", determined.componentName, determined.importName, conf.batchSize, conf.startingPosition)
   }

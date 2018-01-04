@@ -43,6 +43,7 @@ object AwsPlugin extends AutoPlugin with AllOps {
     clientCodeBuild := CodeBuildOperations.client(),
     clientXRay := XRayOperations.client(),
     clientCognito := AwsCognitoIdpOperations.client(),
+    clientKinesisFirehose := AmazonKinesisFirehoseOperations.client(),
 
     // iam operations
     iamUserInfo := IamOperations.getUser(clientIam.value),

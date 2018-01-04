@@ -102,12 +102,6 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveDynamoDbTables(config)
     },
 
-    policyResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrievePolicies(config)
-    },
-
     iamRolesResources := {
       val baseDir: File = baseDirectory.value
       val config = ResourceOperations.readConfig(baseDir)
@@ -160,7 +154,6 @@ object SAMPlugin extends AutoPlugin {
           cognitoResources.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
-          policyResources.value,
           topicResources.value,
           streamResources.value,
           bucketResources.value,
@@ -183,6 +176,7 @@ object SAMPlugin extends AutoPlugin {
         clientS3.value,
         clientIam.value,
         clientCognito.value,
+        clientKinesisFirehose.value,
         streams.value.log
       )
     },
