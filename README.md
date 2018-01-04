@@ -53,6 +53,7 @@ The following seed projects are available:
 - [dnvriend/sam-dynamodb-streams-seed.g8](https://github.com/dnvriend/sam-dynamodb-streams-seed.g8): A template project for quickly creating stateful serverless applications using [dynamodb streams](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html)
 - [dnvriend/sam-sns-seed.g8](https://github.com/dnvriend/sam-sns-seed.g8): A template project for quickly creating applications driven by [sns](https://aws.amazon.com/sns/) async notifications
 - [dnvriend/sam-kinesis-seed.g8](https://github.com/dnvriend/sam-kinesis-seed.g8): A template project for quickly creating applications that produce data for analytics or data processing.
+- [dnvriend/sam-data-segment-seed.g8](https://github.com/dnvriend/sam-data-segment-seed.g8): A template project for quickly creating a serverless data-segment leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/).
 
 ## Available tasks
 The following tasks are available:
@@ -338,6 +339,10 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+
+## 1.0.10 (2018-01-04)
+- Support for Kinesis Extended S3 Firehose
+- Support for creating data-segments, an element of a data lake leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/) 
 
 ## 1.0.9 (2018-01-02)
 - Merged PR #6: Support for creating & authorizing Cognito User Pool Users, thanks [Kevin Kessels](https://github.com/kkessels)!
