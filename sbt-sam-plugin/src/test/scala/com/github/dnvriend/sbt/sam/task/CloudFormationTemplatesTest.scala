@@ -65,7 +65,7 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
 
     val samResources = SamResources(
       streams = Set(s3Firehose.stream(projectName, stage)),
-      iamRoles = Set(s3Firehose.role(projectName, stage, accountId, region)),
+      iamRoles = Set(s3Firehose.role),
       buckets = Set(s3Firehose.bucket(projectName, stage)),
       s3Firehoses = Set(s3Firehose)
     )
@@ -122,7 +122,7 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
       lambdas = pc.lambdas ++ List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
       buckets = pc.buckets :+ bucket :+ s3Firehose.bucket(projectName, stage),
       s3Firehoses = pc.s3Firehoses :+ s3Firehose,
-      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role(projectName, stage, accountId, region)
+      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role
     )
     val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
