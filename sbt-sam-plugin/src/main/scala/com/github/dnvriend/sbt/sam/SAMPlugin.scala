@@ -76,6 +76,14 @@ object SAMPlugin extends AutoPlugin {
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
+    discoveredSqlFiles := {
+      (Keys.baseDirectory.value ** "*.sql").get.toSet
+    },
+
+    classifiedSqlFiles := {
+      ClassifySqlFiles.run(discoveredSqlFiles.value, streams.value.log)
+    },
+
     // validate the sam cloud formation template
     samValidate := {
       val log = streams.value.log
@@ -159,6 +167,7 @@ object SAMPlugin extends AutoPlugin {
           bucketResources.value,
           s3FirehoseResources.value,
           iamRolesResources.value,
+          classifiedSqlFiles.value,
         )
       )
     },
