@@ -176,6 +176,7 @@ object SAMPlugin extends AutoPlugin {
         clientS3.value,
         clientIam.value,
         clientCognito.value,
+        clientKinesisFirehose.value,
         streams.value.log
       )
     },

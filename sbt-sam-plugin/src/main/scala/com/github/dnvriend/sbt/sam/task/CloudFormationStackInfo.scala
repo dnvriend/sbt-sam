@@ -9,6 +9,8 @@ import com.amazonaws.services.dynamodbv2.model.TableDescription
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
 import com.amazonaws.services.identitymanagement.model.GetRoleResult
 import com.amazonaws.services.kinesis.AmazonKinesis
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose
+import com.amazonaws.services.kinesisfirehose.model._
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.FunctionConfiguration
 import com.amazonaws.services.s3.AmazonS3
@@ -54,6 +56,7 @@ object CloudFormationStackInfo {
     s3Client: AmazonS3,
     iamClient: AmazonIdentityManagement,
     cognitoIdpClient: AWSCognitoIdentityProvider,
+    kinesisFirehoseClient: AmazonKinesisFirehose,
     log: Logger
   ): Unit = {
 
@@ -158,11 +161,48 @@ object CloudFormationStackInfo {
     }
 
     val s3FirehoseSummary: String = {
-      def report(str: String) = {
-        str
+      def reportS3Destination(dest: Option[ExtendedS3DestinationDescription]): String = {
+        dest.fold("No extended S3 destination description")(dest => {
+          import dest._
+          s"""  - Extended S3 Destination:
+             |    - BucketArn: $getBucketARN
+             |    - BufferingHints: $getBufferingHints
+             |    - CompressionFormat: $getCompressionFormat
+             |    - EncryptionConfiguration: $getEncryptionConfiguration
+             |    - RoleArn: $getRoleARN""".stripMargin
+        })
+      }
+      def reportDestination(dest: DestinationDescription): String = {
+        val s3Report: String = reportS3Destination(Option(dest.getExtendedS3DestinationDescription))
+        NonEmptyList(s3Report).intercalate("\n")
+      }
+      def reportDestinations(dests: List[DestinationDescription]): String = {
+        dests.map(reportDestination).intercalate("\n")
+      }
+      def reportSource(src: Option[KinesisStreamSourceDescription]): String = {
+        src.fold("No Kinesis Source")(src => {
+          import src._
+          s"""  - Kinesis Source:
+             |    - KinesisStreamArn: $getKinesisStreamARN
+             |    - RoleArn: $getRoleARN""".stripMargin
+        })
+      }
+      def report(info: DeliveryStreamDescription) = {
+        import info._
+        val srcReport: String = reportSource(Option(info.getSource).map(_.getKinesisStreamSourceDescription))
+        val destReport: String = reportDestinations(info.getDestinations.asScala.toList)
+        s"""
+           |  - DeliveryStreamName: $getDeliveryStreamName
+           |  - DeliveryStreamArn: $getDeliveryStreamARN
+           |  - DeliveryStreamStatus: $getDeliveryStreamStatus
+           |  - DeliveryStreamType: $getDeliveryStreamType
+           |$srcReport
+           |$destReport""".stripMargin
       }
       config.s3Firehoses.map { s3Firehose =>
-        (s3Firehose, Option.empty[String])
+        val streamName = CloudFormationTemplates.createResourceName(projectName, stage, s3Firehose.name)
+        val firehoseInfo = AmazonKinesisFirehoseOperations.findDeliveryStream(streamName, kinesisFirehoseClient)
+        (s3Firehose, firehoseInfo)
       }.map {
         case (s3Firehose, optionalInfo) =>
           val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
@@ -177,9 +217,7 @@ object CloudFormationStackInfo {
         s"""
            |  - RoleArn: $getArn
            |  - RoleId: $getRoleId
-           |  - CreationDate: $getCreateDate
-           |  - Description: $getDescription
-         """.stripMargin
+           |  - CreationDate: $getCreateDate""".stripMargin
       }
       config.iamRoles.map { iamRole =>
         val roleName = s"$projectName-$stage-${iamRole.name}"

@@ -22,6 +22,7 @@ import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement
 import com.amazonaws.services.kinesis.AmazonKinesis
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.{ FunctionConfiguration, GetFunctionResult, InvokeResult }
 import com.amazonaws.services.logs.AWSLogs
@@ -47,6 +48,7 @@ object AwsPluginKeys {
   lazy val clientCodeBuild = SettingKey[AWSCodeBuild]("AWS CodeBuild is a fully managed build service in the cloud. AWS CodeBuild compiles your source code, runs unit tests, and produces artifacts that are ready to deploy. AWS CodeBuild eliminates the need to provision, manage, and scale your own build servers")
   lazy val clientXRay = SettingKey[AWSXRay]("AWS X-Ray provides APIs for managing debug traces and retrieving service maps and other data created by processing those traces")
   lazy val clientCognito = SettingKey[AWSCognitoIdentityProvider]("Returns the cognito identity provider client")
+  lazy val clientKinesisFirehose = SettingKey[AmazonKinesisFirehose]("Returns the amazon kinesis firehose client")
 
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
