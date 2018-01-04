@@ -3,6 +3,7 @@ package com.github.dnvriend.sbt.sam.task
 import com.github.dnvriend.ops.AllOps
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.generators.Generators
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.TableWithIndex
@@ -30,6 +31,69 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     }
   }
 
+  it should "generate an s3 firehose project configuration" in {
+    val jarName = "jarName"
+    val latestVersion = "latestVersion"
+    val stage = "dev"
+    val accountId = "1234567890"
+    val region = "eu-west-1"
+    val projectName = "button-clicked-data-segment"
+    val projectVersion = "1.0.0-SNAPSHOT"
+    val projectDescription = "data segment for button clicks"
+    val deploymentBucketName = "deployment-bucket"
+    val cfTemplateName = "button-clicked-data-segment-cf-template"
+    val prefixName = s"$projectName-$stage"
+    val credsAndUser = iterCredentialsAndUser.next()
+    val amazonUser = iterAmazonUser.next()
+
+    val firehoseName = "button-clicked-firehose"
+    val s3Firehose: S3Firehose = ResourceOperations
+      .retrieveS3Firehose(
+        s"""
+          |s3firehoses {
+          |   ButtonClickedFirehose {
+          |    name = $firehoseName // A name for the delivery stream.
+          |    compression = "UNCOMPRESSED" // UNCOMPRESSED | GZIP | ZIP | Snappy
+          |    shard-count = 1 //
+          |    retention-period-hours = 24 // min=24, max=168 (7 days)
+          |    buffering-interval-in-seconds = 100 // min=60, max 900; default 300
+          |    buffering-size = 1 // default 5, max = 128, min = 1
+          |    export = true
+          |  }
+          |}
+        """.stripMargin.tsc).head
+
+    val samResources = SamResources(
+      streams = Set(s3Firehose.stream(projectName, stage)),
+      iamRoles = Set(s3Firehose.role(projectName, stage, accountId, region)),
+      buckets = Set(s3Firehose.bucket(projectName, stage)),
+      s3Firehoses = Set(s3Firehose)
+    )
+
+    val pc = ProjectConfiguration.fromConfig(
+      projectName,
+      projectVersion,
+      projectDescription,
+      deploymentBucketName,
+      cfTemplateName,
+      prefixName,
+      stage,
+      credsAndUser,
+      amazonUser,
+      samResources
+    )
+
+    val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(pc, jarName, latestVersion)
+    val template: JsValue = Json.parse(updateTemplate.value)
+    val templateJsonString = Json.prettyPrint(template)
+    println(templateJsonString)
+    val resources = (template \ "Resources").as[Map[String, JsValue]]
+    (resources("ButtonClickedFirehose") \ "Properties" \ "DeliveryStreamName").as[String] shouldBe s"$projectName-$stage-$firehoseName"
+    (resources("ButtonClickedFirehoseStream") \ "Properties" \ "Name").as[String] shouldBe s"$projectName-$stage-$firehoseName-stream"
+    (resources("ButtonClickedFirehoseBucket") \ "Properties" \ "BucketName").as[String] shouldBe s"$projectName-$stage-$firehoseName-bucket"
+    (resources("ButtonClickedFirehoseRole") \ "Properties" \ "RoleName").as[String] shouldBe s"$projectName-$stage-$firehoseName-role"
+  }
+
   it should "generate an update template" in {
     val pc: ProjectConfiguration = iterProjectConfig.next()
     val httpHandler: HttpHandler = iterHttpHandler.next()
@@ -46,6 +110,8 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val authPool: Authpool = iterAuthpool.next()
     val jarName = "jarName"
     val latestVersion = "latestVersion"
+    val accountId = "0123456789"
+    val region = "eu-west-1"
     val stage = pc.samStage.value
     val projectName = pc.projectName
     val conf = pc.copy(
@@ -56,15 +122,14 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
       lambdas = pc.lambdas ++ List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
       buckets = pc.buckets :+ bucket :+ s3Firehose.bucket(projectName, stage),
       s3Firehoses = pc.s3Firehoses :+ s3Firehose,
-      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role(projectName, stage)
+      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role(projectName, stage, accountId, region)
     )
-    val updateTemplate = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
+    val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
-    println(templateJsonString)
+    //    println(templateJsonString)
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]
-    //    resources.keys.size shouldBe 14 // stream, topic, userpool, userpool-client, role, table, 5x handler + 2 bucket + api
   }
 }

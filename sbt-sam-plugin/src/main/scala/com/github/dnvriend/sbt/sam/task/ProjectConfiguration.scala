@@ -9,11 +9,9 @@ import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
-import com.github.dnvriend.sbt.sam.resource.policy.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 
-import scala.collection.immutable
 import scala.util.matching.Regex
 
 case class SamCFTemplateName(value: String) {
@@ -32,34 +30,37 @@ case class SamStage(value: String) {
   require(!List("-", ".", " ", "/").exists(char => value.contains(char)), s"sam stage with value '$value', should not contain '.', '-', '/' or spaces")
 }
 case class SamResources(
-                         authpool: Option[Authpool],
-                         lambdas: Set[LambdaHandler],
-                         tables: Set[TableWithIndex],
-                         policies: Set[Policy],
-                         topics: Set[Topic],
-                        streams: Set[KinesisStream],
-                        buckets: Set[S3Bucket],
-                        s3Firehoses: Set[S3Firehose],
-                        iamRoles: Set[IamRole],
-                       )
-object ProjectConfiguration {
+                         authpool: Option[Authpool] = None,
+                         lambdas: Set[LambdaHandler] = Set.empty,
+                         tables: Set[TableWithIndex] = Set.empty,
+                         topics: Set[Topic] = Set.empty,
+                         streams: Set[KinesisStream] = Set.empty,
+                         buckets: Set[S3Bucket] = Set.empty,
+                         s3Firehoses: Set[S3Firehose] = Set.empty,
+                         iamRoles: Set[IamRole] = Set.empty,
+                        )
+
+object ProjectConfiguration extends AnyOps {
   def fromConfig(
-    projectName: String,
-    projectVersion: String,
-    projectDescription: String,
-    samS3BucketName: String,
-    samCFTemplateName: String,
-    samResourcePrefixName: String,
-    samStage: String,
-    credentialsRegionAndUser: CredentialsRegionAndUser,
-    amazonUser: AmazonUser,
-    samResources: SamResources,
+                  projectName: String,
+                  projectVersion: String,
+                  projectDescription: String,
+                  deploymentBucketName: String,
+                  samCFTemplateName: String,
+                  samResourcePrefixName: String,
+                  samStage: String,
+                  credentialsRegionAndUser: CredentialsRegionAndUser,
+                  amazonUser: AmazonUser,
+                  samResources: SamResources,
     ): ProjectConfiguration = {
+    val arn = Arn.fromArnString(credentialsRegionAndUser.user.getArn.wrap[Arn])
+    val accountId = arn.accountId.value
+    val region = credentialsRegionAndUser.credentialsAndRegion.region.getName
     val cfTemplateName = samCFTemplateName.replace(".", "-").replace(" ", "")
-    val s3BucketName = samS3BucketName.replace(".", "-").replace(" ", "")
+    val s3BucketName = deploymentBucketName.replace(".", "-").replace(" ", "")
     val streams: List[KinesisStream] = (samResources.streams ++ samResources.s3Firehoses.map(_.stream(projectName, samStage))).toList
     val buckets: List[S3Bucket] = (samResources.buckets ++ samResources.s3Firehoses.map(_.bucket(projectName, samStage))).toList
-    val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role(projectName, samStage))).toList
+    val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role(projectName, samStage, accountId, region))).toList
     ProjectConfiguration(
       projectName,
       projectVersion,
@@ -73,7 +74,6 @@ object ProjectConfiguration {
       samResources.authpool,
       samResources.lambdas.toList,
       samResources.tables.toList,
-      samResources.policies.toList,
       samResources.topics.toList,
       streams,
       buckets,
@@ -95,7 +95,6 @@ case class ProjectConfiguration(
                                  authpool: Option[Authpool] = Option.empty,
                                  lambdas: List[LambdaHandler] = List.empty,
                                  tables: List[TableWithIndex] = List.empty,
-                                 policies: List[Policy] = List.empty,
                                  topics: List[Topic] = List.empty,
                                  streams: List[KinesisStream] = List.empty,
                                  buckets: List[S3Bucket] = List.empty,

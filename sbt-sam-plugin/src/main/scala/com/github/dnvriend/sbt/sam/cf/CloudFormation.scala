@@ -131,4 +131,11 @@ object CloudFormation {
     s"arn:aws:s3:::$bucketName"
   }
 
+  /**
+   * Returns the arn of the cloud watch log group and log stream
+   */
+  def logGroupArn(accountId: String, region: String, logGroupName: String, logStreamName: String): String = {
+    s"arn:aws:logs:$region:$accountId:log-group:$logGroupName:log-stream:$logStreamName"
+  }
+
 }

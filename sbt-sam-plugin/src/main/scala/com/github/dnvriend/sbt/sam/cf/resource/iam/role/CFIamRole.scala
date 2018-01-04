@@ -12,6 +12,49 @@ object CFS3IamPolicy {
       "PolicyDocument" -> policyDocument
     )
   })
+
+  /**
+    * Services, eg. Kinesis firehose, need access to several resources like S3, Kinesis, Log groups etc.
+    * To get access to these resources, Firehose needs (temporary) credentials and gets it by assuming a role.
+    * Firehose thus needs a role, and that role defines the resources that the role has access to such as S3, Kinesis,
+    * Log groups etc
+    * Firehose needs a trust policy document in order to assume the role that is attached to the role. In order to assume
+    * the role, Firehose needs to be granted the capability to assume the role by setting the accountId, thus has
+    * been granted to assume the role by this accountId.
+    */
+  def assumeRolePolicyDocument(principal: String, accountId: String): JsValue = {
+    Json.obj(
+      "Version" -> "2012-10-17",
+      "Statement" -> Json.arr(
+        Json.obj(
+          "Effect" -> "Allow",
+          "Principal" -> Json.obj("Service" -> principal),
+          "Action" -> "sts:AssumeRole",
+          "Condition" -> Json.obj(
+            "StringEquals" -> Json.obj(
+              "sts:ExternalId" -> accountId
+            )
+          )
+        )
+      )
+    )
+  }
+
+  /**
+    * A Policy describes what actions are allowed on what resources.
+    */
+  def allowAccessPolicyDocument(actions: List[String], resources: List[String]): JsValue = {
+    Json.obj(
+      "Version" -> "2012-10-17",
+      "Statement" -> Json.arr(
+        Json.obj(
+          "Effect"-> "Allow",
+          "Action" -> actions,
+          "Resource" -> resources
+        )
+      )
+    )
+  }
 }
 
 /**
@@ -37,10 +80,9 @@ object CFIamRole {
         "Type" -> "AWS::IAM::Role",
         "Properties" -> Json.obj(
           "RoleName" -> roleName,
-          "Path" -> path,
           "AssumeRolePolicyDocument" -> assumeRolePolicyDocument,
           "ManagedPolicyArns" -> managedPolicyArns,
-          "Policies" -> ""
+          "Policies" -> policies
         )
       )
     )
@@ -74,11 +116,6 @@ case class CFIamRole(
                         * see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#using-iam-capabilities
                         */
                       roleName: String,
-
-                      /**
-                        * The path associated with this role.
-                        */
-                      path: String,
 
                       /**
                         * One or more managed policy ARNs to attach to this role.

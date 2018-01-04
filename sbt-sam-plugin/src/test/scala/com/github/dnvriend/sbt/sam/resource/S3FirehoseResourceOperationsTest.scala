@@ -32,7 +32,6 @@ class S3FirehoseResourceOperationsTest extends TestSpec {
             24,
             100,
             1,
-            None,
             true
           )
         )

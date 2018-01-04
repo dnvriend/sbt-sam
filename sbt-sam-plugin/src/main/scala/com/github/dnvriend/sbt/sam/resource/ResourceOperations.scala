@@ -7,7 +7,6 @@ import com.github.dnvriend.sbt.sam.resource.cognito.CognitoResourceOperations
 import com.github.dnvriend.sbt.sam.resource.dynamodb.DynamoDBResourceOperations
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.S3FirehoseResourceOperations
 import com.github.dnvriend.sbt.sam.resource.kinesis.KinesisResourceOperations
-import com.github.dnvriend.sbt.sam.resource.policy.PolicyResourceOperations
 import com.github.dnvriend.sbt.sam.resource.role.RoleResourceOperations
 import com.github.dnvriend.sbt.sam.resource.sns.SNSResourceOperations
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -16,7 +15,6 @@ object ResourceOperations extends ResourceOperations
 trait ResourceOperations extends FunctionalOps
   with CognitoResourceOperations
   with DynamoDBResourceOperations
-  with PolicyResourceOperations
   with SNSResourceOperations
   with KinesisResourceOperations
   with S3BucketResourceOperations
