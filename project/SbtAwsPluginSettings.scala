@@ -9,7 +9,6 @@ object SbtAwsPluginSettings extends AutoPlugin {
 
   override def projectSettings = Seq(
     sbtPlugin := true,
-    libraryDependencies += libCirceYaml,
     libraryDependencies += libPlayJson,
     libraryDependencies += libAwsJavaSdk,
     libraryDependencies += libScalazScalaTest % Test,

@@ -22,7 +22,7 @@ object CFDynamoDBTableGlobalSecondaryIndex {
       Json.toJson(keySchema),
       Json.toJson(projectionType),
       Json.toJson(provisionedThroughput),
-    ).foldMap(identity)(JsMonoids.jsObjectMerge)
+    ).fold(JsMonoids.jsObjectMerge)
   })
 }
 case class CFDynamoDBTableGlobalSecondaryIndex(indexName: String,

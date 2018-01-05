@@ -169,7 +169,7 @@ object CFS3Bucket {
       Json.obj( "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)),
       Json.toJson(corsRules),
       Json.toJson(websiteConfiguration),
-    ).foldMap(identity)(JsMonoids.jsObjectMerge)
+    ).fold(JsMonoids.jsObjectMerge)
     Json.obj(
       logicalName -> Json.obj(
         "Type" -> "AWS::S3::Bucket",

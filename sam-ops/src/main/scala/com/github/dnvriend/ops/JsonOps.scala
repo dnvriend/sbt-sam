@@ -16,7 +16,6 @@ package com.github.dnvriend.ops
 
 import play.api.libs.json._
 
-import scalaz.Scalaz._
 import scalaz._
 
 trait JsonOps {
@@ -38,16 +37,5 @@ class JsonOpsImpl(that: JsValue) extends StringOps {
 
   def bytes: Array[Byte] @@ UTF8 = {
     that.toString.arr
-  }
-
-  def toYaml: String = {
-    val jsonAST = {
-      io.circe.parser.parse(that.toString)
-        .disjunction.valueOr(throw _)
-    }
-    io.circe.yaml.Printer(
-      dropNullKeys = true,
-      mappingStyle = io.circe.yaml.Printer.FlowStyle.Block
-    ).pretty(jsonAST)
   }
 }

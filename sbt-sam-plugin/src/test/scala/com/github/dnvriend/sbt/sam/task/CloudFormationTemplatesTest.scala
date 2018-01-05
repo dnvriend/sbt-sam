@@ -127,7 +127,7 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
-    //    println(templateJsonString)
+    println(templateJsonString)
     (template \ "Resources").toOption shouldBe 'defined
     (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
     val resources = (template \ "Resources").as[Map[String, JsValue]]

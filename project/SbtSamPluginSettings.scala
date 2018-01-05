@@ -13,7 +13,6 @@ object SbtSamPluginSettings extends AutoPlugin {
     sbtPlugin := true,
     libraryDependencies += libTypesafeConfig,
     libraryDependencies += libPureConfig,
-    libraryDependencies += libCirceYaml,
     libraryDependencies += libPlayJson,
     libraryDependencies += libAwsJavaSdk,
     libraryDependencies += libScalazScalaTest,

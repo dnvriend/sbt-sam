@@ -8,7 +8,7 @@ import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json._
 
 import scalaz.NonEmptyList
-import scalaz.Scalaz._
+import scalaz.syntax.all._
 
 object ServerlessApiSwaggerDefinitionBody {
   implicit val writes: Writes[ServerlessApiSwaggerDefinitionBody] = Writes.apply(model => {
@@ -37,7 +37,7 @@ object ServerlessApiProperties {
     NonEmptyList(
       Json.toJson(stageName),
       Json.toJson(swaggerDefinitionBody)
-    ).foldMap(identity)(JsMonoids.jsObjectMerge)
+    ).fold(JsMonoids.jsObjectMerge)
   })
 }
 case class ServerlessApiProperties(
@@ -51,7 +51,7 @@ object ServerlessApi {
     Json.obj(
       "ServerlessRestApi" -> Json.obj(
         "Type" -> "AWS::Serverless::Api",
-        "Properties" -> Json.toJson(properties)
+        "Properties" -> properties
       )
     )
   })
