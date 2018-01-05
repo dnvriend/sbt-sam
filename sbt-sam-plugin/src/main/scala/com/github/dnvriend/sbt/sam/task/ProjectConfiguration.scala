@@ -32,7 +32,7 @@ case class SamStage(value: String) {
 }
 case class SamResources(
                          authpool: Option[Authpool] = None,
-                         importAuthPool: Option[ImportAuthPool],
+                         importAuthPool: Option[ImportAuthPool]= None,
                          lambdas: Set[LambdaHandler] = Set.empty,
                          tables: Set[TableWithIndex] = Set.empty,
                          topics: Set[Topic] = Set.empty,

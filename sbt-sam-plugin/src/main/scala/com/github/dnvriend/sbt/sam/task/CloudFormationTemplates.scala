@@ -304,7 +304,7 @@ object CloudFormationTemplates {
     val gsis: Option[CFDynamoDBTableGlobalSecondaryIndexes] = {
       val indexes: List[CFDynamoDBTableGlobalSecondaryIndex] = table.gsis.map { index =>
         CFDynamoDBTableGlobalSecondaryIndex(
-          index.indexName,
+          createResourceName(projectName, stage, index.indexName),
           keySchema(index.hashKey, index.rangeKey),
           index.projectionType,
           provisionedThroughput(index.rcu, index.wcu)
