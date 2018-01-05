@@ -126,6 +126,13 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveAuthPool(config)
     },
 
+    importAuthpool := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      val authpool = cognitoResources.value
+
+      ResourceOperations.retrieveImportAuthPool(config, authpool)
+    },
 
     bucketResources := {
       val baseDir: File = baseDirectory.value
@@ -152,6 +159,7 @@ object SAMPlugin extends AutoPlugin {
         iamUserInfo.value,
         SamResources(
           cognitoResources.value,
+          importAuthpool.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
           topicResources.value,

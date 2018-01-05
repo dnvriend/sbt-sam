@@ -17,7 +17,7 @@ package com.github.dnvriend.sbt.sam
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
-import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{ Authpool, ImportAuthPool }
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
@@ -61,6 +61,7 @@ object SAMPluginKeys {
   lazy val cognitoResources = taskKey[Option[Authpool]]("Tries to retrieve a cognito configuration, specified in the Lightbend Config .")
   lazy val bucketResources = taskKey[Set[S3Bucket]]("Retrieves a set of s3 buckets, which are configured in the Lightbend Config.")
   lazy val s3FirehoseResources = taskKey[Set[S3Firehose]]("Retrieves a set of s3 firehose data delivery streams, which are configured in the Lightbend Config.")
+  lazy val importAuthpool = taskKey[Option[ImportAuthPool]]("Tries to retrieve a Cognito Authpool that can be imported from CloudFormation. ")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")

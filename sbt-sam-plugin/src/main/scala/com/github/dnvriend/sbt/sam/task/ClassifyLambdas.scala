@@ -1,6 +1,8 @@
 package com.github.dnvriend.sbt.sam.task
 
 import java.lang.annotation.Annotation
+import scalaz._
+import scalaz.Scalaz._
 
 sealed trait LambdaHandler {
   def lambdaConfig: LambdaConfig
