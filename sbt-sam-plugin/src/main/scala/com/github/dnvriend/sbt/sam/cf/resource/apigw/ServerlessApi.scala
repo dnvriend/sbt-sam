@@ -2,7 +2,7 @@ package com.github.dnvriend.sbt.sam.cf.resource.apigw
 
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.swagger.Swagger
-import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{ Authpool, ImportAuthPool }
 import com.github.dnvriend.sbt.sam.task.HttpHandler
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json._
@@ -13,7 +13,7 @@ import scalaz.Scalaz._
 object ServerlessApiSwaggerDefinitionBody {
   implicit val writes: Writes[ServerlessApiSwaggerDefinitionBody] = Writes.apply(model => {
     import model._
-    Json.obj("DefinitionBody" -> Swagger.spec(projectName, stage, httpHandlers, authpool))
+    Json.obj("DefinitionBody" -> Swagger.spec(projectName, stage, httpHandlers, authpool, importAuthPool))
   })
 }
 
@@ -21,7 +21,8 @@ case class ServerlessApiSwaggerDefinitionBody(
     projectName: String,
     stage: String,
     httpHandlers: List[HttpHandler],
-    authpool: Option[Authpool])
+    authpool: Option[Authpool],
+    importAuthPool: Option[ImportAuthPool])
 
 object ServerlessApiStageName {
   implicit val writes: Writes[ServerlessApiStageName] = Writes.apply(model => {
