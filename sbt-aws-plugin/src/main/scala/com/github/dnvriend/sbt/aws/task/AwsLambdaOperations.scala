@@ -52,8 +52,8 @@ object AwsLambdaOperations {
     def predicate(conf: FunctionConfiguration): Boolean = {
       val env = Option(conf.getEnvironment).map(_.getVariables.asScala)
       conf.getHandler.startsWith(s"$fqcn::handleRequest") &&
-        env.get("PROJECT_NAME").contains(projectName) &&
-        env.get("STAGE").contains(stage)
+        env.getOrElse(Map.empty[String, String]).contains("PROJECT_NAME") &&
+        env.getOrElse(Map.empty[String, String]).contains("STAGE")
     }
     val result = for {
       functions <- Option(client.listFunctions().getFunctions)
