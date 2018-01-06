@@ -24,12 +24,4 @@ class JsonOpsTest extends TestSpec with JsonOps {
   it should "create utf tagged bytes" in {
     json.bytes shouldBe taggedBytes
   }
-
-  it should "create yaml" in {
-    val result = Json.obj("person" -> Json.obj("name" -> "dnvriend", "age" -> 42)).toYaml.trim
-    result shouldBe
-      """person:
-        |  name: dnvriend
-        |  age: 42""".stripMargin
-  }
 }

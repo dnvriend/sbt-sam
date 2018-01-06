@@ -11,6 +11,7 @@ import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
+import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
 
 
 import scala.util.matching.Regex
@@ -40,6 +41,7 @@ case class SamResources(
                          buckets: Set[S3Bucket] = Set.empty,
                          s3Firehoses: Set[S3Firehose] = Set.empty,
                          iamRoles: Set[IamRole] = Set.empty,
+                         sqlApplications: List[SqlApplication] = List.empty,
                         )
 
 object ProjectConfiguration extends AnyOps {
@@ -62,7 +64,7 @@ object ProjectConfiguration extends AnyOps {
     val s3BucketName = deploymentBucketName.replace(".", "-").replace(" ", "")
     val streams: List[KinesisStream] = (samResources.streams ++ samResources.s3Firehoses.map(_.stream(projectName, samStage))).toList
     val buckets: List[S3Bucket] = (samResources.buckets ++ samResources.s3Firehoses.map(_.bucket(projectName, samStage))).toList
-    val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role(projectName, samStage, accountId, region))).toList
+    val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role)).toList
     ProjectConfiguration(
       projectName,
       projectVersion,
@@ -82,6 +84,7 @@ object ProjectConfiguration extends AnyOps {
       buckets,
       samResources.s3Firehoses.toList,
       roles,
+      samResources.sqlApplications,
     )
   }
 }
@@ -104,6 +107,7 @@ case class ProjectConfiguration(
                                  buckets: List[S3Bucket] = List.empty,
                                  s3Firehoses: List[S3Firehose] = List.empty,
                                  iamRoles: List[IamRole] = List.empty,
+                                 sqlApplications: List[SqlApplication] = List.empty,
 ) extends AnyOps {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty

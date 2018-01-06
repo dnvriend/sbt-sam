@@ -19,7 +19,7 @@ object CloudFormationTemplate {
       Json.toJson(conditions),
       Json.toJson(resources),
       Json.toJson(outputs),
-    ).foldMap(identity)(JsMonoids.jsObjectMerge)
+    ).fold(JsMonoids.jsObjectMerge)
   })
 }
 

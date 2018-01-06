@@ -73,40 +73,13 @@ case class S3Firehose(
   /**
     * Returns an IAMRole resource
     */
-  def role(projectName: String, stage: String, accountId: String, region: String): IamRole = {
+  def role: IamRole = {
     IamRole(
       roleName,
       roleLogicalName,
       "firehose.amazonaws.com",
       List.empty,
-      List(
-        IamPolicyAllow(
-          s"$roleName-s3-access-policy",
-          List(
-            "s3:AbortMultipartUpload",
-            "s3:GetBucketLocation",
-            "s3:GetObject",
-            "s3:ListBucket",
-            "s3:ListBucketMultipartUploads",
-            "s3:PutObject"
-          ),
-          List(
-            CloudFormation.bucketArn(CloudFormationTemplates.createResourceName(projectName, stage, bucketName)),
-            CloudFormation.bucketArn(CloudFormationTemplates.createResourceName(projectName, stage, bucketName)) + "/*"
-          )
-        ),
-        IamPolicyAllow(
-          s"$roleName-kinesis-access-policy",
-          List(
-            "kinesis:DescribeStream",
-            "kinesis:GetShardIterator",
-            "kinesis:GetRecords"
-          ),
-          List(
-            CloudFormation.kinesisArn(accountId, region, CloudFormationTemplates.createResourceName(projectName, stage, streamName))
-          )
-        )
-      )
+      List(IamPolicyAllow.AllowAllActionsToAllResources)
     )
   }
 }

@@ -23,6 +23,7 @@ import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
+import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
 import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
 import sbt._
 
@@ -40,6 +41,8 @@ object SAMPluginKeys {
   lazy val discoveredClasses = TaskKey[Set[ProjectClass]]("returns a set of discovered classes")
   lazy val discoveredLambdas = TaskKey[Set[ProjectLambda]]("returns a set of discovered unclassified lambdas")
   lazy val classifiedLambdas = TaskKey[Set[LambdaHandler]]("returns a set of classified lambdas")
+  lazy val discoveredSqlFiles = taskKey[Set[File]]("returns a set of discovered sql files")
+  lazy val classifiedSqlFiles = taskKey[List[SqlApplication]]("returns a set of classified sql files")
   lazy val discoveredResources = TaskKey[Set[Class[_]]]("Returns a set of discovered aws resources")
   lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
   lazy val samUploadArtifact = TaskKey[PutObjectResponse]("Upload deployment artifact to the S3 deployment bucket")

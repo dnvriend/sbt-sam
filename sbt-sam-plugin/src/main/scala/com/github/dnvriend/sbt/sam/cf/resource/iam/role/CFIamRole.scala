@@ -55,6 +55,22 @@ object CFS3IamPolicy {
       )
     )
   }
+
+  /**
+    * Allows any action to any resource in your AWS account
+    */
+  final val AllowAccessToAnythingPolicyDocument: JsValue = {
+    Json.obj(
+      "Version" -> "2012-10-17",
+      "Statement" -> Json.arr(
+        Json.obj(
+          "Effect"-> "Allow",
+          "Action" -> "*",
+          "Resource" -> "*"
+        )
+      )
+    )
+  }
 }
 
 /**

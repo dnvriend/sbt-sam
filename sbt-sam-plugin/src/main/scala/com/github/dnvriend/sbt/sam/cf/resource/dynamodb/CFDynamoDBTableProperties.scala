@@ -17,7 +17,7 @@ object CFDynamoDBTableProperties {
         Json.toJson(streamSpecification),
         Json.toJson(gsi),
         Json.toJson(tags),
-      ).foldMap(identity)(JsMonoids.jsObjectMerge)
+      ).fold(JsMonoids.jsObjectMerge)
   })
 }
 

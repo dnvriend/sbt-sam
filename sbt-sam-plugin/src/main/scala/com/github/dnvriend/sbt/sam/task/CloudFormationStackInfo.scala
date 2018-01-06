@@ -19,6 +19,7 @@ import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.KinesisAnalytics
 import sbt.util.Logger
 
 import scala.collection.JavaConverters._
@@ -368,6 +369,23 @@ object CloudFormationStackInfo {
         |$snsEventHandlers""".stripMargin
     }
 
+    val sqlApplicationsSummary: String = {
+      val kinesisAnalytics: String = {
+        config.sqlApplications.collect({ case app: KinesisAnalytics => app }).map { app =>
+          (app, Option.empty[String])
+        }.map {
+          case (app, optionalInfo) =>
+            def report(str: String): String = ""
+            val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+            s"* ${Console.GREEN}${app.details.ApplicationName}: ${Console.RESET}$info"
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Kinesis Analytics Applications configured")
+      }
+
+      s"""SQL Applications:
+         |Kinesis Analytics:
+         |$kinesisAnalytics""".stripMargin
+    }
+
     val endpointSummary: String = {
       samStack.flatMap(_.serviceEndpoint).map { endpoint =>
         config.lambdas.map {
@@ -411,6 +429,7 @@ object CloudFormationStackInfo {
         |$s3BucketsSummary
         |Authentication Pool:
         |$authpoolSummary
+        |$sqlApplicationsSummary
         |Endpoints:
         |$endpointSummary
       """.stripMargin

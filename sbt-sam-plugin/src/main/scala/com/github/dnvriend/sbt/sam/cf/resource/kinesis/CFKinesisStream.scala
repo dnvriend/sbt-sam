@@ -56,6 +56,9 @@ object CFKinesisStream {
   }
 }
 
+/**
+  * 500 Shards in eu-west-1, all other regions 200 shards
+  */
 case class CFKinesisStream(
                           logicalName: String,
                           streamName: String,

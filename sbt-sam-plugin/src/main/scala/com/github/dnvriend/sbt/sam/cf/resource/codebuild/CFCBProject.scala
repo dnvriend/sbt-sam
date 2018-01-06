@@ -19,7 +19,7 @@ object CFCBProject {
         "Type" -> "AWS::CodeBuild::Project",
         "Properties" -> NonEmptyList(
           Json.obj()
-        ).widen[JsValue].foldMap(identity)(JsMonoids.jsObjectMerge)
+        ).widen[JsValue].fold(JsMonoids.jsObjectMerge)
       )
     )
   })

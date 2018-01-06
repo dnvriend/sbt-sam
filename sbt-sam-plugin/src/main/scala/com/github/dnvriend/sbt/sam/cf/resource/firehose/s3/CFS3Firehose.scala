@@ -117,6 +117,15 @@ object CFS3Firehose {
   })
 }
 
+/**
+  * Delivery streams per region 20,
+  * 2,000 transactions/second
+  * 5,000 records/second
+  * 5 MB/second
+  *
+  * The three capacity limits scale proportionally. For example, if you increase the throughput limit to 10MB/second,
+  * the other limits increase to 4,000 transactions/second and 10,000 records/second.
+  */
 case class CFS3Firehose(
                          logicalName: String,
                          /**
