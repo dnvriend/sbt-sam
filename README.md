@@ -54,6 +54,7 @@ The following seed projects are available:
 - [dnvriend/sam-sns-seed.g8](https://github.com/dnvriend/sam-sns-seed.g8): A template project for quickly creating applications driven by [sns](https://aws.amazon.com/sns/) async notifications
 - [dnvriend/sam-kinesis-seed.g8](https://github.com/dnvriend/sam-kinesis-seed.g8): A template project for quickly creating applications that produce data for analytics or data processing.
 - [dnvriend/sam-data-segment-seed.g8](https://github.com/dnvriend/sam-data-segment-seed.g8): A template project for quickly creating a serverless data-segment leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/).
+- [dnvriend/sam-schema-repo-seed.g8](https://github.com/dnvriend/sam-schema-repo-seed.g8): A template project for quickly creating a serverless avro schema repository.
 
 ## Available tasks
 The following tasks are available:
