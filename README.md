@@ -55,6 +55,7 @@ The following seed projects are available:
 - [dnvriend/sam-kinesis-seed.g8](https://github.com/dnvriend/sam-kinesis-seed.g8): A template project for quickly creating applications that produce data for analytics or data processing.
 - [dnvriend/sam-data-segment-seed.g8](https://github.com/dnvriend/sam-data-segment-seed.g8): A template project for quickly creating a serverless data-segment leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/).
 - [dnvriend/sam-schema-repo-seed.g8](https://github.com/dnvriend/sam-schema-repo-seed.g8): A template project for quickly creating a serverless avro schema repository.
+- [dnvriend/sam-microservice-seed.g8](https://github.com/dnvriend/sam-microservice-seed.g8): A template project for quickly creating serverless event-sourced, dynamodb event-store backed applications.
 
 ## Available tasks
 The following tasks are available:
@@ -340,6 +341,12 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+
+## 1.0.13 (2018-01-06)
+- Support for 'com.github.dnvriend.service.Aggregate', a DynamoDB backed event sourced service that provides support
+  for working with aggregates of any kind, leveraging a [State Monad](http://eed3si9n.com/learning-scalaz/State.html) 
+  for sequencing aggregate events and computing a final aggregate state. Events are stored in the event store as 
+  polymorphic JSON events. For more information take a look at [dnvriend/sam-microservice-seed.g8](https://github.com/dnvriend/sam-microservice-seed.g8).
 
 ## 1.0.12 (2018-01-06)
 - Support for 'DynamoDBJsonWithRangeKeyRepository'
