@@ -12,12 +12,27 @@ import scala.collection.JavaConverters._
 import scalaz.Scalaz._
 import scalaz._
 
+object DynamoDBBinaryRepository {
+  def apply(
+    tableName: String,
+    ctx: SamContext,
+    idAttributeName: String = "id",
+    payloadAttributeName: String = "blob"): BinaryRepository = {
+    new DynamoDBBinaryRepository(tableName, ctx, idAttributeName, payloadAttributeName)
+  }
+}
+
 /**
  * BinaryDynamoDBRepository is a repository with only two attributes,
  * an 'id' and 'blob' attribute. It stores a payload as Bytes
- * in the 'blob' attribute
+ * in the 'blob' attribute. The attribute names of 'id' and 'blob' are
+ * configurable.
  */
-class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends BinaryRepository {
+class DynamoDBBinaryRepository(
+    tableName: String,
+    ctx: SamContext,
+    idAttributeName: String = "id",
+    payloadAttributeName: String = "blob") extends BinaryRepository {
   val table: String = ctx.dynamoDbTableName(tableName)
   val db: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient()
 
@@ -44,8 +59,8 @@ class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends Binar
           .withReturnValues(ReturnValue.NONE)
           .withItem(
             Map(
-              "id" -> new AttributeValue(id),
-              "blob" -> new AttributeValue().withB(wrapBytes(value))
+              idAttributeName -> new AttributeValue(id),
+              payloadAttributeName -> new AttributeValue().withB(wrapBytes(value))
             ).asJava
           )
       )
@@ -58,9 +73,9 @@ class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends Binar
    */
   override def find(id: String): Option[Array[Byte]] = {
     val result: Disjunction[String, Array[Byte]] = for {
-      attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map("id" -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
-      blobField <- Validation.lift(attributes)(attr => attr.get("blob").isDefined, "No blob attribute in table").map(_.get("blob")).disjunction
-      byteBuff <- blobField.toRightDisjunction("No blob attribute in table").map(_.getB)
+      attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
+      blobField <- Validation.lift(attributes)(attr => attr.get(payloadAttributeName).isDefined, s"No '$payloadAttributeName' attribute in table").map(_.get(payloadAttributeName)).disjunction
+      byteBuff <- blobField.toRightDisjunction(s"No '$payloadAttributeName' attribute in table").map(_.getB)
     } yield byteBuff.array()
 
     if (result.isLeft) {
@@ -76,7 +91,7 @@ class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends Binar
    */
   override def update(id: String, value: Array[Byte]): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
-      db.updateItem(table, Map("id" -> new AttributeValue(id)).asJava, Map("blob" -> new AttributeValueUpdate(new AttributeValue().withB(wrapBytes(value)), AttributeAction.PUT)).asJava)
+      db.updateItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava, Map(payloadAttributeName -> new AttributeValueUpdate(new AttributeValue().withB(wrapBytes(value)), AttributeAction.PUT)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
     ctx.logger.log(result)
   }
@@ -86,7 +101,7 @@ class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends Binar
    */
   override def delete(id: String): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
-      db.deleteItem(table, Map("id" -> new AttributeValue(id)).asJava)
+      db.deleteItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
     ctx.logger.log(result)
   }
@@ -98,9 +113,9 @@ class DynamoDBBinaryRepository(tableName: String, ctx: SamContext) extends Binar
     Disjunction.fromTryCatchNonFatal {
       db.scan(new ScanRequest()
         .withTableName(table)
-        .withAttributesToGet("id", "blob")
+        .withAttributesToGet(idAttributeName, payloadAttributeName)
         .withLimit(limit)
-      ).getItems.asScala.map(m => (m.get("id").getS, m.get("blob").getB.array()))
+      ).getItems.asScala.map(m => (m.get(idAttributeName).getS, m.get(payloadAttributeName).getB.array()))
         .toList
     }.valueOr { error =>
       ctx.logger.log(error.getMessage)

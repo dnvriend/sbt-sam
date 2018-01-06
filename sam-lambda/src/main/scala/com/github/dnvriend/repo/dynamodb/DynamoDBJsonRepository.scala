@@ -12,12 +12,27 @@ import scala.collection.JavaConverters._
 import scalaz.Scalaz._
 import scalaz._
 
+object DynamoDBJsonRepository {
+  def apply(
+    tableName: String,
+    ctx: SamContext,
+    idAttributeName: String = "id",
+    payloadAttributeName: String = "json"): JsonRepository = {
+    new DynamoDBJsonRepository(tableName, ctx, idAttributeName, payloadAttributeName)
+  }
+}
+
 /**
  * JsonDynamoDBRepository is a repository with only two attributes,
  * an 'id' and 'json' attribute. It stores a payload as JSON string
- * in the 'json' attribute
+ * in the 'json' attribute. The attribute names of 'id' and 'json' are
+ * configurable.
  */
-class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRepository {
+class DynamoDBJsonRepository(
+    tableName: String,
+    ctx: SamContext,
+    idAttributeName: String = "id",
+    payloadAttributeName: String = "json") extends JsonRepository {
   val table: String = ctx.dynamoDbTableName(tableName)
   val db: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient()
 
@@ -51,8 +66,8 @@ class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRep
           .withReturnValues(ReturnValue.NONE)
           .withItem(
             Map(
-              "id" -> new AttributeValue(id),
-              "json" -> new AttributeValue(marshal(value))
+              idAttributeName -> new AttributeValue(id),
+              payloadAttributeName -> new AttributeValue(marshal(value))
             ).asJava
           )
       )
@@ -65,9 +80,9 @@ class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRep
    */
   override def find[A: Reads](id: String): Option[A] = {
     val result: Disjunction[String, A] = for {
-      attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map("id" -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
-      jsonField <- Validation.lift(attributes)(attr => attr.get("json").isEmpty, "No json attribute in table").map(_.get("json")).disjunction
-      jsonString <- jsonField.toRightDisjunction("No json attribute in table").map(_.getS)
+      attributes <- Disjunction.fromTryCatchNonFatal(db.getItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava).getItem.asScala).leftMap(_.getMessage)
+      jsonField <- Validation.lift(attributes)(attr => attr.get(payloadAttributeName).isEmpty, s"No '$payloadAttributeName' attribute in table").map(_.get(payloadAttributeName)).disjunction
+      jsonString <- jsonField.toRightDisjunction(s"No '$payloadAttributeName' attribute in table").map(_.getS)
       value <- Disjunction.fromTryCatchNonFatal(Json.parse(jsonString).as[A]).leftMap(_.getMessage)
     } yield value
 
@@ -84,7 +99,7 @@ class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRep
    */
   override def update[A: Writes](id: String, value: A): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
-      db.updateItem(table, Map("id" -> new AttributeValue(id)).asJava, Map("json" -> new AttributeValueUpdate(new AttributeValue(marshal(value)), AttributeAction.PUT)).asJava)
+      db.updateItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava, Map(payloadAttributeName -> new AttributeValueUpdate(new AttributeValue(marshal(value)), AttributeAction.PUT)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
     ctx.logger.log(result)
   }
@@ -94,7 +109,7 @@ class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRep
    */
   override def delete(id: String): Unit = {
     val result: String = Disjunction.fromTryCatchNonFatal {
-      db.deleteItem(table, Map("id" -> new AttributeValue(id)).asJava)
+      db.deleteItem(table, Map(idAttributeName -> new AttributeValue(id)).asJava)
     }.bimap(t => t.getMessage, result => result.toString).merge
     ctx.logger.log(result)
   }
@@ -106,9 +121,9 @@ class DynamoDBJsonRepository(tableName: String, ctx: SamContext) extends JsonRep
     Disjunction.fromTryCatchNonFatal {
       db.scan(new ScanRequest()
         .withTableName(table)
-        .withAttributesToGet("id", "json")
+        .withAttributesToGet(idAttributeName, payloadAttributeName)
         .withLimit(limit)
-      ).getItems.asScala.map(m => (m.get("id").getS, m.get("json").getS))
+      ).getItems.asScala.map(m => (m.get(idAttributeName).getS, m.get(payloadAttributeName).getS))
         .map { case (id, json) => (id, Json.parse(json).as[A]) }
         .toList
     }.valueOr { error =>
