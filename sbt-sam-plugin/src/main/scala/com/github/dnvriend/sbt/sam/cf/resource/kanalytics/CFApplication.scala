@@ -9,13 +9,27 @@ import scalaz.syntax.all._
 object CFInputLambdaProcessor {
   implicit val writes: Writes[CFInputLambdaProcessor] = Writes.apply(model => {
     import model._
-    Json.obj()
+    Json.obj(
+      "ResourceARN" -> resourceARN,
+      "RoleARN" -> roleARN
+    )
   })
 }
 
+/**
+  * The InputLambdaProcessor property type specifies the Amazon Resource Name (ARN) of a Lambda function for
+  * preprocessing records in a stream before the SQL code for an Amazon Kinesis Data Analytics application executes.
+  */
 case class CFInputLambdaProcessor(
-resourceARN : String,
-roleARN: String
+                                   /**
+                                     * The ARN of the AWS Lambda function that operates on records in the stream.
+                                     */
+                                    resourceARN : String,
+
+                                   /**
+                                     * The ARN of the IAM role that is used to access the AWS Lambda function.
+                                     */
+                                    roleARN: String
                                  )
 
 object CFInputProcessingConfiguration {
@@ -112,14 +126,14 @@ case class CFInputSchema(
                        recordColumns: List[CFRecordColumn],
 
                         /**
-                          * Specifies the encoding of the records in the streaming source; for example, UTF-8.
-                          */
-                        recordEncoding: String,
-
-                        /**
                           * Specifies the format of the records on the streaming source.
                           */
-                        recordFormat: CFRecordFormat
+                        recordFormat: CFRecordFormat,
+
+                        /**
+                          * Specifies the encoding of the records in the streaming source; for example, UTF-8.
+                          */
+                        recordEncoding: String = "UTF-8",
                         )
 
 object CFInputParallelism {
@@ -153,7 +167,7 @@ object CFInput {
       Json.obj("InputSchema" -> inputSchema),
       Json.toJson(kinesisFirehoseInput.map(value => Json.obj("KinesisFirehoseInput" -> value))),
       Json.toJson(kinesisStreamsInput.map(value => Json.obj("KinesisStreamsInput" -> value))),
-      Json.obj("InputProcessingConfiguration" ->  inputProcessingConfiguration),
+      Json.toJson(inputProcessingConfiguration.map(value => Json.obj("InputProcessingConfiguration" ->  value))),
     ).fold(JsMonoids.jsObjectMerge)
   })
 }
@@ -197,7 +211,7 @@ case class CFInput(
                       * received from the stream, before the application's SQL code executes. Currently, the only input
                       * processing configuration available is 'InputLambdaProcessor'.
                       */
-                    inputProcessingConfiguration: CFInputProcessingConfiguration,
+                    inputProcessingConfiguration: Option[CFInputProcessingConfiguration],
                   )
 
 object CFApplication {
@@ -219,6 +233,8 @@ object CFApplication {
 
 /**
   * The AWS::KinesisAnalytics::Application resource creates an Amazon Kinesis Data Analytics application.
+  *
+  * EU (Ireland) Region – 8 Kinesis Processing Units (KPUs)
   */
 case class CFApplication(
                         logicalName: String,
