@@ -3,10 +3,10 @@ package com.github.dnvriend.lambda
 import com.amazonaws.services.lambda.runtime.{ Context, LambdaLogger }
 
 object SamContext {
-  def projectName = sys.env.getOrElse("PROJECT_NAME", "")
-  def stage = sys.env.getOrElse("STAGE", "")
-  def region = sys.env.getOrElse("AWS_REGION", "")
-  def accountId = sys.env.getOrElse("AWS_ACCOUNT_ID", "")
+  def projectName: String = sys.env.getOrElse("PROJECT_NAME", "")
+  def stage: String = sys.env.getOrElse("STAGE", "")
+  def region: String = sys.env.getOrElse("AWS_REGION", "")
+  def accountId: String = sys.env.getOrElse("AWS_ACCOUNT_ID", "")
   def apply(context: Context): SamContext = {
     SamContext(
       context,

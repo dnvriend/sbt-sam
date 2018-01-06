@@ -2,9 +2,9 @@ package com.github.dnvriend.lambda
 
 import com.github.dnvriend.repo.BinaryRepository
 import com.github.dnvriend.repo.dynamodb.DynamoDBBinaryRepository
-import play.api.libs.json.Format
+import play.api.libs.json.Reads
 
-abstract class BinaryDynamoRepoApiGatewayHandler[A: Format](tableName: String) extends ApiGatewayHandler {
+abstract class BinaryDynamoRepoApiGatewayHandler[A: Reads](tableName: String) extends ApiGatewayHandler {
   /**
    * Creates a BinaryRepository
    */

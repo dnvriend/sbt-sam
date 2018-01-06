@@ -2,9 +2,9 @@ package com.github.dnvriend.lambda
 
 import com.github.dnvriend.repo.JsonRepository
 import com.github.dnvriend.repo.dynamodb.DynamoDBJsonRepository
-import play.api.libs.json.Format
+import play.api.libs.json.Reads
 
-abstract class JsonDynamoRepoApiGatewayHandler[A: Format](tableName: String) extends ApiGatewayHandler {
+abstract class JsonDynamoRepoApiGatewayHandler[A: Reads](tableName: String) extends ApiGatewayHandler {
   /**
    * Creates a JsonRepository
    */
