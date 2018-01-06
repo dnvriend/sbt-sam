@@ -1,6 +1,6 @@
 package com.github.dnvriend.sbt.sam.resource
 
-import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, PasswordPolicies, UserPoolUser}
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool, PasswordPolicies, UserPoolUser}
 import com.github.dnvriend.test.TestSpec
 
 class AuthpoolResourceOperationsTest extends TestSpec {
@@ -46,5 +46,19 @@ class AuthpoolResourceOperationsTest extends TestSpec {
             true
           )
         )
+  }
+
+  it should "read an import authpool" in {
+    ResourceOperations
+      .retrieveImportAuthPool(
+        """
+          |cognito {
+          |  AuthPool {
+          |    import-resource = "componentName:resourceName"
+          |  }
+          |}
+        """.stripMargin.tsc, None) shouldBe Option(
+      ImportAuthPool("componentName:resourceName")
+    )
   }
 }
