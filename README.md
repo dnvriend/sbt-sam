@@ -340,6 +340,10 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.11 (2018-01-05)
+- Import of user pools
+- General bug fixing
+
 ## 1.0.10 (2018-01-04)
 - Support for Kinesis Extended S3 Firehose
 - Support for creating data-segments, an element of a data lake leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/) 

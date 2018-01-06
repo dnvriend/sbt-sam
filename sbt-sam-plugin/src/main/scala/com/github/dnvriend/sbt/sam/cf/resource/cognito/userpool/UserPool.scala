@@ -61,6 +61,11 @@ object UserPool {
   def arn: JsValue = {
     CloudFormation.getAtt(LogicalName, "Arn")
   }
+
+  def determineProviderARN(importName: Option[String]): JsValue = {
+    importName.map(name => CloudFormation.importValue(name))
+        .getOrElse(arn)
+  }
 }
 
 case class UserPool(name: String,

@@ -5,13 +5,14 @@ import com.github.dnvriend.ops.AnyOps
 import com.github.dnvriend.sbt.aws.domain.IAMDomain.CredentialsRegionAndUser
 import com.github.dnvriend.sbt.aws.task.{AmazonUser, Arn}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
-import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
+
 
 import scala.util.matching.Regex
 
@@ -32,6 +33,7 @@ case class SamStage(value: String) {
 }
 case class SamResources(
                          authpool: Option[Authpool] = None,
+                         importAuthPool: Option[ImportAuthPool]= None,
                          lambdas: Set[LambdaHandler] = Set.empty,
                          tables: Set[TableWithIndex] = Set.empty,
                          topics: Set[Topic] = Set.empty,
@@ -74,6 +76,7 @@ object ProjectConfiguration extends AnyOps {
       credentialsRegionAndUser,
       amazonUser,
       samResources.authpool,
+      samResources.importAuthPool,
       samResources.lambdas.toList,
       samResources.tables.toList,
       samResources.topics.toList,
@@ -96,6 +99,7 @@ case class ProjectConfiguration(
                                  credentialsRegionAndUser: CredentialsRegionAndUser,
                                  amazonUser: AmazonUser,
                                  authpool: Option[Authpool] = Option.empty,
+                                 importAuthPool: Option[ImportAuthPool] = Option.empty,
                                  lambdas: List[LambdaHandler] = List.empty,
                                  tables: List[TableWithIndex] = List.empty,
                                  topics: List[Topic] = List.empty,

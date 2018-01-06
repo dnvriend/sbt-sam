@@ -1,7 +1,8 @@
 package com.github.dnvriend.sbt.sam.cf.resource.apigw.swagger
 
-import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
-import com.github.dnvriend.sbt.sam.task.HttpHandler
+import com.github.dnvriend.sbt.sam.cf.CloudFormation
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool}
+import com.github.dnvriend.sbt.sam.task.{CloudFormationTemplates, HttpHandler}
 import com.github.dnvriend.sbt.util.JsMonoids
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 
@@ -15,12 +16,12 @@ object Swagger {
   private def merge(parts: JsValue*): JsValue = {
     parts.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
-  def spec(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
+  def spec(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool]): JsValue = {
     merge(
       Parts.swaggerVersion,
       Parts.info(projectName, stage),
       Parts.paths(httpHandlers, authpool),
-      Parts.securityDefinitions(authpool)
+      Parts.securityDefinitions(authpool, importAuthPool, stage)
     )
   }
 
@@ -82,8 +83,8 @@ object Swagger {
       * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
       * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       */
-    def securityDefinitions(authpool: Option[Authpool]): JsValue = authpool match  {
-      case Some(authPool) => Json.obj(
+    def securityDefinitions(authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool], stage: String): JsValue = (authpool, importAuthPool) match  {
+      case (Some(authPool), None) => Json.obj(
         "securityDefinitions" -> Json.obj(
           authPool.name -> Json.obj(
             "type" -> "apiKey",
@@ -99,7 +100,26 @@ object Swagger {
           )
         )
       )
-      case None => JsObject(Nil)
+      case (None, Some(impAuthPool)) => Json.obj(
+        "securityDefinitions" -> Json.obj(
+          "auth_pool" -> Json.obj(
+            "type" -> "apiKey",
+            "name" -> "Authorization",
+            "in" -> "header",
+            "x-amazon-apigateway-authtype" -> "cognito_user_pools",
+            "x-amazon-apigateway-authorizer" -> Json.obj(
+              "type" -> "cognito_user_pools",
+              "providerARNs" -> Json.arr(
+                CloudFormation.importValue(
+                  CloudFormationTemplates.scopeImportResource(impAuthPool.importResource, stage)
+                ),
+              )
+            )
+          )
+        )
+      )
+      case (Some(_), Some(_)) => throw  new IllegalAccessException("You cannot configure an Authpool and a Import Authpool at the same time.")
+      case (_, _) => JsObject(Nil)
     }
 
     /**

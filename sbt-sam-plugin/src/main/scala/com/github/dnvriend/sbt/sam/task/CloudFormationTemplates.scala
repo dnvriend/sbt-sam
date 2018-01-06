@@ -22,7 +22,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
 import com.github.dnvriend.sbt.sam.cf.template._
 import com.github.dnvriend.sbt.sam.cf.template.output.{GenericOutput, ServerlessApiOutput}
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
-import com.github.dnvriend.sbt.sam.resource.cognito.model.Authpool
+import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{HashKey, RangeKey, TableWithIndex}
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
@@ -34,11 +34,12 @@ import scalaz.Scalaz._
 import scalaz._
 
 object CloudFormationTemplates {
+
   final case class ComponentNameOrImport(componentName: Option[String], importName: Option[String])
 
   /**
-   * Returns the basic cloud formation template to create the stack and deployment bucket
-   */
+    * Returns the basic cloud formation template to create the stack and deployment bucket
+    */
   def deploymentBucketTemplate(config: ProjectConfiguration): TemplateBody = {
     val template: CloudFormationTemplate = CloudFormationTemplate(
       Description.description(config.projectDescription),
@@ -56,14 +57,21 @@ object CloudFormationTemplates {
     TemplateBody.fromJson(Json.toJson(template))
   }
 
+  def scopeImportResource(importResource: String, stage: String): String = {
+    val parts = importResource.split(":")
+    val exportComponentName = parts.head
+    val resourceNameToImport = parts.drop(1).head
+    s"$exportComponentName-$stage-$resourceNameToImport"
+  }
+
   /**
     * Determines the scoped - resourceName or import-name from the name as configured on the resource
     */
   def resourceNameOrImport(resourceName: String, projectName: String, stage: String): ComponentNameOrImport = {
-    val componentName = if(!resourceName.startsWith("imports")) {
+    val componentName = if (!resourceName.startsWith("imports")) {
       Option(createResourceName(projectName, stage, resourceName))
     } else None
-    val importName = if(resourceName.startsWith("import")) {
+    val importName = if (resourceName.startsWith("import")) {
       val parts = resourceName.split(":")
       val exportComponentName = parts.drop(1).head
       val resourceNameToImport = parts.drop(2).head
@@ -73,20 +81,20 @@ object CloudFormationTemplates {
   }
 
   /**
-   * A resource, like a Kinesis stream, SNS topic or DynamoDB table, has a name, eg. a
-   * stream has a stream-name, a topic has a topic-name and a table has a table-name, and
-   * these names are logical defined in an SBT-SAM project like 'person', but in an AWS account,
-   * these names must be unique because per resource type there is a flat namespace. By scoping a
-   * resource name like table-name, with [projectname]-[stage]-[name], a name becomes unique in the
-   * resource namespace.
-   */
+    * A resource, like a Kinesis stream, SNS topic or DynamoDB table, has a name, eg. a
+    * stream has a stream-name, a topic has a topic-name and a table has a table-name, and
+    * these names are logical defined in an SBT-SAM project like 'person', but in an AWS account,
+    * these names must be unique because per resource type there is a flat namespace. By scoping a
+    * resource name like table-name, with [projectname]-[stage]-[name], a name becomes unique in the
+    * resource namespace.
+    */
   def createResourceName(projectName: String, stage: String, resourceName: String): String = {
     s"$projectName-$stage-$resourceName".toLowerCase.trim
   }
 
   /**
-   * Sbt SAM uses the SAM-Model, that needs a transform in order to use the SAM-DSL in CloudFormation templates.
-   */
+    * Sbt SAM uses the SAM-Model, that needs a transform in order to use the SAM-DSL in CloudFormation templates.
+    */
   def updateTemplate(config: ProjectConfiguration, jarName: String, latestVersion: String): TemplateBody = {
     val projectName: String = config.projectName
     val projectVersion: String = config.projectVersion
@@ -104,7 +112,7 @@ object CloudFormationTemplates {
         s3FirehoseResources(projectName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
         iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
-        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool)
+        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool)
     }
 
     val template: CloudFormationTemplate = CloudFormationTemplate(
@@ -129,8 +137,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine SNS CloudFormation resources
-   */
+    * Determine SNS CloudFormation resources
+    */
   def snsResources(projectName: String, stage: String, topics: List[Topic]): List[Resource] = {
     topics.map(t => CFTopic.fromConfig(
       t.configName,
@@ -140,8 +148,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine Kinesis CloudFormation resources
-   */
+    * Determine Kinesis CloudFormation resources
+    */
   def kinesisResources(projectName: String, projectVersion: String, stage: String, streams: List[KinesisStream]): List[Resource] = {
     streams.map(str => CFKinesisStream.fromConfig(
       str.configName,
@@ -155,8 +163,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine the SAM S3 deployment bucket CloudFormation resource
-   */
+    * Determine the SAM S3 deployment bucket CloudFormation resource
+    */
   def samDeploymentBucket(projectName: String, projectVersion: String, stage: String, samS3BucketName: String): CFS3Bucket = {
     CFS3Bucket.deploymentBucket(
       samS3BucketName,
@@ -165,8 +173,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine S3 bucket resource
-   */
+    * Determine S3 bucket resource
+    */
   def bucketResource(projectName: String, projectVersion: String, stage: String, bucket: S3Bucket): Resource = {
     CFS3Bucket(
       bucket.configName,
@@ -175,13 +183,13 @@ object CloudFormationTemplates {
       VersioningConfigurationOption.fromBoolean(bucket.versioningEnabled),
       ResourceTag.projectTags(projectName, projectVersion, stage),
       bucket.website.map(website => CFS3WebsiteConfiguration(website.indexDocument, website.errorDocument)),
-      if(bucket.corsEnabled) Option(CorsRules(CorsRule.AllowAllForWebsiteBucketCorsRules)) else None
+      if (bucket.corsEnabled) Option(CorsRules(CorsRule.AllowAllForWebsiteBucketCorsRules)) else None
     )
   }
 
   /**
-   * Determine S3 bucket resources
-   */
+    * Determine S3 bucket resources
+    */
   def bucketResources(projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
     buckets.map(bucket => bucketResource(projectName, projectVersion, stage, bucket))
   }
@@ -267,19 +275,22 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine the DynamoDB CloudFormation resource
-   */
+    * Determine the DynamoDB CloudFormation resource
+    */
   def dynamoDBResource(projectName: String, projectVersion: String, stage: String, table: TableWithIndex): Resource = {
     val tableName: CFTDynamoDBTableName = CFTDynamoDBTableName(createResourceName(projectName, stage, table.name))
+
     def keySchema(hashKey: HashKey, rangeKey: Option[RangeKey]): CFDynamoDBTableKeySchema = {
       CFDynamoDBTableKeySchema(
         CFDynamoDbTableHashKey(hashKey.name),
         rangeKey.map(key => CFDynamoDbTableRangeKey(key.name))
       )
     }
+
     def provisionedThroughput(rcu: Int, wcu: Int): CFDynamoDBTableProvisionedThroughput = {
       CFDynamoDBTableProvisionedThroughput(rcu, wcu)
     }
+
     val attributeDefinition: CFDynamoDBTableAttributeDefinitions = {
       val attributes: List[CFDynamoDBTableAttributeDefinition] = {
         Set(CFDynamoDBTableAttributeDefinition(table.hashKey.name, table.hashKey.keyType)) ++
@@ -293,7 +304,7 @@ object CloudFormationTemplates {
     val gsis: Option[CFDynamoDBTableGlobalSecondaryIndexes] = {
       val indexes: List[CFDynamoDBTableGlobalSecondaryIndex] = table.gsis.map { index =>
         CFDynamoDBTableGlobalSecondaryIndex(
-          index.indexName,
+          createResourceName(projectName, stage, index.indexName),
           keySchema(index.hashKey, index.rangeKey),
           index.projectionType,
           provisionedThroughput(index.rcu, index.wcu)
@@ -323,16 +334,16 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine all DynamoDB CloudFormation resources
-   */
+    * Determine all DynamoDB CloudFormation resources
+    */
   def dynamoDBResources(projectName: String, projectVersion: String, stage: String, tables: List[TableWithIndex]): List[Resource] = {
     tables.map(table => dynamoDBResource(projectName, projectVersion, stage, table))
   }
 
   /**
-   * Determine - the single - ServerlessAPI CloudFormation resource
-   */
-  def apiGatewayResource(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool]): Option[ServerlessApi] = {
+    * Determine - the single - ServerlessAPI CloudFormation resource
+    */
+  def apiGatewayResource(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool]): Option[ServerlessApi] = {
     httpHandlers.toNel.map { handlers =>
       ServerlessApi(
         ServerlessApiProperties(
@@ -341,7 +352,8 @@ object CloudFormationTemplates {
             projectName,
             stage,
             handlers.toList,
-            authpool
+            authpool,
+            importAuthPool
           )
         )
       )
@@ -349,8 +361,8 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine the event sources that will be attached to a CloudFormation Serverless::Function
-   */
+    * Determine the event sources that will be attached to a CloudFormation Serverless::Function
+    */
   def determineEventSourceForLambdaHandler(projectName: String, stage: String, handler: LambdaHandler): EventSource = handler match {
     case HttpHandler(_, conf) =>
       ApiGatewayEventSource("ApiGatewayEventSource", conf.path, conf.method)
@@ -367,16 +379,16 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine the CloudFormation Serverless::Function resource
-   */
+    * Determine the CloudFormation Serverless::Function resource
+    */
   def lambdaResource(
-    projectName: String,
-    projectVersion: String,
-    stage: String,
-    deploymentBucketName: String,
-    jarName: String,
-    latestVersion: String,
-    handler: LambdaHandler): Resource = {
+                      projectName: String,
+                      projectVersion: String,
+                      stage: String,
+                      deploymentBucketName: String,
+                      jarName: String,
+                      latestVersion: String,
+                      handler: LambdaHandler): Resource = {
     val conf: LambdaConfig = handler.lambdaConfig
     ServerlessFunction(
       conf.simpleClassName,
@@ -395,32 +407,32 @@ object CloudFormationTemplates {
   }
 
   /**
-   * Determine all Serverless::Function CloudFormation resources
-   */
+    * Determine all Serverless::Function CloudFormation resources
+    */
   def determineEventHandlerResources(
-    projectName: String,
-    projectVersion: String,
-    stage: String,
-    deploymentBucketName: String,
-    jarName: String,
-    latestVersion: String,
-    handlers: List[LambdaHandler]): List[Resource] = {
+                                      projectName: String,
+                                      projectVersion: String,
+                                      stage: String,
+                                      deploymentBucketName: String,
+                                      jarName: String,
+                                      latestVersion: String,
+                                      handlers: List[LambdaHandler]): List[Resource] = {
     handlers.map(handler => lambdaResource(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, handler))
   }
 
   /**
-   * Determine CloudFormation outputs
-   */
+    * Determine CloudFormation outputs
+    */
   def determineOutputs(
-                      projectName: String,
-                      stage: String,
-                      topics: List[Topic],
-                      buckets: List[S3Bucket],
-                      streams: List[KinesisStream],
-                      s3Firehoses: List[S3Firehose],
-                      authPoolO: Option[Authpool],
-                      exposeApiEndpoint: Boolean,
-                       ): Option[Outputs] = {
+                        projectName: String,
+                        stage: String,
+                        topics: List[Topic],
+                        buckets: List[S3Bucket],
+                        streams: List[KinesisStream],
+                        s3Firehoses: List[S3Firehose],
+                        authPoolO: Option[Authpool],
+                        exposeApiEndpoint: Boolean,
+                      ): Option[Outputs] = {
     val endpointOutput = determineApiEndpointOutput(stage, exposeApiEndpoint)
     val topicOutputs = topics.map(topic => determineTopicOutput(projectName, stage, topic))
     val bucketsOutput = buckets.map(bucket => determineBucketOutput(projectName, stage, bucket))
@@ -430,7 +442,7 @@ object CloudFormationTemplates {
 
     val listOfValidatedOutputs = (endpointOutput +: topicOutputs) ++ bucketsOutput ++ streamsOutput ++ s3FirehosesOutput ++ authPoolOutput
     val validated = listOfValidatedOutputs.sequenceU
-    if(validated.isFailure) {
+    if (validated.isFailure) {
       val message: String = validated.swap.foldMap(_.intercalate1(","))
       println(message)
     }
