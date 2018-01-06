@@ -340,6 +340,10 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.12 (2018-01-06)
+- Support for 'DynamoDBJsonWithRangeKeyRepository'
+- General bug fixing
+
 ## 1.0.11 (2018-01-05)
 - Import of user pools
 - General bug fixing
