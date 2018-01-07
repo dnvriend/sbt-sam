@@ -16,6 +16,7 @@ case class SamRecord(
      * The name of the schema
      */
     schemaName: String,
+
     /**
      * fingerprint that uniquely identifies the writer's schema
      */
@@ -24,6 +25,21 @@ case class SamRecord(
     /**
      * Encoded payload
      */
-    payload: String
+    payload: String,
+
+    /**
+      * Denotes the record being encrypted using AWS KMS
+      */
+    encrypted: Boolean = false,
+
+    /**
+      * The CMK-ARN used to encrypt the record
+      */
+    encryptionArn: String,
+
+    /**
+      * Denotes the record being compressed using GZIP
+      */
+    compressed: Boolean = true,
 )
 

@@ -21,12 +21,12 @@ object SamSerializer extends LazyLogging {
         |=========================================================================================================
         |Serializing: '{}'
         |=========================================================================================================
-        |cmkArn: '{}'
+        |EncryptionCmkArn: '{}'
         |namespaceName: '{}'
         |schemaName: '{}'
       """.stripMargin,
       ct.runtimeClass.getCanonicalName,
-      cmkArn.getOrElse("No cmk arn"),
+      cmkArn.getOrElse(""),
       schemaFor().getNamespace,
       schemaFor().getName,
     )
@@ -37,7 +37,7 @@ object SamSerializer extends LazyLogging {
       data <- AvroUtils.compress(avro)
       cipher <- cmkArn.fold(success(data))(arn => AwsEncryption(arn).encryptBytes(data))
       hex <- AvroUtils.encodeHex(cipher)
-    } yield SamRecord(schemaFor().getNamespace, schemaFor().getName, fingerprintHex, hex)
+    } yield SamRecord(schemaFor().getNamespace, schemaFor().getName, fingerprintHex, hex, cmkArn.isDefined, cmkArn.getOrElse(""), compressed = true)
 
     if(serialized.isLeft) {
       logger.error("error while serializing class: '{}', error: '{}'",
@@ -59,24 +59,30 @@ object SamSerializer extends LazyLogging {
         |=========================================================================================================
         |Deserializing: '{}'
         |=========================================================================================================
-        |cmkArn: '{}'
+        |DecryptionCmkArn: '{}'
         |namespaceName: '{}'
         |schemaName: '{}'
         |fingerprint: '{}'
         |payload: '{}'
+        |compressed: '{}'
+        |encrypted: '{}'
+        |encryptionCmkArn: '{}'
       """.stripMargin,
       ct.runtimeClass.getCanonicalName,
-      cmkArn.getOrElse("No cmk arn"),
+      cmkArn.getOrElse(""),
       schemaForR().getNamespace,
       schemaForR().getName,
       record.fingerprint,
       record.payload,
+      record.compressed,
+      record.encrypted,
+      record.encryptionArn,
     )
 
     val deserialized: DTry[R] = for {
       schema <- resolver.resolve(record.fingerprint).orFail("No fingerprint found")
       data <- AvroUtils.decodeHex(record.payload)
-      plaintext <- cmkArn.fold(success(data))(arn => AwsEncryption(arn).decryptBytesResult(data))
+      plaintext <- (cmkArn |@| record.encrypted.option(0))((arn, _) => AwsEncryption(arn).decryptBytesResult(data)).getOrElse(success(data))
       avro <- AvroUtils.decompress(plaintext)
       result <- AvroUtils.deserialize(avro, schema)
     } yield result
