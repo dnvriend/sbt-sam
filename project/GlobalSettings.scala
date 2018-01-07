@@ -75,6 +75,8 @@ object GlobalSettings extends AutoPlugin {
     libraryDependencies += libScalaz,
     libraryDependencies += libAvro4s,
     libraryDependencies += libPlayJson,
+    libraryDependencies += libScalaLogging,
+    libraryDependencies += libLogback,
     libraryDependencies += libScalaCheckTest % Test,
     libraryDependencies += libScalazScalaTest % Test,
     libraryDependencies += libScalaTest % Test

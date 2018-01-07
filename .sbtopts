@@ -4,3 +4,4 @@
 -J-XX:-UseConcMarkSweepGC
 -J-XX:+UseG1GC
 -J-XX:MaxGCPauseMillis=200
+-Djdk.tls.client.protocols=TLSv1.1,TLSv1.2

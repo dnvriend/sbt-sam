@@ -19,6 +19,10 @@ lazy val `sbt-aws-plugin` = (project in file("sbt-aws-plugin"))
   .dependsOn(`sam-ops`, `sam-testing-lib` % "test->test")
   .enablePlugins(SbtAwsPluginSettings)
 
+lazy val `sam-schema-plugin` = (project in file("sam-schema-plugin"))
+  .dependsOn(`sam-ops`, `sam-testing-lib` % "test->test")
+  .enablePlugins(SbtSamSchemaPluginSettings)
+
 lazy val `sam-annotations` = (project in file("sam-annotations"))
   .dependsOn(`sam-testing-lib` % "test->test")
   .enablePlugins(SamAnnotationsSettings)
@@ -34,6 +38,11 @@ lazy val `sam-macros` = (project in file("sam-macros"))
 lazy val `sam-ops` = (project in file("sam-ops"))
   .dependsOn(`sam-testing-lib` % "test->test")
   .enablePlugins(SamOpsSettings)
+
+lazy val `sam-serialization` =
+  (project in file("sam-serialization"))
+    .dependsOn(`sam-testing-lib` % "test->test")
+    .enablePlugins(SamSerializationSettings)
 
 lazy val `sam-testing-lib` = (project in file("sam-testing-lib"))
   .enablePlugins(SamTestingLibSettings)
