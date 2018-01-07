@@ -7,14 +7,14 @@ import org.apache.avro.Schema
 import scala.collection.JavaConverters._
 
 class HttpAuthResolver(url: String, clientId: String, userPoolId: String, username: String, password: String) extends SchemaResolver {
-  val client: AWSCognitoIdentityProvider = {
+  private val client: AWSCognitoIdentityProvider = {
     AWSCognitoIdentityProviderClientBuilder.defaultClient()
   }
 
   /**
    * Returns the ID token, that must be used with the Authorization header
    */
-  def getIdToken: String = {
+  private def getIdToken: String = {
     val result: AuthenticationResultType = {
       client
         .adminInitiateAuth(new AdminInitiateAuthRequest()
@@ -27,7 +27,9 @@ class HttpAuthResolver(url: String, clientId: String, userPoolId: String, userna
     result.getIdToken
   }
 
+  private val resolver: SchemaResolver = new HttpResolver(url, getIdToken)
+
   override def resolve(fingerprint: String): Option[Schema] = {
-    new HttpResolver(url, getIdToken).resolve(fingerprint)
+    resolver.resolve(fingerprint)
   }
 }
