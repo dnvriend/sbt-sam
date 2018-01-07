@@ -2,6 +2,7 @@ import sbt._
 
 object LibraryDependencies {
   // libraries
+  val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.257"
   val libAwsDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.257"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
