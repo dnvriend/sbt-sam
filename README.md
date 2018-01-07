@@ -56,6 +56,7 @@ The following seed projects are available:
 - [dnvriend/sam-data-segment-seed.g8](https://github.com/dnvriend/sam-data-segment-seed.g8): A template project for quickly creating a serverless data-segment leveraging [Kappa Architecture](http://milinda.pathirage.org/kappa-architecture.com/).
 - [dnvriend/sam-schema-repo-seed.g8](https://github.com/dnvriend/sam-schema-repo-seed.g8): A template project for quickly creating a serverless avro schema repository.
 - [dnvriend/sam-microservice-seed.g8](https://github.com/dnvriend/sam-microservice-seed.g8): A template project for quickly creating serverless event-sourced, dynamodb event-store backed applications.
+- [dnvriend/sam-schema-definition-seed.g8](https://github.com/dnvriend/sam-schema-definition-seed.g8): A template project for quickly creating schema definition projects..
 
 ## Available tasks
 The following tasks are available:
