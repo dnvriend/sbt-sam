@@ -9,6 +9,8 @@ lazy val `sbt-sam` = (project in file("."))
   `sam-annotations`,
   `sam-lambda`,
   `sam-ops`,
+  `sam-schema-plugin`,
+  `sam-serialization`,
 )
 
 lazy val `sbt-sam-plugin` = (project in file("sbt-sam-plugin"))
@@ -20,7 +22,7 @@ lazy val `sbt-aws-plugin` = (project in file("sbt-aws-plugin"))
   .enablePlugins(SbtAwsPluginSettings)
 
 lazy val `sam-schema-plugin` = (project in file("sam-schema-plugin"))
-  .dependsOn(`sam-ops`, `sam-testing-lib` % "test->test")
+  .dependsOn(`sam-ops`, `sbt-aws-plugin`, `sam-testing-lib` % "test->test")
   .enablePlugins(SbtSamSchemaPluginSettings)
 
 lazy val `sam-annotations` = (project in file("sam-annotations"))
