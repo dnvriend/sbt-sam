@@ -343,6 +343,9 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.14 (2018-01-08)
+- Support for importing dynamodb tables with 'import' syntax.
+
 ## 1.0.13 (2018-01-06)
 - Support for 'com.github.dnvriend.service.Aggregate', a DynamoDB backed event sourced service that provides support
   for working with aggregates of any kind, leveraging a [State Monad](http://eed3si9n.com/learning-scalaz/State.html) 
