@@ -11,6 +11,7 @@ trait GenLambdaHandler extends GenGeneric {
     timeout <- Gen.const(300)
     description <- genAlphaNonEmpty
   } yield LambdaConfig(
+    getClass,
     fqcn,
     simpleClassName,
     memorySize,
