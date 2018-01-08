@@ -26,7 +26,7 @@ case class SamContext(
     stage: String,
     region: String,
     accountId: String
-) {
+) extends {
   /**
    * Returns the Arn for an sns topic
    */
@@ -52,6 +52,15 @@ case class SamContext(
    * Returns the scoped DynamoDB table name
    */
   def dynamoDbTableName(tableName: String): String = {
-    s"$projectName-$stage-$tableName"
+    val name: String = if (tableName.startsWith("import")) {
+      val parts = tableName.split(":")
+      val exportComponentName = parts.drop(1).head
+      val tableNameToImport = parts.drop(2).head
+      s"$exportComponentName-$stage-$tableNameToImport"
+    } else {
+      s"$projectName-$stage-$tableName"
+    }
+    logger.log(s"Returning table name: $name")
+    name
   }
 }
