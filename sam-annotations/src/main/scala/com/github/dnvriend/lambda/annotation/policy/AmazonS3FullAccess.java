@@ -20,8 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Grants permissions only for the Amazon CloudWatch Logs actions to write logs. You can use this policy if your Lambda function does not access any other AWS resources except writing logs.
+ * Provides full access to all buckets.
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AWSLambdaBasicExecutionRole {
+public @interface AmazonS3FullAccess {
 }

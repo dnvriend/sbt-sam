@@ -20,8 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Grants permissions for Amazon Kinesis Streams actions, and CloudWatch Logs actions. If you are writing a Lambda function to process Kinesis stream events you can attach this permissions policy.
+ * Provides full access to CloudWatch Logs
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AWSLambdaKinesisExecutionRole {
+public @interface CloudWatchLogsFullAccess {
 }

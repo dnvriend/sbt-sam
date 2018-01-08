@@ -20,8 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Grants permissions for DynamoDB streams actions and CloudWatch Logs actions. If you are writing a Lambda function to process DynamoDB stream events you can attach this permissions policy.
+ * Provides access to AWS Key Management Service (KMS).
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AWSLambdaDynamoDBExecutionRole {
+public @interface AWSKeyManagementServicePowerUser {
 }
