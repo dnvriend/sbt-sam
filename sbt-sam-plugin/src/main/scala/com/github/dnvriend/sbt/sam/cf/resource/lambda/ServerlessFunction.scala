@@ -19,15 +19,7 @@ object ServerlessFunction {
             "Key" -> jarName,
             "Version" -> latestVersion
           ),
-          "Policies" -> Json.arr(
-            "AmazonDynamoDBFullAccess",
-            "CloudWatchFullAccess",
-            "CloudWatchLogsFullAccess",
-            "AmazonSNSFullAccess",
-            "AmazonKinesisFullAccess",
-            "AWSKeyManagementServicePowerUser",
-            "AmazonKinesisFirehoseFullAccess",
-          ),
+          "Policies" -> managedPolicies,
           "Description" -> description,
           "MemorySize" -> memorySize,
           "Timeout" -> timeout,
@@ -64,5 +56,6 @@ case class ServerlessFunction(
     description: String,
     memorySize: Int,
     timeout: Int,
+    managedPolicies: List[String],
     eventSource: EventSource
 ) extends Resource

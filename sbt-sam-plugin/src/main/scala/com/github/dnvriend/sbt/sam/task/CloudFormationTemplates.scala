@@ -402,6 +402,7 @@ object CloudFormationTemplates {
       conf.description,
       conf.memorySize,
       conf.timeout,
+      conf.managedPolicies,
       determineEventSourceForLambdaHandler(projectName, stage, handler)
     )
   }

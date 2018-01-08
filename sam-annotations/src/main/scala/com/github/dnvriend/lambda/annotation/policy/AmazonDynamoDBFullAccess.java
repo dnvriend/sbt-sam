@@ -20,9 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Provides minimum permissions for a Lambda function to execute while accessing a resource within a
- * VPC - create, describe, delete network interfaces and write permissions to CloudWatch Logs.
+ * Provides full access to Amazon DynamoDB.
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AWSLambdaVPCAccessExecutionRole {
+public @interface AmazonDynamoDBFullAccess {
 }
