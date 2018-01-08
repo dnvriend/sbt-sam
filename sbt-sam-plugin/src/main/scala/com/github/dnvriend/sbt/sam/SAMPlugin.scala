@@ -77,7 +77,7 @@ object SAMPlugin extends AutoPlugin {
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
     discoveredSqlFiles := {
-      (Keys.baseDirectory.value ** "*.sql").get.toSet
+      ((Keys.unmanagedSources in Compile).value ** "*.sql").get.toSet
     },
 
     classifiedSqlFiles := {

@@ -33,6 +33,7 @@ object ClassifySqlFiles extends AllOps {
   ) extends SqlApplication
 
   def readSql(file: File): ParsedSqlApplication = {
+    println("Reading sql file: " + file.absolutePath)
     val lines: List[String] = IO.read(file).split("\n").toList
     val json = lines.takeWhile(_ != "*/").filterNot(_ == "/*").mkString
     val body = lines.dropWhile(_ != "*/").filterNot(_ == "*/").mkString
