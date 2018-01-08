@@ -11,6 +11,7 @@ lazy val `sbt-sam` = (project in file("."))
   `sam-ops`,
   `sam-schema-plugin`,
   `sam-serialization`,
+  `sam-dynamodb-resolver`,
 )
 
 lazy val `sbt-sam-plugin` = (project in file("sbt-sam-plugin"))
@@ -45,6 +46,11 @@ lazy val `sam-serialization` =
   (project in file("sam-serialization"))
     .dependsOn(`sam-testing-lib` % "test->test")
     .enablePlugins(SamSerializationSettings)
+
+lazy val `sam-dynamodb-resolver` =
+  (project in file("sam-dynamodb-resolver"))
+    .dependsOn(`sam-lambda`, `sam-serialization`, `sam-testing-lib` % "test->test")
+    .enablePlugins(SamDynamoDBResolverSettings)
 
 lazy val `sam-testing-lib` = (project in file("sam-testing-lib"))
   .enablePlugins(SamTestingLibSettings)
