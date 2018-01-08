@@ -343,8 +343,18 @@ The 'default cli config' file:
 
 ## Changelog
 
-## 1.0.14 (2018-01-08)
+## 1.0.16 (2018-01-08)
+- release error due to bintray errors
+- configurable managed policies on lambdas by setting annotations; no annotations means default full policies
 - Support for importing dynamodb tables with 'import' syntax.
+- general bug fixing
+
+## 1.0.15 (2018-01-08)
+- release error due to bintray errors
+
+## 1.0.14 (2018-01-08)
+- release error due to bintray errors
+
 
 ## 1.0.13 (2018-01-06)
 - Support for 'com.github.dnvriend.service.Aggregate', a DynamoDB backed event sourced service that provides support
