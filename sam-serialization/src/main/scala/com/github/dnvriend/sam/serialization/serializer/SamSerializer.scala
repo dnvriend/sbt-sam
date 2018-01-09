@@ -4,7 +4,7 @@ package serializer
 import com.github.dnvriend.sam.serialization.crypto.AwsEncryption
 import com.github.dnvriend.sam.serialization.record.SamRecord
 import com.github.dnvriend.sam.serialization.resolver.SchemaResolver
-import com.sksamuel.avro4s.{FromRecord, SchemaFor, ToRecord}
+import com.sksamuel.avro4s.{ FromRecord, SchemaFor, ToRecord }
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.reflect.ClassTag
@@ -13,9 +13,8 @@ import scalaz.Scalaz._
 object SamSerializer extends LazyLogging {
 
   def serialize[A: ToRecord](
-      value: A,
-      cmkArn: Option[String])
-    (implicit schemaFor: SchemaFor[A], ct: ClassTag[A]): DTry[SamRecord] = {
+    value: A,
+    cmkArn: Option[String])(implicit schemaFor: SchemaFor[A], ct: ClassTag[A]): DTry[SamRecord] = {
     logger.info(
       """
         |=========================================================================================================
@@ -28,9 +27,9 @@ object SamSerializer extends LazyLogging {
       ct.runtimeClass.getCanonicalName,
       cmkArn.getOrElse(""),
       schemaFor().getNamespace,
-      schemaFor().getName,
+      schemaFor().getName
     )
-   val serialized: DTry[SamRecord] = for {
+    val serialized: DTry[SamRecord] = for {
       fingerprint <- AvroUtils.fingerPrint(schemaFor())
       fingerprintHex <- AvroUtils.encodeHex(fingerprint)
       avro <- AvroUtils.serialize(value)
@@ -39,10 +38,11 @@ object SamSerializer extends LazyLogging {
       hex <- AvroUtils.encodeHex(cipher)
     } yield SamRecord(schemaFor().getNamespace, schemaFor().getName, fingerprintHex, hex, cmkArn.isDefined, cmkArn.getOrElse(""), compressed = true)
 
-    if(serialized.isLeft) {
-      logger.error("error while serializing class: '{}', error: '{}'",
+    if (serialized.isLeft) {
+      logger.error(
+        "error while serializing class: '{}', error: '{}'",
         ct.runtimeClass.getCanonicalName,
-        serialized.swap.foldMap(_.getMessage),
+        serialized.swap.foldMap(_.getMessage)
       )
     }
 
@@ -76,7 +76,7 @@ object SamSerializer extends LazyLogging {
       record.payload,
       record.compressed,
       record.encrypted,
-      record.encryptionArn,
+      record.encryptionArn
     )
 
     val deserialized: DTry[R] = for {
@@ -87,10 +87,11 @@ object SamSerializer extends LazyLogging {
       result <- AvroUtils.deserialize(avro, schema)
     } yield result
 
-    if(deserialized.isLeft) {
-      logger.error("error while deserializing to reader class: '{}': '{}'",
+    if (deserialized.isLeft) {
+      logger.error(
+        "error while deserializing to reader class: '{}': '{}'",
         ct.runtimeClass.getCanonicalName,
-        deserialized.swap.foldMap(_.getMessage),
+        deserialized.swap.foldMap(_.getMessage)
       )
     }
 

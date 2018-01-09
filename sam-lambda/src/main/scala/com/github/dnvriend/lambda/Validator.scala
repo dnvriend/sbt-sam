@@ -18,8 +18,8 @@ import scalaz.Scalaz._
 import scalaz._
 
 object Validator {
-  def instance[A](f: A => ValidationNel[String, A]): Validator[A] = {
-    (data: A) => f(data)
+  def instance[A](f: A => ValidationNel[String, A]): Validator[A] = new Validator[A] {
+    override def validate(data: A): ValidationNel[String, A] = f(data)
   }
   def empty[A]: Validator[A] = Validator.instance[A](_.successNel[String])
 }

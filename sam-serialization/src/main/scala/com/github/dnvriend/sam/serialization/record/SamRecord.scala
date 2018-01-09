@@ -28,18 +28,18 @@ case class SamRecord(
     payload: String,
 
     /**
-      * Denotes the record being encrypted using AWS KMS
-      */
+     * Denotes the record being encrypted using AWS KMS
+     */
     encrypted: Boolean = false,
 
     /**
-      * The CMK-ARN used to encrypt the record
-      */
+     * The CMK-ARN used to encrypt the record
+     */
     encryptionArn: String,
 
     /**
-      * Denotes the record being compressed using GZIP
-      */
-    compressed: Boolean = true,
+     * Denotes the record being compressed using GZIP
+     */
+    compressed: Boolean = true
 )
 

@@ -7,15 +7,15 @@ import org.apache.avro.Schema
 
 import scalaj.http._
 import scalaz.Scalaz._
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.google.common.cache.{ CacheBuilder, CacheLoader, LoadingCache }
 import com.typesafe.scalalogging.LazyLogging
 
 class HttpResolver(
-                    url: String,
-                    authToken: String,
-                    maximumCacheSize: Int = 50,
-                    expireAfterWriteSeconds: Int = 60,
-                  ) extends SchemaResolver with LazyLogging {
+    url: String,
+    authToken: String,
+    maximumCacheSize: Int = 50,
+    expireAfterWriteSeconds: Int = 60
+) extends SchemaResolver with LazyLogging {
   logger.info(
     """
       |Creating HttpResolver:

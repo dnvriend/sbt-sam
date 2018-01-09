@@ -1,21 +1,21 @@
 package com.github.dnvriend.sam.serialization.resolver
 
-import com.amazonaws.services.cognitoidp.{AWSCognitoIdentityProvider, AWSCognitoIdentityProviderClientBuilder}
-import com.amazonaws.services.cognitoidp.model.{AdminInitiateAuthRequest, AuthFlowType, AuthenticationResultType}
+import com.amazonaws.services.cognitoidp.{ AWSCognitoIdentityProvider, AWSCognitoIdentityProviderClientBuilder }
+import com.amazonaws.services.cognitoidp.model.{ AdminInitiateAuthRequest, AuthFlowType, AuthenticationResultType }
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.avro.Schema
 
 import scala.collection.JavaConverters._
 
 class HttpAuthResolver(
-                        url: String,
-                        clientId: String,
-                        userPoolId: String,
-                        username: String,
-                        password: String,
-                        maximumCacheSize: Int = 50,
-                        expireAfterWriteSeconds: Int = 60,
-                      ) extends SchemaResolver with LazyLogging {
+    url: String,
+    clientId: String,
+    userPoolId: String,
+    username: String,
+    password: String,
+    maximumCacheSize: Int = 50,
+    expireAfterWriteSeconds: Int = 60
+) extends SchemaResolver with LazyLogging {
   logger.info(
     """
       |Creating HttpAuthResolver:

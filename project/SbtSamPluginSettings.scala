@@ -1,13 +1,12 @@
-import sbt._
-import sbt.Keys._
-import sbt.ScriptedPlugin.autoImport.{scriptedBufferLog, scriptedLaunchOpts}
 import LibraryDependencies._
-import sbtbuildinfo._
+import sbt.Keys._
+import sbt._
 import sbtbuildinfo.BuildInfoKeys._
+import sbtbuildinfo._
 
 object SbtSamPluginSettings extends AutoPlugin {
   override def trigger = noTrigger
-  override def requires = plugins.JvmPlugin && ScriptedPlugin
+  override def requires = plugins.JvmPlugin
 
   override def projectSettings = Seq(
     sbtPlugin := true,
@@ -18,11 +17,6 @@ object SbtSamPluginSettings extends AutoPlugin {
     libraryDependencies += libScalazScalaTest,
     libraryDependencies += libScalaTest,
 
-    scriptedLaunchOpts := {
-      scriptedLaunchOpts.value ++
-        Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
-    },
-    scriptedBufferLog := false,
     addSbtPlugin(libSbtAssembly),
   ) ++ buildInfoSettings
 

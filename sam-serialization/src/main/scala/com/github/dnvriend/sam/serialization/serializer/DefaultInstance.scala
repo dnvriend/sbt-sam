@@ -11,7 +11,7 @@ object DefaultInstance extends LazyLogging {
     logger.info("Creating a default instance for class: '{}'", t.runtimeClass.getCanonicalName)
 
     val defaultInstance: DTry[A] = {
-      import reflect.runtime.{universe => ru, currentMirror => cm}
+      import reflect.runtime.{ universe => ru, currentMirror => cm }
 
       val clazz = cm.classSymbol(t.runtimeClass)
       val mod = clazz.companion.asModule
@@ -27,10 +27,11 @@ object DefaultInstance extends LazyLogging {
       im.reflectMethod(mApply)(args: _*).asInstanceOf[A]
     }.safe
 
-    if(defaultInstance.isLeft) {
-      logger.error("error while instantiating class: '{}', error: '{}'",
+    if (defaultInstance.isLeft) {
+      logger.error(
+        "error while instantiating class: '{}', error: '{}'",
         t.runtimeClass.getCanonicalName,
-        defaultInstance.swap.foldMap(_.getMessage),
+        defaultInstance.swap.foldMap(_.getMessage)
       )
     }
 

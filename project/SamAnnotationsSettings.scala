@@ -6,6 +6,7 @@ object SamAnnotationsSettings extends AutoPlugin {
   override def requires = plugins.JvmPlugin
 
   override def projectSettings = Seq(
+    crossScalaVersions := Seq("2.11.12", "2.12.4"),
   )
 
 }

@@ -10,11 +10,11 @@ import scala.util.Try
 import scalaz.Scalaz._
 
 class DynamoDBSchemaResolver(
-                              ctx: SamContext,
-                              tableName: String = "schema_by_fingerprint",
-                              idAttributeName: String = "fingerprint",
-                              payloadAttributeName: String = "json",
-                              ) extends SchemaResolver with LazyLogging {
+    ctx: SamContext,
+    tableName: String = "schema_by_fingerprint",
+    idAttributeName: String = "fingerprint",
+    payloadAttributeName: String = "json"
+) extends SchemaResolver with LazyLogging {
   logger.info(
     """
       |Creating DynamoDBSchemaResolver:
@@ -25,7 +25,7 @@ class DynamoDBSchemaResolver(
     """.stripMargin,
     tableName,
     idAttributeName,
-    payloadAttributeName,
+    payloadAttributeName
   )
   private val repository = DynamoDBJsonRepository(tableName, ctx, idAttributeName, payloadAttributeName)
 
