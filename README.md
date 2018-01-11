@@ -342,6 +342,8 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.17 (2018-01-11)
+- support for akka-stream, see [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream) for examples.
 
 ## 1.0.16 (2018-01-08)
 - release error due to bintray errors
