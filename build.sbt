@@ -12,6 +12,7 @@ lazy val `sbt-sam` = (project in file("."))
   `sam-schema-plugin`,
   `sam-serialization`,
   `sam-dynamodb-resolver`,
+  `sam-akka-stream`,
 )
 
 lazy val `sbt-sam-plugin` = (project in file("sbt-sam-plugin"))
@@ -33,6 +34,10 @@ lazy val `sam-annotations` = (project in file("sam-annotations"))
 lazy val `sam-lambda` = (project in file("sam-lambda"))
   .dependsOn(`sam-ops`, `sam-testing-lib` % "test->test")
   .enablePlugins(SamLambdaSettings)
+
+lazy val `sam-akka-stream` = (project in file("sam-akka-stream"))
+  .dependsOn(`sam-lambda`, `sam-testing-lib` % "test->test")
+  .enablePlugins(SamAkkaStreamSettings)
 
 lazy val `sam-macros` = (project in file("sam-macros"))
   .dependsOn(`sam-testing-lib` % "test->test")

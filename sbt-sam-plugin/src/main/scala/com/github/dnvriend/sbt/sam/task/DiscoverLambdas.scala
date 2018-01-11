@@ -13,10 +13,12 @@ object DiscoverLambdas {
       List(
         "com.github.dnvriend.lambda.BinaryDynamoRepoApiGatewayHandler",
         "com.github.dnvriend.lambda.JsonDynamoRepoApiGatewayHandler",
+        "com.github.dnvriend.sam.akka.stream.JsonApiGatewayHandler",
         "com.github.dnvriend.lambda.JsonApiGatewayHandler",
         "com.github.dnvriend.lambda.JsonDApiGatewayHandler",
         "com.github.dnvriend.lambda.ApiGatewayHandler",
         "com.github.dnvriend.lambda.DynamoDBHandler",
+        "com.github.dnvriend.sam.akka.stream.KinesisEventHandler",
         "com.github.dnvriend.lambda.KinesisEventHandler",
         "com.github.dnvriend.lambda.ScheduledEventHandler",
         "com.github.dnvriend.lambda.SNSEventHandler",
