@@ -1,11 +1,15 @@
 import sbt._
 
 object LibraryDependencies {
+  // versions
+  val awsSdkVersion = "1.11.257"
+
   // libraries
+  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
+  val libAwsDynamoDBSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
+  val libAwsSnsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-sns" % awsSdkVersion
+  val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % awsSdkVersion
   val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
-  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.257"
-  val libAwsDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.257"
-  val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.257"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
   val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.0.2"
   val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.1"

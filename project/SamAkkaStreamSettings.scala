@@ -10,6 +10,5 @@ object SamAkkaStreamSettings extends AutoPlugin {
     crossScalaVersions := Seq("2.11.12", "2.12.4"),
     libraryDependencies += libAkkaActor,
     libraryDependencies += libAkkaStream,
-    libraryDependencies += libKinesisSdk,
   ) ++ GlobalSettings.commonSettings
 }

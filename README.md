@@ -280,6 +280,13 @@ The task `samLogs` shows the last log output for a selected lambda:
 [success] Total time: 1 s, completed Dec 25, 2017 7:20:17 PM
 ```
 
+## Stage Configuration
+sbt-sam can be configured to be used when deploying applications by means of Jenkins. sbt-sam looks at environment variables
+for configuration. The most important one is the environment variable `SAM_STAGE`, when if set, overrules the `samStage` setting 
+in build.sbt. When Jenkins sets the `SAM_STAGE` variable to 'test', then the stage will be test and the naming of the components
+will become scoped with 'test'. The `SAM_STAGE` variable content has no special meaning for sbt-sam, other than grouping components
+together.
+
 ## AWS Configuration
 The standard resolution for AWS credentials is:
 
