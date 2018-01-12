@@ -22,6 +22,7 @@ object DiscoverLambdas {
         "com.github.dnvriend.lambda.KinesisEventHandler",
         "com.github.dnvriend.lambda.ScheduledEventHandler",
         "com.github.dnvriend.lambda.SNSEventHandler",
+        "com.github.dnvriend.lambda.S3EventHandler"
       ).contains(superClassName)
   }
 
@@ -40,7 +41,7 @@ object DiscoverLambdas {
    */
   def run(projectClasses: Set[ProjectClass]): Set[ProjectLambda] = {
     projectClasses
-//      .map(debugProjectClass)
+      //      .map(debugProjectClass)
       .filter(lambdaPredicate)
       .map(pc => ProjectLambda(pc))
   }

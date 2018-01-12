@@ -356,6 +356,16 @@ object CloudFormationStackInfo {
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.snsConf.topic}): ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No SNS event handlers configured")
       }
+      val s3EventHandlers: String = {
+        config.lambdas.collect({ case h: S3EventHandler => h }).map { handler =>
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, projectName, stage, lambdaClient))
+        }.map {
+          case (handler, optionalInfo) =>
+            val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.s3Conf.bucketResourceName}): ${Console.RESET}$info"
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No S3 event handlers configured")
+      }
       s"""Lambdas:
         |Api Http Event Handlers:
         |$httpHandlers
@@ -366,7 +376,9 @@ object CloudFormationStackInfo {
         |Kinesis Event Handlers:
         |$kinesisEventHandlers
         |SNS Event Handlers:
-        |$snsEventHandlers""".stripMargin
+        |$snsEventHandlers
+        |S3 Event Handlers:
+        | $s3EventHandlers""".stripMargin
     }
 
     val sqlApplicationsSummary: String = {

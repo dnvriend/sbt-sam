@@ -16,7 +16,7 @@ object S3EventSource {
         "Type" -> "S3",
         "Properties" -> NonEmptyList(
           Json.toJson(determineName(importName, bucketName)),
-          Json.obj("Events" -> Json.arr(events.map(_.value)))
+          Json.obj("Events" -> Json.toJson(events.map(_.value)))
         ).foldMap(identity)(JsMonoids.jsObjectMerge)
       )
     )
@@ -24,7 +24,7 @@ object S3EventSource {
 
   def determineName(importName: Option[String], resourceName: Option[String]): Option[JsValue] = {
     importName.map(name => bucketNameFromImport(name))
-      .orElse(resourceName.map(name => bucketNameToArn(name)))
+      .orElse(resourceName.map(name => bucketNameRef(name)))
   }
 
   def bucketNameFromImport(importName: String): JsValue = {
@@ -34,10 +34,14 @@ object S3EventSource {
   def bucketNameToArn(bucketName: String): JsValue = {
     Json.obj("Bucket" -> CloudFormation.bucketArn(bucketName))
   }
+
+  def bucketNameRef(bucketResourceName: String): JsValue =
+    Json.obj("Bucket" -> CloudFormation.ref(bucketResourceName))
+
 }
 case class S3EventSource(
                           logicalName: String,
                           bucketName: Option[String],
                           importName: Option[String],
-                          events: List[S3Event],
+                          events: List[S3EventType],
                         ) extends EventSource
