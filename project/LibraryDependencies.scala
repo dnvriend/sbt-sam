@@ -1,15 +1,20 @@
 import sbt._
 
 object LibraryDependencies {
+  // versions
+  val awsSdkVersion = "1.11.263"
+
   // libraries
+  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
+  val libAwsDynamoDBSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
+  val libAwsSnsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-sns" % awsSdkVersion
+  val libAwsS3Sdk: ModuleID = "com.amazonaws" % "aws-java-sdk-s3" % awsSdkVersion
+  val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % awsSdkVersion
   val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
-  val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % "1.11.257"
-  val libAwsDynamoDBSdk: ModuleID =  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.257"
-  val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.257"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
   val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.0.2"
   val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.1"
-  val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.58"
+  val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.59"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.2"
   val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.8.0"
   val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.18"
@@ -22,8 +27,8 @@ object LibraryDependencies {
   val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.3.0"
   val libLogback: ModuleID = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
-  val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % "2.5.8"
-  val libAkkaStream: ModuleID = "com.typesafe.akka" %% "akka-stream" % "2.5.8"
+  val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % "2.5.9"
+  val libAkkaStream: ModuleID = "com.typesafe.akka" %% "akka-stream" % "2.5.9"
 
   // testing libs //
   val libScalaCheckTest: ModuleID = "org.scalacheck" %% "scalacheck" % "1.13.5"

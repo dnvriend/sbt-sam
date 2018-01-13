@@ -18,6 +18,7 @@ object DiscoverLambdas {
         "com.github.dnvriend.lambda.JsonDApiGatewayHandler",
         "com.github.dnvriend.lambda.ApiGatewayHandler",
         "com.github.dnvriend.lambda.DynamoDBHandler",
+        "com.github.dnvriend.sam.akka.stream.KinesisEventProcessor",
         "com.github.dnvriend.sam.akka.stream.KinesisEventHandler",
         "com.github.dnvriend.lambda.KinesisEventHandler",
         "com.github.dnvriend.lambda.ScheduledEventHandler",

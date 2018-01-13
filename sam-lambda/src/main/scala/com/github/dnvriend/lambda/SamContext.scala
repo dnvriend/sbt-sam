@@ -31,36 +31,50 @@ case class SamContext(
    * Returns the Arn for an sns topic
    */
   def snsTopicArn(topicName: String): String = {
-    s"arn:aws:sns:$region:$accountId:$projectName-$stage-$topicName"
+    s"arn:aws:sns:$region:$accountId:${determineName(topicName)}"
   }
 
   /**
    * Returns the Arn for a kinesis stream
    */
   def kinesisStreamArn(streamName: String): String = {
-    s"arn:aws:kinesis:$region:$accountId:stream/$projectName-$stage-$streamName"
+    s"arn:aws:kinesis:$region:$accountId:stream/${determineName(streamName)}"
+  }
+
+  /**
+   * Determines whether a resource name is imported, if so
+   * if returns the name to use for an imported resource, else
+   * it will determine the name to use for a local resource
+   */
+  def determineName(name: String): String = {
+    if (name.startsWith("import")) {
+      val parts = name.split(":")
+      val exportComponentName = parts.drop(1).head
+      val tableNameToImport = parts.drop(2).head
+      s"$exportComponentName-$stage-$tableNameToImport"
+    } else {
+      s"$projectName-$stage-$name"
+    }
   }
 
   /**
    * Returns the scoped Kinesis stream name
    */
   def kinesisStreamName(streamName: String): String = {
-    s"$projectName-$stage-$streamName"
+    determineName(streamName)
+  }
+
+  /**
+   * Returns the scoped SNS Topic name
+   */
+  def snsTopicName(topicName: String): String = {
+    determineName(topicName)
   }
 
   /**
    * Returns the scoped DynamoDB table name
    */
   def dynamoDbTableName(tableName: String): String = {
-    val name: String = if (tableName.startsWith("import")) {
-      val parts = tableName.split(":")
-      val exportComponentName = parts.drop(1).head
-      val tableNameToImport = parts.drop(2).head
-      s"$exportComponentName-$stage-$tableNameToImport"
-    } else {
-      s"$projectName-$stage-$tableName"
-    }
-    logger.log(s"Returning table name: $name")
-    name
+    determineName(tableName)
   }
 }

@@ -86,8 +86,14 @@ trait S3AccessControl
 object S3AccessControl {
 
   def fromName(name: String): S3AccessControl = name.toLowerCase.trim match {
-    case "private" => Private
+    case "authenticatedread" => AuthenticatedRead
+    case "awsexecread" => AwsExecRead
+    case "bucketownerread" => BucketOwnerRead
     case "bucketownerfullcontrol" => BucketOwnerFullControl
+    case "logdeliverywrite" => LogDeliveryWrite
+    case "private" => Private
+    case "publicread" => PublicRead
+    case "publicreadwrite" => PublicReadWrite
   }
 
   /**

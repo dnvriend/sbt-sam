@@ -57,33 +57,18 @@ The following seed projects are available:
 - [dnvriend/sam-schema-repo-seed.g8](https://github.com/dnvriend/sam-schema-repo-seed.g8): A template project for quickly creating a serverless avro schema repository.
 - [dnvriend/sam-microservice-seed.g8](https://github.com/dnvriend/sam-microservice-seed.g8): A template project for quickly creating serverless event-sourced, dynamodb event-store backed applications.
 - [dnvriend/sam-schema-definition-seed.g8](https://github.com/dnvriend/sam-schema-definition-seed.g8): A template project for quickly creating schema definition projects..
+- [dnvriend/sam-authorization-seed.g8](https://github.com/dnvriend/sam-authorization-seed.g8): A template project for quickly creating a serverless authentication and authorization service.
+- [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream-seed.g8): A template project for creating serverless components with akka-stream.
+- [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8): A template project for quickly creating S3 bucket event handlers.
+
+## Mini Data and Analytics Platform
+- [sam-mini-platform](https://github.com/dnvriend/sam-mini-platform): A mini platform for ingesting, processing, and analyzing data.
+
+## sbt-sam test projects
+- [sam-encryption-test](sam-encryption-test): A small study project on AWS encryption using AWS KMS, AWS Lambda and sbt-sam.
 
 ## Available tasks
 The following tasks are available:
-
-### whoAmI
-The task `whoAmI` uses the AWS configuration to determine 'who-you-are' in the context of AWS account. This is useful
-to determine what account is being used:
-
-```bash
-> whoAmI
-[info]
-[info] ===================================
-[info] Using the following AWS credentials
-[info] ===================================
-[info] * ProfileLocation: /Users/dnvriend/.aws/credentials
-[info] * Region: 'eu-central-1'
-[info] * IAM User:
-[info]   - UserName: 'dnvriend'
-[info]   - Arn: 'arn:aws:iam::1234567890:user/dnvriend'
-[info]   - Created on: 'Sat Dec 16 08:59:01 CET 2017'
-[info]   - Last used on: 'Sat Dec 23 10:12:59 CET 2017'
-[info] * Credentials:
-[info]   - AWSAccessKeyId: 'XYZABCDEFG'
-[info]   - AWSSecretKey: 'XYZABCDEFDASDASEWA'
-[info]
-[success] Total time: 0 s, completed Dec 24, 2017 9:03:00 AM
-```
 
 ### samInfo
 The task `samInfo` shows the current state of the component. In future versions, the task will also show the differences between 
@@ -280,6 +265,13 @@ The task `samLogs` shows the last log output for a selected lambda:
 [success] Total time: 1 s, completed Dec 25, 2017 7:20:17 PM
 ```
 
+## Stage Configuration
+sbt-sam can be configured to be used when deploying applications by means of Jenkins. sbt-sam looks at environment variables
+for configuration. The most important one is the environment variable `SAM_STAGE`, when if set, overrules the `samStage` setting 
+in build.sbt. When Jenkins sets the `SAM_STAGE` variable to 'test', then the stage will be test and the naming of the components
+will become scoped with 'test'. The `SAM_STAGE` variable content has no special meaning for sbt-sam, other than grouping components
+together.
+
 ## AWS Configuration
 The standard resolution for AWS credentials is:
 
@@ -342,21 +334,30 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.18 (2018-01-13)
+- Support for S3 Event Sources, see [dnvriend/sam-s3-seed.g8]() for examples, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+- Support for `com.github.dnvriend.sam.akka.stream.KinesisEventProcessor`, an akka streams event processor for Kinesis streams to
+  create a 'FromStream map ToStream' style processor using akka stream declarations,
+- Support for `com.github.dnvriend.sam.akka.stream.KinesisEventHandler`, an akka stream based Kinesis Event Handler
+- Support for `com.github.dnvriend.kinesis.KinesisProducer`, a KinesisProducer component to produce messages to Kinesis. 
+- Support for `com.github.dnvriend.sns.TopicProducer`, an SNS TopicProducer component to produce messages to SNS.  
+- Support for `com.github.dnvriend.s3.GetS3Object`, for getting access to the data stored in S3 objects.
+- Added the `AmazonS3FullAccess` role to lambdas with no policy (role) annotations.
+
 ## 1.0.17 (2018-01-11)
-- support for akka-stream, see [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream) for examples.
+- Support for akka-stream, see [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream) for examples.
 
 ## 1.0.16 (2018-01-08)
-- release error due to bintray errors
-- configurable managed policies on lambdas by setting annotations; no annotations means default full policies
+- Release error due to bintray errors
+- Configurable managed policies on lambdas by setting annotations; no annotations means default full policies
 - Support for importing dynamodb tables with 'import' syntax.
-- general bug fixing
+- General bug fixing
 
 ## 1.0.15 (2018-01-08)
-- release error due to bintray errors
+- Not Released due to bintray errors
 
 ## 1.0.14 (2018-01-08)
-- release error due to bintray errors
-
+- Not Released due to bintray errors
 
 ## 1.0.13 (2018-01-06)
 - Support for 'com.github.dnvriend.service.Aggregate', a DynamoDB backed event sourced service that provides support
