@@ -2,9 +2,9 @@ package com.github.dnvriend.sbt.sam.task
 
 import java.lang.annotation.Annotation
 
-import scala.collection.immutable
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.{S3EventType, S3Events}
+
 import scala.tools.nsc.classpath.PackageNameUtils
-import scalaz._
 import scalaz.Scalaz._
 
 sealed trait LambdaHandler {
@@ -81,6 +81,17 @@ final case class KinesisEventHandler(
                                       kinesisConf: KinesisConf
                                     ) extends LambdaHandler
 
+case class S3Conf(
+                   bucketResourceName: String ,
+                   filter: String,
+                   events: List[S3EventType]
+                 )
+
+final case class S3EventHandler(
+                               lambdaConfig: LambdaConfig,
+                               s3Conf: S3Conf
+                               ) extends LambdaHandler
+
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
           stage: String): Set[LambdaHandler] = {
@@ -115,7 +126,13 @@ object ClassifyLambdas {
         case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToKinesisEventHandler(cl, fqcn, simpleName, anno, stage))
       }
 
-    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers)
+    val s3EventHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("S3Conf"))
+      .map(cl => (cl, cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("S3Conf"))))
+      .flatMap {
+        case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToS3EventHandler(cl, fqcn, simpleName, anno, stage))
+      }
+
+    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers)
       .map(determinePolicies)
   }
 
@@ -125,6 +142,7 @@ object ClassifyLambdas {
     case h: ScheduledEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
     case h: SNSEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
     case h: KinesisEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
+    case h: S3EventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
   }
 
   def determinePoliciesForLambdaConfig(cfg: LambdaConfig): LambdaConfig = {
@@ -229,8 +247,22 @@ object ClassifyLambdas {
     )
   }
 
+  def mapAnnoToS3EventHandler(cl: Class[_], className:  String, simpleName: String, anno: Annotation, stage: String): S3EventHandler = {
+    val bucketResourceName = anno.annotationType().getMethod("bucketResourceName").invoke(anno).asInstanceOf[String]
+    val filter = anno.annotationType().getMethod("filter").invoke(anno).asInstanceOf[String]
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val events = anno.annotationType().getMethod("events").invoke(anno).asInstanceOf[Array[String]].toList
+    val s3Events = S3Events.fromList(events)
+
+    S3EventHandler(
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      S3Conf(bucketResourceName, filter, s3Events)
+    )
+  }
+
   implicit class ClassOps(className: String) {
     def withoutDollarSigns: String = className.replace("$", "")
   }
-
 }

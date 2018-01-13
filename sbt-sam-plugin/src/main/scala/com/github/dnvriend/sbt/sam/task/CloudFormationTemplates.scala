@@ -15,6 +15,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.apigw.ApiGatewayEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.dynamodb.DynamoDBEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.kinesis.KinesisEventSource
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.S3EventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.schedule.ScheduledEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.sns.SnsEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.s3._
@@ -376,6 +377,8 @@ object CloudFormationTemplates {
     case KinesisEventHandler(_, conf) =>
       val determined = resourceNameOrImport(conf.stream, projectName, stage)
       KinesisEventSource("KinesisEventSource", determined.componentName, determined.importName, conf.batchSize, conf.startingPosition)
+    case S3EventHandler(_, conf) =>
+      S3EventSource("S3EventSource", Option(conf.bucketResourceName), None, conf.events)
   }
 
   /**
