@@ -335,7 +335,7 @@ The 'default cli config' file:
 
 ## Changelog
 ## 1.0.18 (2018-01-13)
-- Support for S3 Event Sources, see [dnvriend/sam-s3-seed.g8]() for examples, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+- Support for S3 Event Sources, see [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8) for examples, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
 - Support for `com.github.dnvriend.sam.akka.stream.KinesisEventProcessor`, an akka streams event processor for Kinesis streams to
   create a 'FromStream map ToStream' style processor using akka stream declarations,
 - Support for `com.github.dnvriend.sam.akka.stream.KinesisEventHandler`, an akka stream based Kinesis Event Handler
