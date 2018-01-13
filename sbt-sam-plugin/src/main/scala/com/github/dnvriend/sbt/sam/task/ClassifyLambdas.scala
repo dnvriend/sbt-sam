@@ -154,6 +154,7 @@ object ClassifyLambdas {
         case p@"AmazonKinesisFirehoseFullAccess" => p
         case p@"AmazonKinesisFullAccess" => p
         case p@"AmazonS3FullAccess" => p
+        case p@"AmazonS3ReadOnlyAccess" => p
         case p@"AmazonSNSFullAccess" => p
         case p@"AmazonVPCFullAccess" => p
         case p@"AWSKeyManagementServicePowerUser" => p
@@ -171,6 +172,7 @@ object ClassifyLambdas {
       "AmazonKinesisFullAccess",
       "AWSKeyManagementServicePowerUser",
       "AmazonKinesisFirehoseFullAccess",
+      "AmazonS3FullAccess",
     ))
 
     cfg.copy(managedPolicies = policies)

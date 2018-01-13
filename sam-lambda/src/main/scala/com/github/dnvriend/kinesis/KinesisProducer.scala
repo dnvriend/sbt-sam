@@ -23,10 +23,10 @@ object KinesisProducer {
  * @param ctx
  */
 class KinesisProducer(ctx: SamContext) {
-  private val kinesis: AmazonKinesis = AmazonKinesisClientBuilder.defaultClient()
+  private val client: AmazonKinesis = AmazonKinesisClientBuilder.defaultClient()
 
   def produce(topicName: String, record: KinesisRecord): PutRecordResult = {
-    kinesis.putRecord(ctx.kinesisStreamName(topicName), ByteBuffer.wrap(record.data), record.partitionKey)
+    client.putRecord(ctx.kinesisStreamName(topicName), ByteBuffer.wrap(record.data), record.partitionKey)
   }
 
   def produce(topicName: String, records: List[KinesisRecord]): List[PutRecordsResultEntry] = {
@@ -36,7 +36,7 @@ class KinesisProducer(ctx: SamContext) {
           .withPartitionKey(key)
           .withData(ByteBuffer.wrap(data))
     }
-    kinesis.putRecords(new PutRecordsRequest()
+    client.putRecords(new PutRecordsRequest()
       .withStreamName(ctx.kinesisStreamName(topicName))
       .withRecords(xs: _*)
     ).getRecords.asScala.toList

@@ -18,9 +18,9 @@ object TopicProducer {
  * and exports the topic name.
  */
 class TopicProducer(ctx: SamContext) {
-  private val sns: AmazonSNS = AmazonSNSClientBuilder.defaultClient()
+  private val client: AmazonSNS = AmazonSNSClientBuilder.defaultClient()
 
   def produce(topicName: String, message: String): PublishResult = {
-    sns.publish(ctx.snsTopicArn(topicName), message)
+    client.publish(ctx.snsTopicArn(topicName), message)
   }
 }
