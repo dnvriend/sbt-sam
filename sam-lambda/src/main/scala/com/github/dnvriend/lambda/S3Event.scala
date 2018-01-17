@@ -8,8 +8,8 @@ object S3Event {
   implicit val reads: Reads[S3Event] = Json.reads
 
   def parse(input: InputStream): List[S3Event] = {
-    val jsValue = Json.parse(input)
-    (jsValue \ "Records").as[List[S3Event]]
+
+    (Json.parse(input) \ "Records").as[List[S3Event]]
   }
 }
 case class S3Event(

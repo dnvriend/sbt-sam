@@ -30,6 +30,7 @@ object HttpRequest {
 }
 
 case class HttpRequest(request: JsValue) extends AllOps {
+
   def body: JsValue = Reads.StringReads.map(Json.parse).reads(request("body")).getOrElse(JsNull)
 
   def pathParameters: JsValue = request("pathParameters")
