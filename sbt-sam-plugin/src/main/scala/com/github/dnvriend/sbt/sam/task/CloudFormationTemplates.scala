@@ -13,6 +13,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.apigw.ApiGatewayEventSource
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.cloudwatch.CloudWatchEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.dynamodb.DynamoDBEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.kinesis.KinesisEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.S3EventSource
@@ -379,6 +380,8 @@ object CloudFormationTemplates {
       KinesisEventSource("KinesisEventSource", determined.componentName, determined.importName, conf.batchSize, conf.startingPosition)
     case S3EventHandler(_, conf) =>
       S3EventSource("S3EventSource", Option(conf.bucketResourceName), None, conf.events)
+    case CloudWatchHandler(_, conf) =>
+      CloudWatchEventSource("CloudWatchEventSource", conf.pattern)
   }
 
   /**

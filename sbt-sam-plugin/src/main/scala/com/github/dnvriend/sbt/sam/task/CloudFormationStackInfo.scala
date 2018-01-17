@@ -30,6 +30,7 @@ object CloudFormationStackResource {
   implicit val show: Show[CloudFormationStackResource] = Show.shows(m => {
     s"${m.logicalResourceId}- ${m.resourceType}- ${m.resourceStatus}- ${m.timestamp}"
   })
+
   def fromStackResource(resource: StackResource): CloudFormationStackResource = {
     CloudFormationStackResource(
       resource.getLogicalResourceId,
@@ -39,6 +40,7 @@ object CloudFormationStackResource {
     )
   }
 }
+
 case class CloudFormationStackResource(
     logicalResourceId: String,
     resourceType: String,
@@ -93,6 +95,7 @@ object CloudFormationStackInfo {
            |    - HashKeyRange: $getHashKeyRange
            |    - SequenceNumberRange: $getSequenceNumberRange""".stripMargin
       }
+
       def report(conf: com.amazonaws.services.kinesis.model.StreamDescription): String = {
         import conf._
         val shardSummary: String = getShards.asScala.map(reportShard).toList.intercalate("\n")
@@ -106,6 +109,7 @@ object CloudFormationStackInfo {
            |  - Number of shards: ${getShards.size}
            |$shardSummary""".stripMargin
       }
+
       config.streams.map { stream =>
         val streamName = s"$projectName-$stage-${stream.name}"
         (stream, KinesisOperations.describeStream(streamName, kinesisClient))
@@ -123,6 +127,7 @@ object CloudFormationStackInfo {
         s"""
            |  - TopicArn: $getTopicArn""".stripMargin
       }
+
       config.topics.map { topic =>
         val topicName = s"$projectName-$stage-${topic.name}"
         (topic, SNSOperations.describeTopic(topicName, snsClient))
@@ -146,6 +151,7 @@ object CloudFormationStackInfo {
            |  - Location: $location
            |  - CreationDate: $getCreationDate""".stripMargin
       }
+
       config.buckets.map { bucket =>
         val bucketName = BucketName(s"$projectName-$stage-${bucket.name}")
         val s3bucket: ValidationNel[String, Bucket] = S3Operations.getBucket(bucketName, s3Client).toSuccessNel(s"S3 bucket not found for name '${bucketName.value}'")
@@ -173,13 +179,16 @@ object CloudFormationStackInfo {
              |    - RoleArn: $getRoleARN""".stripMargin
         })
       }
+
       def reportDestination(dest: DestinationDescription): String = {
         val s3Report: String = reportS3Destination(Option(dest.getExtendedS3DestinationDescription))
         NonEmptyList(s3Report).intercalate("\n")
       }
+
       def reportDestinations(dests: List[DestinationDescription]): String = {
         dests.map(reportDestination).intercalate("\n")
       }
+
       def reportSource(src: Option[KinesisStreamSourceDescription]): String = {
         src.fold("No Kinesis Source")(src => {
           import src._
@@ -188,6 +197,7 @@ object CloudFormationStackInfo {
              |    - RoleArn: $getRoleARN""".stripMargin
         })
       }
+
       def report(info: DeliveryStreamDescription) = {
         import info._
         val srcReport: String = reportSource(Option(info.getSource).map(_.getKinesisStreamSourceDescription))
@@ -200,6 +210,7 @@ object CloudFormationStackInfo {
            |$srcReport
            |$destReport""".stripMargin
       }
+
       config.s3Firehoses.map { s3Firehose =>
         val streamName = CloudFormationTemplates.createResourceName(projectName, stage, s3Firehose.name)
         val firehoseInfo = AmazonKinesisFirehoseOperations.findDeliveryStream(streamName, kinesisFirehoseClient)
@@ -220,6 +231,7 @@ object CloudFormationStackInfo {
            |  - RoleId: $getRoleId
            |  - CreationDate: $getCreateDate""".stripMargin
       }
+
       config.iamRoles.map { iamRole =>
         val roleName = s"$projectName-$stage-${iamRole.name}"
         val roleInfo = IamOperations.getRole(roleName, iamClient)
@@ -237,6 +249,7 @@ object CloudFormationStackInfo {
         s"""    - UserPoolClientId: $getClientId
            |    - UserPoolClientName: $getClientName""".stripMargin
       }
+
       def report(info: UserPoolWithClients) = {
         import info._
         s"""
@@ -247,6 +260,7 @@ object CloudFormationStackInfo {
            |  - LastModified: ${userPool.getLastModifiedDate}
            |  - UserPoolClients: ${userPoolClients.map(reportUserPoolClient).intercalate("\n")}""".stripMargin
       }
+
       config.authpool.map { authPool =>
         val userPoolName = s"$projectName-$stage-${authPool.name}"
         val userPoolInfo = AwsCognitoIdpOperations.findUserPoolWithClients(userPoolName, cognitoIdpClient)
@@ -278,6 +292,7 @@ object CloudFormationStackInfo {
            |  - StreamLabel: $getLatestStreamLabel
            |  - Restore Summary: $getRestoreSummary""".stripMargin
       }
+
       config.tables.map(table => {
         val tableName = s"$projectName-$stage-${table.name}"
         (table, DynamoDbOperations.describeTable(tableName, dynamoClient))
@@ -301,6 +316,7 @@ object CloudFormationStackInfo {
            |  - tracing: ${getTracingConfig.getMode}
            |  - lastmodified: $getLastModified""".stripMargin
       }
+
       val httpHandlers: String = {
         config.lambdas.collect({ case h: HttpHandler => h }).map { handler =>
           val fqcn: String = handler.lambdaConfig.fqcn
@@ -363,22 +379,34 @@ object CloudFormationStackInfo {
         }.map {
           case (handler, optionalInfo) =>
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
-            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.s3Conf.bucketResourceName}): ${Console.RESET}$info"
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.s3Conf.bucketResourceName}) -> (${handler.s3Conf.events.mkString(", ")}): ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No S3 event handlers configured")
       }
+      val cloudWatchEventHandlers: String = {
+        config.lambdas.collect({ case h: CloudWatchHandler => h }).map { handler =>
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, projectName, stage, lambdaClient))
+        }.map {
+          case (handler, optionalInfo) =>
+            val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.cloudWatchConf.pattern}): ${Console.RESET}$info"
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No CloudWatch event handlers configured")
+      }
       s"""Lambdas:
-        |Api Http Event Handlers:
-        |$httpHandlers
-        |DynamoDB Streams Handlers:
-        |$dynamoHandlers
-        |Scheduled Event Handlers:
-        |$scheduledEventHandlers
-        |Kinesis Event Handlers:
-        |$kinesisEventHandlers
-        |SNS Event Handlers:
-        |$snsEventHandlers
-        |S3 Event Handlers:
-        | $s3EventHandlers""".stripMargin
+         |Api Http Event Handlers:
+         |$httpHandlers
+         |DynamoDB Streams Handlers:
+         |$dynamoHandlers
+         |Scheduled Event Handlers:
+         |$scheduledEventHandlers
+         |Kinesis Event Handlers:
+         |$kinesisEventHandlers
+         |SNS Event Handlers:
+         |$snsEventHandlers
+         |S3 Event Handlers:
+         | $s3EventHandlers
+         | CloudWatch Event Handlers:
+         | $cloudWatchEventHandlers""".stripMargin
     }
 
     val sqlApplicationsSummary: String = {
@@ -388,6 +416,7 @@ object CloudFormationStackInfo {
         }.map {
           case (app, optionalInfo) =>
             def report(str: String): String = ""
+
             val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
             s"* ${Console.GREEN}${app.details.ApplicationName}: ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Kinesis Analytics Applications configured")
@@ -420,30 +449,30 @@ object CloudFormationStackInfo {
 
     val report =
       s"""
-        |====================
-        |Stack State:
-        |====================
-        |$stackSummary
-        |Account:
-        |$accountSummary
-        |$lambdaSummary
-        |IAM Roles:
-        |$iamRolesSummary
-        |DynamoDbTables:
-        |$tablesSummary
-        |SNS Topics:
-        |$snsTopicsSummary
-        |Kinesis Streams:
-        |$kinesisStreamsSummary
-        |S3 Firehose Data Delivery Streams:
-        |$s3FirehoseSummary
-        |S3 Buckets:
-        |$s3BucketsSummary
-        |Authentication Pool:
-        |$authpoolSummary
-        |$sqlApplicationsSummary
-        |Endpoints:
-        |$endpointSummary
+         |====================
+         |Stack State:
+         |====================
+         |$stackSummary
+         |Account:
+         |$accountSummary
+         |$lambdaSummary
+         |IAM Roles:
+         |$iamRolesSummary
+         |DynamoDbTables:
+         |$tablesSummary
+         |SNS Topics:
+         |$snsTopicsSummary
+         |Kinesis Streams:
+         |$kinesisStreamsSummary
+         |S3 Firehose Data Delivery Streams:
+         |$s3FirehoseSummary
+         |S3 Buckets:
+         |$s3BucketsSummary
+         |Authentication Pool:
+         |$authpoolSummary
+         |$sqlApplicationsSummary
+         |Endpoints:
+         |$endpointSummary
       """.stripMargin
 
     log.info(report)
