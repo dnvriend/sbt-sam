@@ -60,7 +60,8 @@ The following seed projects are available:
 - [dnvriend/sam-authorization-seed.g8](https://github.com/dnvriend/sam-authorization-seed.g8): A template project for quickly creating a serverless authentication and authorization service.
 - [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream-seed.g8): A template project for creating serverless components with akka-stream.
 - [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8): A template project for quickly creating S3 bucket event handlers.
-
+- [dnvriend/sam-cloudwatch-seed.g8](https://github.com/dnvriend/sam-cloudwatch-seed.g8): A template project for quickly creating CloudWatch event handlers.
+                                                                                         
 ## Mini Data and Analytics Platform
 - [sam-mini-platform](https://github.com/dnvriend/sam-mini-platform): A mini platform for ingesting, processing, and analyzing data.
 
@@ -334,6 +335,10 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+
+## 1.0.19 (2018-01-17)
+- Merged PR #86 'Added handler for CloudWatch Lambda events', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+
 ## 1.0.18 (2018-01-13)
 - Support for S3 Event Sources, see [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8) for examples, thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
 - Support for `com.github.dnvriend.sam.akka.stream.KinesisEventProcessor`, an akka streams event processor for Kinesis streams to
