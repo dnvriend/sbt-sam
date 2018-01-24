@@ -35,20 +35,20 @@ import sbt._
 
 object AwsPluginKeys {
   // clients
-  lazy val clientAwsLambda = SettingKey[AWSLambda]("Returns the AwsLambda client")
-  lazy val clientApiGateway = SettingKey[AmazonApiGateway]("Returns the ApiGateway client")
-  lazy val clientDynamoDb = SettingKey[AmazonDynamoDB]("Returns the DynamoDb client")
-  lazy val clientS3 = SettingKey[AmazonS3]("Returns the s3 client")
-  lazy val clientKinesis = SettingKey[AmazonKinesis]("Returns the kinesis client")
-  lazy val clientSns = SettingKey[AmazonSNS]("Returns the simple notification service client")
-  lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("Returns the amazon cloud watch client")
-  lazy val clientAwsLogs = SettingKey[AWSLogs]("Returns the amazon cloud watch logs client")
-  lazy val clientIam = SettingKey[AmazonIdentityManagement]("Returns the amazon identity and access management (IAM client")
-  lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("Returns the amazon cloud formation client")
-  lazy val clientCodeBuild = SettingKey[AWSCodeBuild]("AWS CodeBuild is a fully managed build service in the cloud. AWS CodeBuild compiles your source code, runs unit tests, and produces artifacts that are ready to deploy. AWS CodeBuild eliminates the need to provision, manage, and scale your own build servers")
-  lazy val clientXRay = SettingKey[AWSXRay]("AWS X-Ray provides APIs for managing debug traces and retrieving service maps and other data created by processing those traces")
-  lazy val clientCognito = SettingKey[AWSCognitoIdentityProvider]("Returns the cognito identity provider client")
-  lazy val clientKinesisFirehose = SettingKey[AmazonKinesisFirehose]("Returns the amazon kinesis firehose client")
+  lazy val clientAwsLambda = SettingKey[AWSLambda]("clientAwsLambda")
+  lazy val clientApiGateway = SettingKey[AmazonApiGateway]("clientApiGateway")
+  lazy val clientDynamoDb = SettingKey[AmazonDynamoDB]("clientDynamoDb")
+  lazy val clientS3 = SettingKey[AmazonS3]("clientS3")
+  lazy val clientKinesis = SettingKey[AmazonKinesis]("clientKinesis")
+  lazy val clientSns = SettingKey[AmazonSNS]("clientSns")
+  lazy val clientCloudWatch = SettingKey[AmazonCloudWatch]("clientCloudWatch")
+  lazy val clientAwsLogs = SettingKey[AWSLogs]("clientAwsLogs")
+  lazy val clientIam = SettingKey[AmazonIdentityManagement]("clientIam")
+  lazy val clientCloudFormation = SettingKey[AmazonCloudFormation]("clientCloudFormation")
+  lazy val clientCodeBuild = SettingKey[AWSCodeBuild]("clientCodeBuild")
+  lazy val clientXRay = SettingKey[AWSXRay]("clientXRay")
+  lazy val clientCognito = SettingKey[AWSCognitoIdentityProvider]("clientCognito")
+  lazy val clientKinesisFirehose = SettingKey[AmazonKinesisFirehose]("clientKinesisFirehose")
 
   // lambda tasks
   lazy val lambdaListFunctions = taskKey[List[FunctionConfiguration]]("Returns a list of Lambda functions")
@@ -64,8 +64,8 @@ object AwsPluginKeys {
   lazy val cfDeleteStack = inputKey[DeleteStackResponse]("Deletes a specified stack. Once the call completes successfully, stack deletion starts. Deleted stacks do not show up in the DescribeStacks API if the deletion has been completed successfully")
 
   // iam tasks
-  lazy val iamUserInfo = settingKey[AmazonUser]("Returns the current Amazon user and details")
-  lazy val iamCredentialsRegionAndUser = taskKey[CredentialsRegionAndUser]("Returns the current user")
+  lazy val iamUserInfo = SettingKey[AmazonUser]("iamUserInfo")
+  lazy val iamCredentialsRegionAndUser = TaskKey[CredentialsRegionAndUser]("iamCredentialsRegionAndUser")
   lazy val whoAmI = taskKey[Unit]("Shows the current region and credentials in use")
 
   // code build tasks

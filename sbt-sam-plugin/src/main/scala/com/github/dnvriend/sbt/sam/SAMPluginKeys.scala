@@ -30,31 +30,31 @@ import sbt._
 object SAMPluginKeys {
   // sam settings
   lazy val samStage = settingKey[String]("The stage to deploy the service to")
-  lazy val samStageValue = SettingKey[String]("The actual stage value")
-  lazy val samS3BucketName = SettingKey[String]("The S3 deployment bucket name for the sam project")
-  lazy val samCFTemplateName = SettingKey[String]("The cloudformation template name for the sam project")
-  lazy val samResourcePrefixName = SettingKey[String]("The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on")
+  lazy val samStageValue = SettingKey[String]("samStageValue") // The actual stage value
+  lazy val samS3BucketName = SettingKey[String]("samS3BucketName") // The S3 deployment bucket name for the sam project
+  lazy val samCFTemplateName = SettingKey[String]("samCFTemplateName") // The cloudformation template name for the sam project
+  lazy val samResourcePrefixName = SettingKey[String]("samResourcePrefixName") // The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on
 
   // sam worker tasks
-  lazy val samProjectClassLoader = TaskKey[ClassLoader]("sam's project classloader")
-  lazy val discoveredClassFiles = TaskKey[Set[File]]("returns a set of discovered class files")
-  lazy val discoveredClasses = TaskKey[Set[ProjectClass]]("returns a set of discovered classes")
-  lazy val discoveredLambdas = TaskKey[Set[ProjectLambda]]("returns a set of discovered unclassified lambdas")
-  lazy val classifiedLambdas = TaskKey[Set[LambdaHandler]]("returns a set of classified lambdas")
-  lazy val discoveredSqlFiles = taskKey[Set[File]]("returns a set of discovered sql files")
-  lazy val classifiedSqlFiles = taskKey[List[SqlApplication]]("returns a set of classified sql files")
-  lazy val discoveredResources = TaskKey[Set[Class[_]]]("Returns a set of discovered aws resources")
-  lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("The sam project configuration")
-  lazy val samUploadArtifact = TaskKey[PutObjectResponse]("Upload deployment artifact to the S3 deployment bucket")
-  lazy val samDeleteArtifact = taskKey[Unit]("Delete deployment artifact from the S3 deployment bucket")
-  lazy val samDeleteCloudFormationStack = TaskKey[Unit]("Deletes the cloud formation stack")
-  lazy val samCreateCloudFormationStack = TaskKey[Unit]("Create the cloud formation stack")
-  lazy val samUpdateCloudFormationStack = TaskKey[Unit]("Update the cloud formation stack")
-  lazy val samDescribeCloudFormationStackForCreate = TaskKey[Option[Stack]]("Determine the state of the cloud for create")
-  lazy val samDescribeCloudFormationStack = TaskKey[Option[Stack]]("Determine the state of the cloud for update or delete")
-  lazy val samServiceEndpoint = TaskKey[Option[ServiceEndpoint]]("Shows the service endpoint")
-  lazy val samCreateUsers = taskKey[Unit]("Deploys and authenticates cognito users")
-  lazy val samCreateUserToken = taskKey[Unit]("Gets the ID token for a user by username and password")
+  lazy val samProjectClassLoader = TaskKey[ClassLoader]("samProjectClassLoader") // sam's project classloader
+  lazy val discoveredClassFiles = TaskKey[Set[File]]("discoveredClassFiles") // returns a set of discovered class files
+  lazy val discoveredClasses = TaskKey[Set[ProjectClass]]("discoveredClasses") // returns a set of discovered classes
+  lazy val discoveredLambdas = TaskKey[Set[ProjectLambda]]("discoveredLambdas") // returns a set of discovered unclassified lambdas
+  lazy val classifiedLambdas = TaskKey[Set[LambdaHandler]]("classifiedLambdas") // returns a set of classified lambdas
+  lazy val discoveredSqlFiles = TaskKey[Set[File]]("discoveredSqlFiles") //TODO: not yet necessary but for future use for analytical engines with sql frontends
+  lazy val classifiedSqlFiles = taskKey[List[SqlApplication]]("classifiedSqlFiles") // returns a set of classified sql files
+  lazy val discoveredResources = TaskKey[Set[Class[_]]]("discoveredResources") // Returns a set of discovered aws resources
+  lazy val samProjectConfiguration = taskKey[ProjectConfiguration]("samProjectConfiguration") // The sam project configuration
+  lazy val samUploadArtifact = TaskKey[PutObjectResponse]("samUploadArtifact") // Upload deployment artifact to the S3 deployment bucket
+  lazy val samDeleteArtifact = taskKey[Unit]("samDeleteArtifact") // Delete deployment artifact from the S3 deployment bucket
+  lazy val samDeleteCloudFormationStack = TaskKey[Unit]("samDeleteCloudFormationStack") // Deletes the cloud formation stack
+  lazy val samCreateCloudFormationStack = TaskKey[Unit]("samCreateCloudFormationStack") // Create the cloud formation stack
+  lazy val samUpdateCloudFormationStack = TaskKey[Unit]("samUpdateCloudFormationStack") // Update the cloud formation stack
+  lazy val samDescribeCloudFormationStackForCreate = TaskKey[Option[Stack]]("samDescribeCloudFormationStackForCreate") // Determine the state of the cloud for create
+  lazy val samDescribeCloudFormationStack = TaskKey[Option[Stack]]("samDescribeCloudFormationStack") // Determine the state of the cloud for update or delete
+  lazy val samServiceEndpoint = TaskKey[Option[ServiceEndpoint]]("samServiceEndpoint") // Shows the service endpoint
+  lazy val samCreateUsers = taskKey[Unit]("samCreateUsers") // Deploys and authenticates cognito users
+  lazy val samCreateUserToken = taskKey[Unit]("samCreateUserToken") // Gets the ID token for a user by username and password
 
   // resource tasks
   lazy val dynamoDbTableResources = taskKey[Set[TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
