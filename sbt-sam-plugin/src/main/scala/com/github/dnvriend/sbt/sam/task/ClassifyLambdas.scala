@@ -182,13 +182,8 @@ object ClassifyLambdas {
 
     val policies: List[String] = annotationNames.toNel.map(_.toList).getOrElse(List(
       "AmazonDynamoDBFullAccess",
-      "CloudWatchFullAccess",
       "CloudWatchLogsFullAccess",
-      "AmazonSNSFullAccess",
-      "AmazonKinesisFullAccess",
-      "AWSKeyManagementServicePowerUser",
-      "AmazonKinesisFirehoseFullAccess",
-      "AmazonS3FullAccess",
+      "AmazonS3FullAccess"
     ))
 
     cfg.copy(managedPolicies = policies)
