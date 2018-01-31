@@ -3,6 +3,7 @@ package com.github.dnvriend.sbt.sam.task
 import com.github.dnvriend.sbt.aws.task.TemplateBody
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.generic.tag.ResourceTag
+import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.{ServerlessApi, ServerlessApiProperties, ServerlessApiStageName, ServerlessApiSwaggerDefinitionBody}
 import com.github.dnvriend.sbt.sam.cf.resource.cognito.userpool.{UserPool, UserPoolClient}
@@ -114,7 +115,8 @@ object CloudFormationTemplates {
         s3FirehoseResources(projectName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
         iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
-        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool)
+        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool) ++
+        rdsResource(projectName, projectVersion, stage, config.rdsInstances)
     }
 
     val template: CloudFormationTemplate = CloudFormationTemplate(
@@ -276,6 +278,12 @@ object CloudFormationTemplates {
     })
   }
 
+  def rdsResource(projectName: String, projectVersion: String, stage: String, rdsInstances: List[RDSInstance]): List[Resource] = {
+    rdsInstances.map { instance =>
+      instance.copy(dbInstanceIdentifier = createResourceName(projectName, stage, instance.dbInstanceIdentifier))
+    }
+  }
+
   /**
     * Determine the DynamoDB CloudFormation resource
     */
@@ -409,7 +417,8 @@ object CloudFormationTemplates {
       conf.memorySize,
       conf.timeout,
       conf.managedPolicies,
-      determineEventSourceForLambdaHandler(projectName, stage, handler)
+      determineEventSourceForLambdaHandler(projectName, stage, handler),
+      conf.vpcConfig
     )
   }
 

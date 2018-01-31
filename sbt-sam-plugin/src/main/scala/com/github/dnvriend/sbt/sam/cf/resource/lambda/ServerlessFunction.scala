@@ -3,7 +3,7 @@ package com.github.dnvriend.sbt.sam.cf.resource.lambda
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
-import play.api.libs.json.{ Json, Writes }
+import play.api.libs.json.{ JsObject, JsValue, Json, Writes }
 
 object ServerlessFunction {
   implicit val writes: Writes[ServerlessFunction] = Writes.apply(model => {
@@ -38,7 +38,7 @@ object ServerlessFunction {
             "sbt:sam:stage" -> stage
           ),
           "Events" -> Json.toJson(eventSource)
-        )
+        ).++(determineVpcConfig)
       )
     )
   })
@@ -57,5 +57,22 @@ case class ServerlessFunction(
     memorySize: Int,
     timeout: Int,
     managedPolicies: List[String],
-    eventSource: EventSource
-) extends Resource
+    eventSource: EventSource,
+    vpcConfig: Option[VpcConfig]
+) extends Resource {
+
+  val determineVpcConfig: JsObject = {
+    vpcConfig.fold(JsObject(Nil))(config => Json.obj(
+      "VpcConfig" -> Json.obj(
+        "SecurityGroupIds" -> config.securityGroupIds,
+        "SubnetIds" -> config.subnetIds
+      )
+    ))
+
+  }
+}
+
+case class VpcConfig(
+    securityGroupIds: List[String],
+    subnetIds: List[String]
+)

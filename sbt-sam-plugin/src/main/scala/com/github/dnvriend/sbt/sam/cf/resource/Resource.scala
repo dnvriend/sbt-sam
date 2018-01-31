@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.cf.resource
 
 import com.github.dnvriend.sbt.sam.cf.cloudwatch.{ CFLogGroup, CFLogStream }
+import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
 import com.github.dnvriend.sbt.sam.cf.resource.apigw.ServerlessApi
 import com.github.dnvriend.sbt.sam.cf.resource.codebuild.CFCBProject
 import com.github.dnvriend.sbt.sam.cf.resource.cognito.userpool.{ UserPool, UserPoolClient }
@@ -28,6 +29,7 @@ object Resource {
     case resource: UserPoolClient     => UserPoolClient.writes.writes(resource)
     case resource: CFLogStream        => CFLogStream.writes.writes(resource)
     case resource: CFLogGroup         => CFLogGroup.writes.writes(resource)
+    case resource: RDSInstance        => RDSInstance.writes.writes(resource)
   }
 }
 trait Resource

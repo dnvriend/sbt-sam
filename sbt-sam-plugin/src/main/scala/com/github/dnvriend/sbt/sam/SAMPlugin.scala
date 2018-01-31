@@ -154,6 +154,12 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveS3Firehose(config)
     },
 
+    rdsResources := {
+      val baseDir: File = baseDirectory.value
+      val config = ResourceOperations.readConfig(baseDir)
+      ResourceOperations.retrieveRDSInstances(config)
+    },
+
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
@@ -176,6 +182,7 @@ object SAMPlugin extends AutoPlugin {
           s3FirehoseResources.value,
           iamRolesResources.value,
           classifiedSqlFiles.value,
+          rdsResources.value,
         )
       )
     },
