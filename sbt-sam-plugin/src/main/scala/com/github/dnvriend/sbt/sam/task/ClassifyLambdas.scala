@@ -83,23 +83,23 @@ final case class KinesisEventHandler(
                                     ) extends LambdaHandler
 
 case class S3Conf(
-                   bucketResourceName: String,
+                   bucketResourceName: String ,
                    filter: String,
                    events: List[S3EventType]
                  )
 
 final case class S3EventHandler(
-                                 lambdaConfig: LambdaConfig,
-                                 s3Conf: S3Conf
+                               lambdaConfig: LambdaConfig,
+                               s3Conf: S3Conf
                                ) extends LambdaHandler
 
 case class CloudWatchConf(
-                           pattern: String
-                         )
+                        pattern: String
+                        )
 
 case class CloudWatchHandler(
-                              lambdaConfig: LambdaConfig,
-                              cloudWatchConf: CloudWatchConf
+                            lambdaConfig: LambdaConfig,
+                            cloudWatchConf: CloudWatchConf
                             ) extends LambdaHandler
 
 object ClassifyLambdas {
@@ -190,12 +190,7 @@ object ClassifyLambdas {
 
     annotationNames.toNel.map(_.toList).getOrElse(List(
       "AmazonDynamoDBFullAccess",
-      "CloudWatchFullAccess",
       "CloudWatchLogsFullAccess",
-      "AmazonSNSFullAccess",
-      "AmazonKinesisFullAccess",
-      "AWSKeyManagementServicePowerUser",
-      "AmazonKinesisFirehoseFullAccess",
       "AmazonS3FullAccess"
     ))
   }
@@ -311,5 +306,4 @@ object ClassifyLambdas {
   implicit class ClassOps(className: String) {
     def withoutDollarSigns: String = className.replace("$", "")
   }
-
 }

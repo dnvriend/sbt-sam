@@ -2,9 +2,6 @@ package com.github.dnvriend.sbt.aws.task
 
 import com.amazonaws.services.kinesis._
 import com.amazonaws.services.kinesis.model.StreamDescription
-import com.github.dnvriend.ops.Converter
-
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 /**
