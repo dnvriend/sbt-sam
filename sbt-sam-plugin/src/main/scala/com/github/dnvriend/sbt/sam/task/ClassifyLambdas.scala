@@ -2,7 +2,11 @@ package com.github.dnvriend.sbt.sam.task
 
 import java.lang.annotation.Annotation
 
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.VPCConfig
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.{S3EventType, S3Events}
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.vpc.VPCResourceOperations
+import com.typesafe.config.Config
 
 import scala.tools.nsc.classpath.PackageNameUtils
 import scalaz.Scalaz._
@@ -19,6 +23,7 @@ case class LambdaConfig(
                          timeout: Int = 300,
                          description: String = "",
                          managedPolicies: List[String] = List.empty,
+                         vpcConfig: Option[VPCConfig] = None
                        )
 
 case class HttpConf(
@@ -103,7 +108,8 @@ case class CloudWatchHandler(
 
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
-          stage: String): Set[LambdaHandler] = {
+          stage: String, config: Config): Set[LambdaHandler] = {
+
 
     val dynamoHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("DynamoHandler"))
       .map(cl => (cl, cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("DynamoHandler"))))
@@ -148,20 +154,27 @@ object ClassifyLambdas {
       }
 
     (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers)
-      .map(determinePolicies)
+      .map(determineAdditionalConfig(config, _))
   }
 
-  def determinePolicies(lambda: LambdaHandler): LambdaHandler = lambda match {
-    case h: HttpHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: DynamoHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: ScheduledEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: SNSEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: KinesisEventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: S3EventHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
-    case h: CloudWatchHandler => h.copy(lambdaConfig = determinePoliciesForLambdaConfig(h.lambdaConfig))
+  def determineAdditionalConfig(config: Config, lambda: LambdaHandler): LambdaHandler = lambda match {
+    case h: HttpHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: DynamoHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: ScheduledEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: SNSEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: KinesisEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: S3EventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: CloudWatchHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
   }
 
-  def determinePoliciesForLambdaConfig(cfg: LambdaConfig): LambdaConfig = {
+  def addAdditionalConfig(config: Config, lambdaconfig: LambdaConfig): LambdaConfig = {
+    lambdaconfig.copy(
+      managedPolicies = determineLambdaPolicies(lambdaconfig),
+      vpcConfig = determineLambdaVPCConfig(config,lambdaconfig)
+    )
+  }
+
+  def determineLambdaPolicies(cfg: LambdaConfig): List[String] = {
     val annotationNames = cfg.cl.getDeclaredAnnotations.toList.map(_.annotationType().getName)
       .map(PackageNameUtils.separatePkgAndClassNames)
       .map(_._2)
@@ -180,13 +193,19 @@ object ClassifyLambdas {
         case p@"CloudWatchLogsFullAccess" => p
       }
 
-    val policies: List[String] = annotationNames.toNel.map(_.toList).getOrElse(List(
+    annotationNames.toNel.map(_.toList).getOrElse(List(
       "AmazonDynamoDBFullAccess",
       "CloudWatchLogsFullAccess",
       "AmazonS3FullAccess"
     ))
+  }
 
-    cfg.copy(managedPolicies = policies)
+  def determineLambdaVPCConfig(conf: Config, lambdaConf: LambdaConfig): Option[VPCConfig] = {
+    def annoToVpcConfig(anno: Annotation): Option[VPCConfig] = {
+      val id = anno.annotationType().getMethod("id").invoke(anno).asInstanceOf[String]
+      ResourceOperations.retrieveVPCs(conf)find(_.id == id)
+    }
+    lambdaConf.cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("VPCConf")).flatMap(annoToVpcConfig)
   }
 
   def annotationPredicate(annotationName: String)(cl: Class[_]): Boolean = {
@@ -260,7 +279,7 @@ object ClassifyLambdas {
     )
   }
 
-  def mapAnnoToS3EventHandler(cl: Class[_], className:  String, simpleName: String, anno: Annotation, stage: String): S3EventHandler = {
+  def mapAnnoToS3EventHandler(cl: Class[_], className: String, simpleName: String, anno: Annotation, stage: String): S3EventHandler = {
     val bucketResourceName = anno.annotationType().getMethod("bucketResourceName").invoke(anno).asInstanceOf[String]
     val filter = anno.annotationType().getMethod("filter").invoke(anno).asInstanceOf[String]
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
@@ -275,11 +294,11 @@ object ClassifyLambdas {
     )
   }
 
-    def mapAnnoToCloudWatchHandler(cl: Class[_], className: String, simpleName: String, anno: Annotation, stage: String): CloudWatchHandler = {
-      val pattern = anno.annotationType().getMethod("pattern").invoke(anno).asInstanceOf[String]
-      val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
-      val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
-      val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+  def mapAnnoToCloudWatchHandler(cl: Class[_], className: String, simpleName: String, anno: Annotation, stage: String): CloudWatchHandler = {
+    val pattern = anno.annotationType().getMethod("pattern").invoke(anno).asInstanceOf[String]
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
 
     CloudWatchHandler(
       LambdaConfig(cl, className, simpleName, memorySize, timeout, description),

@@ -13,12 +13,14 @@ import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose
 import com.amazonaws.services.kinesisfirehose.model._
 import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.model.FunctionConfiguration
+import com.amazonaws.services.rds.model.DBInstance
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ AccessControlList, Bucket }
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
+import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.KinesisAnalytics
 import sbt.util.Logger
 
@@ -112,7 +114,6 @@ object CloudFormationStackInfo {
 
       config.streams.map { stream =>
         val streamName = s"$projectName-$stage-${stream.name}"
-        println(s"====>>>> looking for stream name: '$streamName'")
         (stream, KinesisOperations.describeStream(streamName, kinesisClient))
       }.map {
         case (stream, optionalInfo) =>
@@ -166,6 +167,36 @@ object CloudFormationStackInfo {
           val exportedText: String = bucket.export.option(s" -> exported as '${CloudFormationTemplates.createResourceName(projectName, stage, bucket.name)}'").getOrElse("")
           s"* ${Console.GREEN}${bucket.name}$exportedText: ${Console.RESET}$info"
       }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No buckets configured")
+    }
+
+    val rdsInstanceSummary: String = {
+      def report(dbInstance: DBInstance): String = {
+        import dbInstance._
+        s"""
+             |  - DatabaseInstanceIdentifier: $getDBInstanceIdentifier
+             |  - DatabaseInstanceClass: $getDBInstanceClass
+             |  - DatabaseName: $getDBName
+             |  - AllocatedStorage: $getAllocatedStorage
+             |  - Endpoint: ${getEndpoint.getAddress}
+             |  - Engine: $getEngine
+             |  - EngineVersion: $getEngineVersion
+             |  - Port: ${getEndpoint.getPort}
+             |  - Publicly Accessible: $getPubliclyAccessible
+             |  - Status: $getDBInstanceStatus
+             |  - SecurityGroup: $getDBSecurityGroups
+             |  - StorageType: $getStorageType
+             |  - VPCSecurityGroup: $getVpcSecurityGroups
+         """.stripMargin
+      }
+
+      config.rdsInstances.map { rdsInstance =>
+        val rdsInfo = RDSOperations.getRDSInstance(CloudFormationTemplates.createResourceName(projectName, stage, rdsInstance.dbInstanceIdentifier))
+        (rdsInstance, rdsInfo)
+      }.map {
+        case (rdsInstance, instanceInfo) =>
+          val info = instanceInfo.fold(Console.YELLOW + "not yet deployed")(report)
+          s"* ${Console.GREEN}${rdsInstance.dbInstanceIdentifier}: ${Console.RESET}$info"
+      }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No RDS Instances configured")
     }
 
     val s3FirehoseSummary: String = {
@@ -472,6 +503,8 @@ object CloudFormationStackInfo {
          |Authentication Pool:
          |$authpoolSummary
          |$sqlApplicationsSummary
+         |RDS Instances:
+         |$rdsInstanceSummary
          |Endpoints:
          |$endpointSummary
       """.stripMargin

@@ -7,11 +7,14 @@ import com.github.dnvriend.sbt.sam.resource.cognito.CognitoResourceOperations
 import com.github.dnvriend.sbt.sam.resource.dynamodb.DynamoDBResourceOperations
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.S3FirehoseResourceOperations
 import com.github.dnvriend.sbt.sam.resource.kinesis.KinesisResourceOperations
+import com.github.dnvriend.sbt.sam.resource.rds.RDSResourceOperations
 import com.github.dnvriend.sbt.sam.resource.role.RoleResourceOperations
 import com.github.dnvriend.sbt.sam.resource.sns.SNSResourceOperations
+import com.github.dnvriend.sbt.sam.resource.vpc.VPCResourceOperations
 import com.typesafe.config.{ Config, ConfigFactory }
 
 object ResourceOperations extends ResourceOperations
+
 trait ResourceOperations extends FunctionalOps
   with CognitoResourceOperations
   with DynamoDBResourceOperations
@@ -19,7 +22,9 @@ trait ResourceOperations extends FunctionalOps
   with KinesisResourceOperations
   with S3BucketResourceOperations
   with S3FirehoseResourceOperations
-  with RoleResourceOperations {
+  with RoleResourceOperations
+  with RDSResourceOperations
+  with VPCResourceOperations {
   /**
    * Loads the resource configuration from base path
    */
