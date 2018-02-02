@@ -181,4 +181,8 @@ case class CFS3Firehose(
                            */
                          compression: String,
 
-                       ) extends Resource
+                       ) extends Resource {
+
+  require(deliveryStreamName.length <= 128, s"DeliveryStreamName should be less than 128 characters, deliveryStreamName is: '$deliveryStreamName', length is '${deliveryStreamName.length}'")
+  require(deliveryStreamName.length > 1, s"DeliveryStreamName should be larger than than 1character, deliveryStreamName is: '$deliveryStreamName', length is '${deliveryStreamName.length}'")
+}

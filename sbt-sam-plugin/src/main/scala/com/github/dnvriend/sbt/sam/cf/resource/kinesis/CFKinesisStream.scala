@@ -67,4 +67,8 @@ case class CFKinesisStream(
                           projectName: String,
                           projectVersion: String,
                           samStage: String,
-                        ) extends Resource
+                        ) extends Resource {
+
+  require(streamName.length <= 128, s"DeliveryStreamName should be less than 128 characters, deliveryStreamName is: '$streamName', length is '${streamName.length}'")
+  require(streamName.length > 1, s"DeliveryStreamName should be larger than 1 character, deliveryStreamName is: '$streamName', length is '${streamName.length}'")
+}

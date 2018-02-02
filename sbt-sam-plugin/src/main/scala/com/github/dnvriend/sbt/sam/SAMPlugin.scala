@@ -45,8 +45,8 @@ object SAMPlugin extends AutoPlugin {
       val samStageEnv: Option[String] = sys.env.get("SAM_STAGE")
       samStageEnv.orElse(samStageProp).getOrElse(throw new RuntimeException("'SAM_STAGE' not set in environment or 'samStage' not set in project"))
     },
-    samS3BucketName := s"${organization.value}-${name.value}-${samStageValue.value}",
-    samCFTemplateName := s"${organization.value}-${name.value}-${samStageValue.value}",
+    samS3BucketName := s"${organization.value}-${samStageValue.value}-${name.value}",
+    samCFTemplateName := s"${organization.value}-${samStageValue.value}-${name.value}",
     samResourcePrefixName := s"${name.value}-${samStageValue.value}",
     (assemblyJarName in assembly) := "codepackage.jar",
 
