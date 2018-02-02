@@ -15,6 +15,14 @@ import com.github.dnvriend.test.TestSpec
 import play.api.libs.json.{ JsValue, Json }
 
 class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
+  it should "be able to create a resource name" in {
+    val projectName = "test"
+    val stage = "dev"
+    val resourceName = "SAM"
+
+    CloudFormationTemplates.createResourceName(projectName, stage, resourceName) shouldEqual "test-dev-sam"
+  }
+
   it should "create a deployment bucket template" in {
     forAll { (pc: ProjectConfiguration) =>
       val template: TemplateBody = CloudFormationTemplates.deploymentBucketTemplate(pc)
