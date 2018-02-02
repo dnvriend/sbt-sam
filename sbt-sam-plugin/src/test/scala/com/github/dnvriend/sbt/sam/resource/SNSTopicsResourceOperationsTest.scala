@@ -8,7 +8,7 @@ class SNSTopicsResourceOperationsTest extends TestSpec {
     ResourceOperations.retrieveTopics("".tsc) shouldBe Set()
   }
 
-  it should "read an sns topic" in {
+  it should "read a sns topic" in {
     ResourceOperations
       .retrieveTopics(
         """
