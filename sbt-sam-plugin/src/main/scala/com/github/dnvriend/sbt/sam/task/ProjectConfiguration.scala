@@ -42,7 +42,7 @@ case class SamResources(
                          s3Firehoses: Set[S3Firehose] = Set.empty,
                          iamRoles: Set[IamRole] = Set.empty,
                          sqlApplications: List[SqlApplication] = List.empty,
-                         rdsInstances: Set[RDSInstance]
+                         rdsInstances: Set[RDSInstance] = Set.empty
                         )
 
 object ProjectConfiguration extends AnyOps {
