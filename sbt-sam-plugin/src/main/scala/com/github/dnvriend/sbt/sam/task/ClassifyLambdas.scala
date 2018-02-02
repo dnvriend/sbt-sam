@@ -1,8 +1,12 @@
 package com.github.dnvriend.sbt.sam.task
 
 import java.lang.annotation.Annotation
-import com.github.dnvriend.sbt.sam.cf.resource.lambda.VpcConfig
+
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.VPCConfig
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.{S3EventType, S3Events}
+import com.github.dnvriend.sbt.sam.resource.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.vpc.VPCResourceOperations
+import com.typesafe.config.Config
 
 import scala.tools.nsc.classpath.PackageNameUtils
 import scalaz.Scalaz._
@@ -19,7 +23,7 @@ case class LambdaConfig(
                          timeout: Int = 300,
                          description: String = "",
                          managedPolicies: List[String] = List.empty,
-                         vpcConfig: Option[VpcConfig] = None
+                         vpcConfig: Option[VPCConfig] = None
                        )
 
 case class HttpConf(
@@ -104,7 +108,8 @@ case class CloudWatchHandler(
 
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
-          stage: String): Set[LambdaHandler] = {
+          stage: String, config: Config): Set[LambdaHandler] = {
+
 
     val dynamoHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("DynamoHandler"))
       .map(cl => (cl, cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("DynamoHandler"))))
@@ -149,23 +154,23 @@ object ClassifyLambdas {
       }
 
     (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers)
-      .map(determineAdditionalConfig)
+      .map(determineAdditionalConfig(config, _))
   }
 
-  def determineAdditionalConfig(lambda: LambdaHandler): LambdaHandler = lambda match {
-    case h: HttpHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: DynamoHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: ScheduledEventHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: SNSEventHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: KinesisEventHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: S3EventHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
-    case h: CloudWatchHandler => h.copy(lambdaConfig = addAdditionalConfig(h.lambdaConfig))
+  def determineAdditionalConfig(config: Config, lambda: LambdaHandler): LambdaHandler = lambda match {
+    case h: HttpHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: DynamoHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: ScheduledEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: SNSEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: KinesisEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: S3EventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: CloudWatchHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
   }
 
-  def addAdditionalConfig(cfg: LambdaConfig): LambdaConfig = {
-    cfg.copy(
-      managedPolicies = determineLambdaPolicies(cfg),
-      vpcConfig = determineLambdaVPCConfig(cfg)
+  def addAdditionalConfig(config: Config, lambdaconfig: LambdaConfig): LambdaConfig = {
+    lambdaconfig.copy(
+      managedPolicies = determineLambdaPolicies(lambdaconfig),
+      vpcConfig = determineLambdaVPCConfig(config,lambdaconfig)
     )
   }
 
@@ -195,14 +200,12 @@ object ClassifyLambdas {
     ))
   }
 
-  def determineLambdaVPCConfig(cfg: LambdaConfig): Option[VpcConfig] = {
-    def annoToVpcConfig(anno: Annotation): VpcConfig = {
-      val securityGroups = anno.annotationType().getMethod("securityGroupIds").invoke(anno).asInstanceOf[Array[String]].toList
-      val subnets = anno.annotationType().getMethod("subnetIds").invoke(anno).asInstanceOf[Array[String]].toList
-      VpcConfig(securityGroups, subnets)
+  def determineLambdaVPCConfig(conf: Config, lambdaConf: LambdaConfig): Option[VPCConfig] = {
+    def annoToVpcConfig(anno: Annotation): Option[VPCConfig] = {
+      val id = anno.annotationType().getMethod("id").invoke(anno).asInstanceOf[String]
+      ResourceOperations.retrieveVPCs(conf)find(_.id == id)
     }
-
-    cfg.cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("VPCConf")).map(annoToVpcConfig)
+    lambdaConf.cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("VPCConf")).flatMap(annoToVpcConfig)
   }
 
   def annotationPredicate(annotationName: String)(cl: Class[_]): Boolean = {

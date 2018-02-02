@@ -10,6 +10,7 @@ import com.github.dnvriend.sbt.sam.resource.kinesis.KinesisResourceOperations
 import com.github.dnvriend.sbt.sam.resource.rds.RDSResourceOperations
 import com.github.dnvriend.sbt.sam.resource.role.RoleResourceOperations
 import com.github.dnvriend.sbt.sam.resource.sns.SNSResourceOperations
+import com.github.dnvriend.sbt.sam.resource.vpc.VPCResourceOperations
 import com.typesafe.config.{ Config, ConfigFactory }
 
 object ResourceOperations extends ResourceOperations
@@ -22,7 +23,8 @@ trait ResourceOperations extends FunctionalOps
   with S3BucketResourceOperations
   with S3FirehoseResourceOperations
   with RoleResourceOperations
-  with RDSResourceOperations {
+  with RDSResourceOperations
+  with VPCResourceOperations {
   /**
    * Loads the resource configuration from base path
    */

@@ -114,7 +114,6 @@ object CloudFormationStackInfo {
 
       config.streams.map { stream =>
         val streamName = s"$projectName-$stage-${stream.name}"
-        println(s"====>>>> looking for stream name: '$streamName'")
         (stream, KinesisOperations.describeStream(streamName, kinesisClient))
       }.map {
         case (stream, optionalInfo) =>

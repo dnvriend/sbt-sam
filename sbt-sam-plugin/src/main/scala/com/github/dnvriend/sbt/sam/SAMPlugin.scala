@@ -19,6 +19,7 @@ import com.github.dnvriend.sbt.aws.AwsPluginKeys._
 import com.github.dnvriend.sbt.aws.task._
 import com.github.dnvriend.sbt.sam.task._
 import com.github.dnvriend.sbt.sam.resource.ResourceOperations
+import com.typesafe.config.Config
 import sbt.complete.DefaultParsers._
 import sbt.Keys._
 import sbt._
@@ -33,6 +34,8 @@ object SAMPlugin extends AutoPlugin {
   override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin && AwsPlugin
 
   val autoImport = SAMPluginKeys
+
+  def config(file: File): Config = ResourceOperations.readConfig(file)
 
   import autoImport._
 
@@ -72,7 +75,7 @@ object SAMPlugin extends AutoPlugin {
     discoveredLambdas := (discoveredLambdas triggeredBy discoveredClasses).value,
     discoveredLambdas := (discoveredLambdas keepAs discoveredLambdas).value,
 
-    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStageValue.value),
+    classifiedLambdas := ClassifyLambdas.run(discoveredLambdas.value, samStageValue.value, config(baseDirectory.value)),
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
@@ -105,9 +108,7 @@ object SAMPlugin extends AutoPlugin {
     },
 
     dynamoDbTableResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveDynamoDbTables(config)
+      ResourceOperations.retrieveDynamoDbTables(config(baseDirectory.value))
     },
 
     iamRolesResources := {
@@ -123,41 +124,28 @@ object SAMPlugin extends AutoPlugin {
     },
 
     streamResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveStreams(config)
+      ResourceOperations.retrieveStreams(config(baseDirectory.value))
     },
 
     cognitoResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveAuthPool(config)
+      ResourceOperations.retrieveAuthPool(config(baseDirectory.value))
     },
 
     importAuthpool := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
       val authpool = cognitoResources.value
-
-      ResourceOperations.retrieveImportAuthPool(config, authpool)
+      ResourceOperations.retrieveImportAuthPool(config(baseDirectory.value), authpool)
     },
 
     bucketResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveBuckets(config)
+      ResourceOperations.retrieveBuckets(config(baseDirectory.value))
     },
 
     s3FirehoseResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveS3Firehose(config)
+      ResourceOperations.retrieveS3Firehose(config(baseDirectory.value))
     },
 
     rdsResources := {
-      val baseDir: File = baseDirectory.value
-      val config = ResourceOperations.readConfig(baseDir)
-      ResourceOperations.retrieveRDSInstances(config)
+      ResourceOperations.retrieveRDSInstances(config(baseDirectory.value))
     },
 
     samProjectConfiguration := {

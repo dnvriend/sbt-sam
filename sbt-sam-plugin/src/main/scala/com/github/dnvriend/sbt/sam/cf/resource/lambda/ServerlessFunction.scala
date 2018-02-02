@@ -1,9 +1,9 @@
 package com.github.dnvriend.sbt.sam.cf.resource.lambda
 
-import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
+import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
-import play.api.libs.json.{ JsObject, JsValue, Json, Writes }
+import play.api.libs.json.{ JsObject, Json, Writes }
 
 object ServerlessFunction {
   implicit val writes: Writes[ServerlessFunction] = Writes.apply(model => {
@@ -58,7 +58,7 @@ case class ServerlessFunction(
     timeout: Int,
     managedPolicies: List[String],
     eventSource: EventSource,
-    vpcConfig: Option[VpcConfig]
+    vpcConfig: Option[VPCConfig]
 ) extends Resource {
 
   val determineVpcConfig: JsObject = {
@@ -68,11 +68,11 @@ case class ServerlessFunction(
         "SubnetIds" -> config.subnetIds
       )
     ))
-
   }
 }
 
-case class VpcConfig(
+case class VPCConfig(
+    id: String = "",
     securityGroupIds: List[String],
     subnetIds: List[String]
 )
