@@ -61,6 +61,7 @@ The following seed projects are available:
 - [dnvriend/sam-akka-stream-seed.g8](https://github.com/dnvriend/sam-akka-stream-seed.g8): A template project for creating serverless components with akka-stream.
 - [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8): A template project for quickly creating S3 bucket event handlers.
 - [dnvriend/sam-cloudwatch-seed.g8](https://github.com/dnvriend/sam-cloudwatch-seed.g8): A template project for quickly creating CloudWatch event handlers.
+- [dnvriend/sam-rds-vpc-seed.g8](https://github.com/dnvriend/sam-rds-vpc-seed.g8): A template project for quickly creating a sam connecting to RDS via a VPC.
                                                                                          
 ## Mini Data and Analytics Platform
 - [sam-mini-platform](https://github.com/dnvriend/sam-mini-platform): A mini platform for ingesting, processing, and analyzing data.
