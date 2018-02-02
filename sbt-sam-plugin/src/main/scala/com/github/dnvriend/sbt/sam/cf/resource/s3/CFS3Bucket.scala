@@ -213,7 +213,12 @@ final case class CFS3Bucket(
                            websiteConfiguration: Option[CFS3WebsiteConfiguration] = None,
                            corsRules: Option[CorsRules] = None,
                            ) extends Resource {
-  require(tags.lengthCompare(8) < 0, "No more than 7 tags are allowed")
+  require(tags.length <= 7, s"No more than 7 tags are allowed, tags are '$tags', and number of tags is: '${tags.length}'")
+  require(bucketName.length <= 63, s"Bucket names must be no more than 63 characters long, bucket name is '$bucketName', and is ${bucketName.length} chars long")
+  require(bucketName.length > 3, s"Bucket names must be more than 3 characters long, bucket name is '$bucketName', and is ${bucketName.length} chars long")
+  require(!bucketName.startsWith("."), s"Bucket names must not start with a dot '.', bucket name is '$bucketName'")
+  require(!bucketName.endsWith("."), s"Bucket names must not end with a dot '.', bucket name is '$bucketName'")
+  require(!bucketName.forall(_.isLower), s"Bucket name characters must all be lowercase, bucket name is '$bucketName'")
 
   def ref: JsValue = CloudFormation.ref(logicalName)
 }
