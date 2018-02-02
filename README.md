@@ -337,6 +337,12 @@ The 'default cli config' file:
 
 ## Changelog
 
+## 1.0.20 (2018-02-02)
+- Merged PR #89 'RDS & Lamda VPC Support', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+- Changed the deployment bucket name from 'organizationName-projectName-stage' -> 'organizationName-stage-projectName', please note 
+  that this update is a breaking change, as sbt-sam looks for the new deployment bucket name to remove all artifacts,
+- added [dnvriend/sam-rds-vpc-seed.g8](https://github.com/dnvriend/sam-rds-vpc-seed.g8) seed project,
+
 ## 1.0.19 (2018-01-17)
 - Merged PR #86 'Added handler for CloudWatch Lambda events', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
 
