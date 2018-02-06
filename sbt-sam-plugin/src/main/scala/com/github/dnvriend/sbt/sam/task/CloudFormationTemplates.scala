@@ -418,7 +418,8 @@ object CloudFormationTemplates {
       conf.timeout,
       conf.managedPolicies,
       determineEventSourceForLambdaHandler(projectName, stage, handler),
-      conf.vpcConfig
+      conf.vpcConfig,
+      conf.envVars
     )
   }
 

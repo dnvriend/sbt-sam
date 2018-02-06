@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.VPCConfig
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.s3.{S3EventType, S3Events}
 import com.github.dnvriend.sbt.sam.resource.ResourceOperations
+import com.github.dnvriend.sbt.sam.resource.function.FunctionResourceOperations
 import com.github.dnvriend.sbt.sam.resource.vpc.VPCResourceOperations
 import com.typesafe.config.Config
 
@@ -23,7 +24,8 @@ case class LambdaConfig(
                          timeout: Int = 300,
                          description: String = "",
                          managedPolicies: List[String] = List.empty,
-                         vpcConfig: Option[VPCConfig] = None
+                         vpcConfig: Option[VPCConfig] = None,
+                         envVars: Map[String, String] = Map.empty
                        )
 
 case class HttpConf(
@@ -170,7 +172,8 @@ object ClassifyLambdas {
   def addAdditionalConfig(config: Config, lambdaconfig: LambdaConfig): LambdaConfig = {
     lambdaconfig.copy(
       managedPolicies = determineLambdaPolicies(lambdaconfig),
-      vpcConfig = determineLambdaVPCConfig(config,lambdaconfig)
+      vpcConfig = determineLambdaVPCConfig(config,lambdaconfig),
+      envVars = determineEnvVars(config)
     )
   }
 
@@ -206,6 +209,10 @@ object ClassifyLambdas {
       ResourceOperations.retrieveVPCs(conf)find(_.id == id)
     }
     lambdaConf.cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("VPCConf")).flatMap(annoToVpcConfig)
+  }
+
+  def determineEnvVars(config: Config): Map[String, String] = {
+    FunctionResourceOperations.resolveEnvVars(config)
   }
 
   def annotationPredicate(annotationName: String)(cl: Class[_]): Boolean = {

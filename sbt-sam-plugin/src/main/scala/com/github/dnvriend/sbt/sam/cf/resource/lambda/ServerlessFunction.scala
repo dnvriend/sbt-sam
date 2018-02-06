@@ -3,7 +3,7 @@ package com.github.dnvriend.sbt.sam.cf.resource.lambda
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.cf.resource.Resource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
-import play.api.libs.json.{ JsObject, Json, Writes }
+import play.api.libs.json._
 
 object ServerlessFunction {
   implicit val writes: Writes[ServerlessFunction] = Writes.apply(model => {
@@ -30,7 +30,7 @@ object ServerlessFunction {
               "PROJECT_NAME" -> projectName,
               "VERSION" -> projectVersion,
               "AWS_ACCOUNT_ID" -> CloudFormation.accountId
-            )
+            ).++(Json.toJsObject(envVars))
           ),
           "Tags" -> Json.obj(
             "sbt:sam:projectName" -> projectName,
@@ -58,7 +58,8 @@ case class ServerlessFunction(
     timeout: Int,
     managedPolicies: List[String],
     eventSource: EventSource,
-    vpcConfig: Option[VPCConfig]
+    vpcConfig: Option[VPCConfig],
+    envVars: Map[String, String]
 ) extends Resource {
 
   val determineVpcConfig: JsObject = {
