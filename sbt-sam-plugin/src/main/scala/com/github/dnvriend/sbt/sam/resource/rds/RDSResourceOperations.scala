@@ -19,10 +19,11 @@ trait RDSResourceOperations extends FunctionalOps {
     }.sequenceU.leftMap(_.toString)
   }
 
-  private def getRDSInstancesFromConfig(conf: Config): Disjunction[String, List[RDSInstance]] = for {
-    rdsConf <- conf.getConfig("rds").safe.leftMap(_.toString)
-    rdsInstances <- extractInstances(rdsConf)
-  } yield rdsInstances
+  private def getRDSInstancesFromConfig(conf: Config): Disjunction[String, List[RDSInstance]] =
+    for {
+      rdsConf <- conf.getConfig("rds").safe.leftMap(_.toString)
+      rdsInstances <- extractInstances(rdsConf)
+    } yield rdsInstances
 
   def retrieveRDSInstances(conf: Config): Set[RDSInstance] = {
     getRDSInstancesFromConfig(conf).getOrElse(Nil).toSet
