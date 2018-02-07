@@ -10,6 +10,7 @@ object SamLambdaSettings extends AutoPlugin {
     libraryDependencies += LibraryDependencies.libAwsSnsSdk,
     libraryDependencies += LibraryDependencies.libKinesisSdk,
     libraryDependencies += LibraryDependencies.libAwsDynamoDBSdk,
+    libraryDependencies += LibraryDependencies.libAwsRequestSigner,
     libraryDependencies += LibraryDependencies.libSecurityBouncyCastle % Provided,
     libraryDependencies += LibraryDependencies.libAwsEncryptionSDK % Provided,
     libraryDependencies += LibraryDependencies.libAwsJavaSdk % Test

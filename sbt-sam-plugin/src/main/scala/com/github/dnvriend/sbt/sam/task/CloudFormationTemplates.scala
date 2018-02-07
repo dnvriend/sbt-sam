@@ -24,6 +24,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
 import com.github.dnvriend.sbt.sam.cf.template._
 import com.github.dnvriend.sbt.sam.cf.template.output.{GenericOutput, ServerlessApiOutput}
+import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerType
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool}
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model.{HashKey, RangeKey, TableWithIndex}
@@ -115,7 +116,7 @@ object CloudFormationTemplates {
         s3FirehoseResources(projectName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
         iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
-        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool) ++
+        apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool, config.authorizerType) ++
         rdsResource(projectName, projectVersion, stage, config.rdsInstances)
     }
 
@@ -353,7 +354,13 @@ object CloudFormationTemplates {
   /**
     * Determine - the single - ServerlessAPI CloudFormation resource
     */
-  def apiGatewayResource(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool]): Option[ServerlessApi] = {
+  def apiGatewayResource(projectName: String,
+                         stage: String,
+                         httpHandlers: List[HttpHandler],
+                         authpool: Option[Authpool],
+                         importAuthPool: Option[ImportAuthPool],
+                         authorizerType: AuthorizerType
+                        ): Option[ServerlessApi] = {
     httpHandlers.toNel.map { handlers =>
       ServerlessApi(
         ServerlessApiProperties(
@@ -363,7 +370,8 @@ object CloudFormationTemplates {
             stage,
             handlers.toList,
             authpool,
-            importAuthPool
+            importAuthPool,
+            authorizerType
           )
         )
       )
