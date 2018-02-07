@@ -25,6 +25,7 @@ object LibraryDependencies {
   val libShapeless: ModuleID = "com.chuusai" %% "shapeless" % "2.3.2"
   val libSbtIO: ModuleID = "org.scala-sbt" %% "io" % "1.1.1"
   val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.3.0"
+  val libAwsRequestSigner: ModuleID = "io.ticofab" %% "aws-request-signer" % "0.5.2"
   val libLogback: ModuleID = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
   val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % "2.5.9"

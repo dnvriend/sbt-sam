@@ -10,6 +10,7 @@ import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
+import com.github.dnvriend.sbt.sam.resource.authorizer.{AuthorizerType, CognitoAuthorizerType}
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
@@ -34,6 +35,7 @@ case class SamStage(value: String) {
 case class SamResources(
                          authpool: Option[Authpool] = None,
                          importAuthPool: Option[ImportAuthPool]= None,
+                         authorizerType: AuthorizerType = CognitoAuthorizerType,
                          lambdas: Set[LambdaHandler] = Set.empty,
                          tables: Set[TableWithIndex] = Set.empty,
                          topics: Set[Topic] = Set.empty,
@@ -78,6 +80,7 @@ object ProjectConfiguration extends AnyOps {
       amazonUser,
       samResources.authpool,
       samResources.importAuthPool,
+      samResources.authorizerType,
       samResources.lambdas.toList,
       samResources.tables.toList,
       samResources.topics.toList,
@@ -102,6 +105,7 @@ case class ProjectConfiguration(
                                  amazonUser: AmazonUser,
                                  authpool: Option[Authpool] = Option.empty,
                                  importAuthPool: Option[ImportAuthPool] = Option.empty,
+                                 authorizerType: AuthorizerType = CognitoAuthorizerType,
                                  lambdas: List[LambdaHandler] = List.empty,
                                  tables: List[TableWithIndex] = List.empty,
                                  topics: List[Topic] = List.empty,

@@ -1,6 +1,7 @@
 package com.github.dnvriend.sbt.sam.cf.resource.apigw.swagger
 
 import com.github.dnvriend.sbt.sam.cf.CloudFormation
+import com.github.dnvriend.sbt.sam.resource.authorizer.{AuthorizerType, CognitoAuthorizerType, Sigv4AuthorizerType}
 import com.github.dnvriend.sbt.sam.resource.cognito.model.{Authpool, ImportAuthPool}
 import com.github.dnvriend.sbt.sam.task.{CloudFormationTemplates, HttpHandler}
 import com.github.dnvriend.sbt.util.JsMonoids
@@ -16,12 +17,19 @@ object Swagger {
   private def merge(parts: JsValue*): JsValue = {
     parts.toList.foldMap(identity)(JsMonoids.jsObjectMerge)
   }
-  def spec(projectName: String, stage: String, httpHandlers: List[HttpHandler], authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool]): JsValue = {
+
+  def spec(projectName: String,
+           stage: String,
+           httpHandlers: List[HttpHandler],
+           authpool: Option[Authpool],
+           importAuthPool: Option[ImportAuthPool],
+           authorizerType: AuthorizerType
+          ): JsValue = {
     merge(
       Parts.swaggerVersion,
       Parts.info(projectName, stage),
-      Parts.paths(httpHandlers, authpool),
-      Parts.securityDefinitions(authpool, importAuthPool, stage)
+      Parts.paths(httpHandlers, authpool, authorizerType),
+      Parts.securityDefinitions(authpool, importAuthPool, stage, authorizerType)
     )
   }
 
@@ -47,9 +55,12 @@ object Swagger {
     /**
       * Required: The available paths and operations for the API.
       */
-    def paths(httpHandlers: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
+    def paths(httpHandlers: List[HttpHandler],
+              authpool: Option[Authpool],
+              authorizerType: AuthorizerType,
+             ): JsValue = {
       val handersByPath: Map[String, List[HttpHandler]] = httpHandlers.groupBy(_.httpConf.path)
-      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(resourcePath, handlers, authpool) }.toList
+      val pathsWithOperations = handersByPath.map { case (resourcePath, handlers) => path(resourcePath, handlers, authpool, authorizerType) }.toList
       Json.obj("paths" -> pathsWithOperations.foldMap(identity)(JsMonoids.jsObjectMerge))
     }
 
@@ -57,22 +68,28 @@ object Swagger {
       * A relative path to an individual endpoint. The field name MUST begin with a slash.
       * The path is appended to the basePath in order to construct the full URL.
       */
-    def path(path: String, handlersForPath: List[HttpHandler], authpool: Option[Authpool]): JsValue = {
-      val operations = handlersForPath.map(handler => operation(handler, authpool))
+    def path(path: String,
+             handlersForPath: List[HttpHandler],
+             authpool: Option[Authpool],
+             authorizerType: AuthorizerType,
+            ): JsValue = {
+      val operations = handlersForPath.map(handler => operation(handler, authpool, authorizerType))
       Json.obj(path -> merge(operations: _*))
     }
 
     /**
       * add swagger operation and AWS ApiGateway extensions
       */
-    def operation(handler: HttpHandler, authpool: Option[Authpool]) = {
+    def operation(handler: HttpHandler,
+                  authpool: Option[Authpool],
+                  authorizerType: AuthorizerType,
+                 ): JsObject = {
       val method: String = handler.httpConf.method
       Json.obj(method -> merge(
         AmazonApiGatewayIntegration.swaggerExtension(handler),
         responses,
-        security(handler.httpConf.authorization, authpool.map(_.name).getOrElse("auth_pool")),
-      )
-      )
+        security(handler.httpConf.authorization, authpool.map(_.name).getOrElse("auth_pool"), authorizerType),
+      ))
     }
 
     /**
@@ -83,51 +100,70 @@ object Swagger {
       * https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
       * http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       */
-    def securityDefinitions(authpool: Option[Authpool], importAuthPool: Option[ImportAuthPool], stage: String): JsValue = (authpool, importAuthPool) match  {
-      case (Some(authPool), None) => Json.obj(
-        "securityDefinitions" -> Json.obj(
-          authPool.name -> Json.obj(
-            "type" -> "apiKey",
-            "name" -> "Authorization",
-            "in" -> "header",
-            "x-amazon-apigateway-authtype" -> "cognito_user_pools",
-            "x-amazon-apigateway-authorizer" -> Json.obj(
-              "type" -> "cognito_user_pools",
-              "providerARNs" -> Json.arr(
-                Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
-              )
+    def securityDefinitions(authpool: Option[Authpool],
+                            importAuthPool: Option[ImportAuthPool],
+                            stage: String,
+                            authorizerType: AuthorizerType): JsValue = authorizerType match {
+      case Sigv4AuthorizerType =>
+        Json.obj(
+          "securityDefinitions" -> Json.obj(
+            "sigv4" -> Json.obj(
+              "type" -> "apiKey",
+              "name" -> "Authorization",
+              "in" -> "header",
+              "x-amazon-apigateway-authtype" -> "awsSigv4"
             )
           )
         )
-      )
-      case (None, Some(impAuthPool)) => Json.obj(
-        "securityDefinitions" -> Json.obj(
-          "auth_pool" -> Json.obj(
-            "type" -> "apiKey",
-            "name" -> "Authorization",
-            "in" -> "header",
-            "x-amazon-apigateway-authtype" -> "cognito_user_pools",
-            "x-amazon-apigateway-authorizer" -> Json.obj(
-              "type" -> "cognito_user_pools",
-              "providerARNs" -> Json.arr(
-                CloudFormation.importValue(
-                  CloudFormationTemplates.scopeImportResource(impAuthPool.importResource, stage)
-                ),
+      case CognitoAuthorizerType =>
+        (authpool, importAuthPool) match {
+          case (Some(authPool), None) => Json.obj(
+            "securityDefinitions" -> Json.obj(
+              authPool.name -> Json.obj(
+                "type" -> "apiKey",
+                "name" -> "Authorization",
+                "in" -> "header",
+                "x-amazon-apigateway-authtype" -> "cognito_user_pools",
+                "x-amazon-apigateway-authorizer" -> Json.obj(
+                  "type" -> "cognito_user_pools",
+                  "providerARNs" -> Json.arr(
+                    Json.obj("Fn::GetAtt" → Json.arr("ServerlessUserPool", "Arn")),
+                  )
+                )
               )
             )
           )
-        )
-      )
-      case (Some(_), Some(_)) => throw  new IllegalAccessException("You cannot configure an Authpool and a Import Authpool at the same time.")
-      case (_, _) => JsObject(Nil)
+          case (None, Some(impAuthPool)) => Json.obj(
+            "securityDefinitions" -> Json.obj(
+              "auth_pool" -> Json.obj(
+                "type" -> "apiKey",
+                "name" -> "Authorization",
+                "in" -> "header",
+                "x-amazon-apigateway-authtype" -> "cognito_user_pools",
+                "x-amazon-apigateway-authorizer" -> Json.obj(
+                  "type" -> "cognito_user_pools",
+                  "providerARNs" -> Json.arr(
+                    CloudFormation.importValue(
+                      CloudFormationTemplates.scopeImportResource(impAuthPool.importResource, stage)
+                    ),
+                  )
+                )
+              )
+            )
+          )
+          case (Some(_), Some(_)) => throw new IllegalAccessException("You cannot configure an Authpool and a Import Authpool at the same time.")
+          case (_, _) => JsObject(Nil)
+        }
     }
 
     /**
       * A declaration of which security schemes are applied for the API as a whole.
       */
-    def security(authorized: Boolean, authpoolName: String): JsValue = authorized match {
-      case false => JsNull
-      case true => Json.obj("security" -> Json.arr(Json.obj(authpoolName -> Json.arr())))
+    def security(authorized: Boolean, authpoolName: String, authorizerType: AuthorizerType): JsValue = {
+      authorized.option(authorizerType).map {
+        case Sigv4AuthorizerType => Json.obj("security" -> Json.arr(Json.obj("sigv4" -> Json.arr())))
+        case _ => Json.obj("security" -> Json.arr(Json.obj(authpoolName -> Json.arr())))
+      }.getOrElse(JsNull)
     }
 
     /**
@@ -179,4 +215,5 @@ object Swagger {
       Json.obj("uri" -> Json.obj("Fn::Sub" -> lambdaUri))
     }
   }
+
 }

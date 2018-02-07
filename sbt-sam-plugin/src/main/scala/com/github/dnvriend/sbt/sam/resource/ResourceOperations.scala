@@ -2,6 +2,7 @@ package com.github.dnvriend.sbt.sam.resource
 
 import sbt._
 import com.github.dnvriend.ops.FunctionalOps
+import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerOperations
 import com.github.dnvriend.sbt.sam.resource.bucket.S3BucketResourceOperations
 import com.github.dnvriend.sbt.sam.resource.cognito.CognitoResourceOperations
 import com.github.dnvriend.sbt.sam.resource.dynamodb.DynamoDBResourceOperations
@@ -24,7 +25,8 @@ trait ResourceOperations extends FunctionalOps
   with S3FirehoseResourceOperations
   with RoleResourceOperations
   with RDSResourceOperations
-  with VPCResourceOperations {
+  with VPCResourceOperations
+  with AuthorizerOperations {
   /**
    * Loads the resource configuration from base path
    */

@@ -132,6 +132,10 @@ object SAMPlugin extends AutoPlugin {
       ResourceOperations.retrieveImportAuthPool(configFrom(baseDirectory.value), authpool)
     },
 
+    authorizerType := {
+      ResourceOperations.retrieveAuthorizerType(configFrom(baseDirectory.value))
+    },
+
     bucketResources := {
       ResourceOperations.retrieveBuckets(configFrom(baseDirectory.value))
     },
@@ -158,6 +162,7 @@ object SAMPlugin extends AutoPlugin {
         SamResources(
           cognitoResources.value,
           importAuthpool.value,
+          authorizerType.value,
           classifiedLambdas.value,
           dynamoDbTableResources.value,
           topicResources.value,

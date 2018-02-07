@@ -22,6 +22,7 @@ import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
 import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
+import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerType
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
@@ -67,6 +68,7 @@ object SAMPluginKeys {
   lazy val s3FirehoseResources = taskKey[Set[S3Firehose]]("Retrieves a set of s3 firehose data delivery streams, which are configured in the Lightbend Config.")
   lazy val rdsResources = taskKey[Set[RDSInstance]]("Retrieves a set of RDS instances, which are configured in the Lightbend Config.")
   lazy val importAuthpool = taskKey[Option[ImportAuthPool]]("Tries to retrieve a Cognito Authpool that can be imported from CloudFormation. ")
+  lazy val authorizerType = taskKey[AuthorizerType]("Tries to retrieve an AuthorizerType that will be used as the authorizer for API gateway.")
 
   // sam tasks
   lazy val samInfo = taskKey[Unit]("Show info the service")
