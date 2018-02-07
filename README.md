@@ -7,19 +7,24 @@
 [![Download](https://api.bintray.com/packages/dnvriend/maven/sam-lambda/images/download.svg)](https://bintray.com/dnvriend/maven/sam-lambda/_latestVersion)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-## Notice
-`sbt-sam` is work in progress so the best way to enjoy `sbt-sam` - in the mean-time - is cloning the project and publish the artifacts
-locally in order to have the latest artifacts. Then take a look at the seed projects, update the `sbt-sam`'s library versions
-according to your latest build and enjoy the same workflow you're used to, but for creating serverless applications!
-
-We do our best to create a first base version that supports `cognito` user pool secured `api gateway` backend components that
-support `dynamodb`, `dynamodb streams`, `kinesis`, `sns` and `s3`. 
-
-```bash
-$ git clone git@github.com:dnvriend/sbt-sam.git
-cd sbt-sam
-sbt compile publishLocal
-``` 
+## Supported features
+sbt-sam supports the following:
+- AWS Lambda with AWS API gateway with optionally Cognito UserPool or Sigv4 (IAM) Authentication,
+- AWS Lambda Scheduled events support,
+- AWS Lambda CloudWatch events support,
+- AWS Lambda S3 Events support,
+- AWS Lambda Kinesis support,
+- AWS Lambda SNS support,
+- AWS Relational Database Service (RDS) support,
+- AWS DynamoDB support,
+- AWS SNS support,
+- AWS Kinesis support,
+- AWS S3 support,
+- Jenkins/AWS CodeBuild support,
+- Scala 2.12 support,
+- sbt 1.1.0 support,
+- sbt compile/test/package, dependency management & packaging/publishing,
+- uses AWS CloudFormation extensively to create/update a component,
 
 ## Installation
 `sbt-sam` comes in the form of an sbt-plugin and libraries, and is published to [Bintray jcenter](https://bintray.com/bintray/jcenter) 
