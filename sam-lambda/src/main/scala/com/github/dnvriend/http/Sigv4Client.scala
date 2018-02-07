@@ -66,9 +66,9 @@ object Sigv4Client {
     * AwsRegionProviderChain to lookup the API keys and REGION for a given AWS profile
     */
   def post[A: Writes](
-                      value: A,
-                      url: String,
-                      headers: Map[String, String]): HttpResponse[Array[Byte]] = {
+                       value: A,
+                       url: String,
+                       headers: Map[String, String]): HttpResponse[Array[Byte]] = {
     post(value, new URL(url), new DefaultAWSCredentialsProviderChain, new DefaultAwsRegionProviderChain, headers)
   }
 
@@ -76,12 +76,12 @@ object Sigv4Client {
     * Connect to given url and executes a POST request
     */
   def post[A: Writes](
-                      value: A,
-                      url: URL,
-                     credentialsProvider: AWSCredentialsProvider,
-                     regionProvider: AwsRegionProvider,
-                     headers: Map[String, String],
-                    ): HttpResponse[Array[Byte]] = {
+                       value: A,
+                       url: URL,
+                       credentialsProvider: AWSCredentialsProvider,
+                       regionProvider: AwsRegionProvider,
+                       headers: Map[String, String],
+                     ): HttpResponse[Array[Byte]] = {
     val payload: String = Json.toJson(value).toString()
     val payloadAsBytes: Array[Byte] = payload.getBytes("UTF-8")
     val mergedHeaders: Map[String, String] = {
@@ -99,9 +99,49 @@ object Sigv4Client {
       .headers(mergedHeaders)
       .timeout(Int.MaxValue, Int.MaxValue)
       .compress(true)
-      .put(payloadAsBytes)
+      .postData(payload)
       .asBytes
   }
 
+  /**
+    * Connect to given url and executes a PUT request with DefaultAWSCredentialsProviderChain and
+    * AwsRegionProviderChain to lookup the API keys and REGION for a given AWS profile
+    */
+  def put[A: Writes](
+                      value: A,
+                      url: String,
+                      headers: Map[String, String]): HttpResponse[Array[Byte]] = {
+    put(value, new URL(url), new DefaultAWSCredentialsProviderChain, new DefaultAwsRegionProviderChain, headers)
+  }
 
+  /**
+    * Connect to given url and executes a PUT request
+    */
+  def put[A: Writes](
+                      value: A,
+                      url: URL,
+                      credentialsProvider: AWSCredentialsProvider,
+                      regionProvider: AwsRegionProvider,
+                      headers: Map[String, String],
+                    ): HttpResponse[Array[Byte]] = {
+    val payload: String = Json.toJson(value).toString()
+    val payloadAsBytes: Array[Byte] = payload.getBytes("UTF-8")
+    val mergedHeaders: Map[String, String] = {
+      headers ++ getSignedHeaders(
+        url,
+        credentialsProvider,
+        regionProvider.getRegion,
+        "PUT",
+        Some(payloadAsBytes),
+        Map("Content-Type" -> "application/json")
+      )
+    }
+    println(mergedHeaders)
+    Http(url.toString)
+      .headers(mergedHeaders)
+      .timeout(Int.MaxValue, Int.MaxValue)
+      .compress(true)
+      .put(payload)
+      .asBytes
+  }
 }
