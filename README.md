@@ -62,12 +62,13 @@ The following seed projects are available:
 - [dnvriend/sam-s3-seed.g8](https://github.com/dnvriend/sam-s3-seed.g8): A template project for quickly creating S3 bucket event handlers.
 - [dnvriend/sam-cloudwatch-seed.g8](https://github.com/dnvriend/sam-cloudwatch-seed.g8): A template project for quickly creating CloudWatch event handlers.
 - [dnvriend/sam-rds-vpc-seed.g8](https://github.com/dnvriend/sam-rds-vpc-seed.g8): A template project for quickly creating a sam connecting to RDS via a VPC.
+- [dnvriend/sam-sigv4-seed.g8](https://github.com/dnvriend/sam-sigv4-seed.g8): A template project for quickly creating sigv4 secured serverless applications.
                                                                                          
 ## Mini Data and Analytics Platform
 - [sam-mini-platform](https://github.com/dnvriend/sam-mini-platform): A mini platform for ingesting, processing, and analyzing data.
 
 ## sbt-sam test projects
-- [sam-encryption-test](sam-encryption-test): A small study project on AWS encryption using AWS KMS, AWS Lambda and sbt-sam.
+- [sam-encryption-test](https://github.com/dnvriend/sam-encryption-test): A small study project on AWS encryption using AWS KMS, AWS Lambda and sbt-sam.
 
 ## Available tasks
 The following tasks are available:

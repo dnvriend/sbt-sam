@@ -94,7 +94,6 @@ object Sigv4Client {
         Map("Content-Type" -> "application/json")
       )
     }
-    println(mergedHeaders)
     Http(url.toString)
       .headers(mergedHeaders)
       .timeout(Int.MaxValue, Int.MaxValue)
@@ -136,7 +135,6 @@ object Sigv4Client {
         Map("Content-Type" -> "application/json")
       )
     }
-    println(mergedHeaders)
     Http(url.toString)
       .headers(mergedHeaders)
       .timeout(Int.MaxValue, Int.MaxValue)
