@@ -336,6 +336,9 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.21 (2018-02-07)
+- Merged PR #93 'Added the possibility to add custom environment varibles via Lightbend config', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+- Merged PR #94 'Fixed an issue where env variables were not recognized', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
 
 ## 1.0.20 (2018-02-02)
 - Merged PR #89 'RDS & Lamda VPC Support', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
