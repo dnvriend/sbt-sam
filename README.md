@@ -342,6 +342,9 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.23 (2018-02-12)
+- Change iamGetUser in AWS plugin from settingKey to taskKey
+
 ## 1.0.22 (2018-02-07)
 - Support [Signature Version 4 (sigv4)](https://docs.aws.amazon.com/apigateway/api-reference/signing-requests/) authentication method for HttpHandlers (Lambdas). 
 - Added `authorizer.type` to sam.conf to set the authorizer type, valid values are `sigv4` and `cognito`.
