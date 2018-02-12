@@ -64,7 +64,7 @@ object AwsPluginKeys {
   lazy val cfDeleteStack = inputKey[DeleteStackResponse]("Deletes a specified stack. Once the call completes successfully, stack deletion starts. Deleted stacks do not show up in the DescribeStacks API if the deletion has been completed successfully")
 
   // iam tasks
-  lazy val iamUserInfo = SettingKey[AmazonUser]("iamUserInfo")
+  lazy val iamUserInfo = TaskKey[AmazonUser]("iamUserInfo")
   lazy val iamCredentialsRegionAndUser = TaskKey[CredentialsRegionAndUser]("iamCredentialsRegionAndUser")
   lazy val whoAmI = taskKey[Unit]("Shows the current region and credentials in use")
 
