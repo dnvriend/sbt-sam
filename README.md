@@ -342,6 +342,9 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.24 (2018-02-19)
+- Merged PR #97 'Fail build on CloudFormation error', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
+
 ## 1.0.23 (2018-02-12)
 - Change iamGetUser in AWS plugin from settingKey to taskKey
 

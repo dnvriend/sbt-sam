@@ -295,7 +295,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
       val failureEvents = List("FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS")
 
       stackStatus match {
-        case s if failureEvents.exists(fe => s.contains(fe)) => throw new RuntimeException(s"Deploy failed, the CloudFormation stack has status: '$s'.")
+        case s if failureEvents.exists(fe => s.contains(fe))      => throw new RuntimeException(s"Deploy failed, the CloudFormation stack has status: '$s'.")
         case s if nonFailureEvents.exists(nfe => s.contains(nfe)) => publishEvents(stackStatus, newEvents)
         case _ =>
           publishEvents(stackStatus, newEvents)
