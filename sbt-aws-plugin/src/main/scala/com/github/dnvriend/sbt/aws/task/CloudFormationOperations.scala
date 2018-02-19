@@ -289,16 +289,21 @@ object CloudFormationOperations extends AwsProgressListenerOps {
         stackEvents.response.map(_.getStackEvents.asScala.filter(_.getTimestamp.getTime >= now).map(Event.fromStackEvent).toSet)
           .getOrElse(Set.empty)
       }
-      if (List("FAILED", "COMPLETE", "STACK_DOES_NOT_EXIST").exists(state => stackStatus.contains(state))) {
-        publishEvents(stackStatus, newEvents)
-      } else {
-        publishEvents(stackStatus, newEvents)
-        events = newEvents
-        Thread.sleep(500)
-        loop
+
+      /* see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html */
+      val nonFailureEvents = List("COMPLETE", "STACK_DOES_NOT_EXIST")
+      val failureEvents = List("FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS")
+
+      stackStatus match {
+        case s if failureEvents.exists(fe => s.contains(fe)) => throw new RuntimeException(s"Deploy failed, the CloudFormation stack has status: '$s'.")
+        case s if nonFailureEvents.exists(nfe => s.contains(nfe)) => publishEvents(stackStatus, newEvents)
+        case _ =>
+          publishEvents(stackStatus, newEvents)
+          events = newEvents
+          Thread.sleep(500)
+          loop
       }
     }
-
     loop
   }
 
