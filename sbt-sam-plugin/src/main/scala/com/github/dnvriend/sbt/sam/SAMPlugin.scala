@@ -232,6 +232,7 @@ object SAMPlugin extends AutoPlugin {
         samProjectConfiguration.value,
         samDescribeCloudFormationStackForCreate.value,
         clientCloudFormation.value,
+        clientS3.value,
         streams.value.log
       )
     },
@@ -306,5 +307,14 @@ object SAMPlugin extends AutoPlugin {
 
     samRemove := Def.sequential(samDeleteArtifact, samDeleteCloudFormationStack).value,
     samDeploy := Def.sequential(samCreateCloudFormationStack, samUploadArtifact, samUpdateCloudFormationStack).value,
+
+    samCheckDeploymentBucketExists := {
+      val log = streams.value.log
+      val s3Client = clientS3.value
+      val config = samProjectConfiguration.value
+      val exists = s3Client.doesBucketExistV2(config.samS3BucketName.value)
+      if(exists) log.info(s"DeploymentBucket: '${config.samS3BucketName.value}', already exists")
+      else log.info(s"DeploymentBucket: '${config.samS3BucketName.value}, does not yet exists")
+    },
   )
 }

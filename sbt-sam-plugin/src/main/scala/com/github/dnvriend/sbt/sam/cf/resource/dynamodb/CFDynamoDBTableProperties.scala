@@ -14,6 +14,7 @@ object CFDynamoDBTableProperties {
         Json.toJson(keySchema),
         Json.toJson(attributeDefinitions),
         Json.toJson(provisionedThroughput),
+        Json.toJson(CFDynamoDBTableSSESpecification()),
         Json.toJson(streamSpecification),
         Json.toJson(gsi),
         Json.toJson(tags),

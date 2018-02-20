@@ -57,6 +57,7 @@ object SAMPluginKeys {
   lazy val samServiceEndpoint = TaskKey[Option[ServiceEndpoint]]("samServiceEndpoint") // Shows the service endpoint
   lazy val samCreateUsers = taskKey[Unit]("samCreateUsers") // Deploys and authenticates cognito users
   lazy val samCreateUserToken = taskKey[Unit]("samCreateUserToken") // Gets the ID token for a user by username and password
+  lazy val samCheckDeploymentBucketExists = taskKey[Unit]("samCheckDeploymentBucketExists") // checks whether the deployment bucket exists
 
   // resource tasks
   lazy val dynamoDbTableResources = taskKey[Set[TableWithIndex]]("Retrieves a set of tables, which are configured in the Lightbend Config.")
