@@ -13,6 +13,7 @@ object CFKinesisStream {
           "Name" -> streamName,
           "ShardCount" -> shardCount,
           "RetentionPeriodHours" -> retensionPeriodHours,
+          "StreamEncryption" -> Json.obj("EncryptionType" -> "KMS", "KeyId" -> "alias/aws/kinesis"),
           "Tags" -> Json.arr(
             Json.obj("Key" -> "sbt:sam:projectName", "Value" -> projectName),
             Json.obj("Key" -> "sbt:sam:projectVersion", "Value" -> projectVersion),
