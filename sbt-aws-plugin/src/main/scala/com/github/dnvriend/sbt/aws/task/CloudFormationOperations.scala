@@ -8,7 +8,7 @@ import sbt.util.Logger
 
 import scala.collection.JavaConverters._
 import scala.compat.Platform
-import scalaz.{ Disjunction, Show }
+import scalaz.Disjunction
 import scalaz.Scalaz._
 
 object TemplateBody {
@@ -292,7 +292,7 @@ object CloudFormationOperations extends AwsProgressListenerOps {
 
       /* see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html */
       val nonFailureEvents = List("COMPLETE", "STACK_DOES_NOT_EXIST")
-      val failureEvents = List("FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS")
+      val failureEvents = List("FAILED", "UPDATE_ROLLBACK_COMPLETE", "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS", "ROLLBACK_COMPLETE")
 
       stackStatus match {
         case s if failureEvents.exists(fe => s.contains(fe))      => throw new RuntimeException(s"Deploy failed, the CloudFormation stack has status: '$s'.")
