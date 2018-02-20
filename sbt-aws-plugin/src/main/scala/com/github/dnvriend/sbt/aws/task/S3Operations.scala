@@ -180,4 +180,12 @@ object S3Operations extends AwsProgressListenerOps {
       }
     })
   }
+
+  /**
+   * Checks if the specified bucket exists. Amazon S3 buckets are named in a global namespace; use this method to
+   * determine if a specified bucket name already exists, and therefore can't be used to create a new bucket.
+   */
+  def doesBucketExists(bucketName: String, client: AmazonS3): Boolean = {
+    client.doesBucketExistV2(bucketName)
+  }
 }

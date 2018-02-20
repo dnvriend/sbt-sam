@@ -2,8 +2,11 @@ package com.github.dnvriend.sbt.sam.task
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.Stack
+import com.amazonaws.services.s3.AmazonS3
 import com.github.dnvriend.sbt.aws.task._
 import sbt.util.Logger
+
+
 
 /**
  * Creates the cloud formation stack if it does not exists
@@ -13,7 +16,15 @@ object CloudFormationStackCreate {
     config: ProjectConfiguration,
     describeStackResponse: Option[Stack],
     client: AmazonCloudFormation,
-    log: Logger): Unit = {
+    s3Client: AmazonS3,
+    log: Logger,
+  ): Unit = {
+    val deploymentBucketName: String = config.samS3BucketName.value
+
+    if(s3Client.doesBucketExistV2(deploymentBucketName)) {
+      throw new RuntimeException(s"Deployment bucket '$deploymentBucketName' already exists, please change the samStage or organization/project name")
+    }
+
     if (describeStackResponse.isEmpty) {
       log.info("Creating cloud formation stack")
       CloudFormationOperations.createStack(
