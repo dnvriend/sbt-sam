@@ -23,12 +23,11 @@ case class SamCFTemplateName(value: String) {
 }
 
 object SamS3BucketName {
-  val bucketNameRegex: Regex = """^([a-z]|(\d(?!\d{0,2}\.\d{1,3}\.\d{1,3}\.\d{1,3})))([a-z\d]|(\.(?!(\.|-)))|(-(?!\.))){1,61}[a-z\d\.]$""".r
 }
 case class SamS3BucketName(value: String) {
-  require(SamS3BucketName.bucketNameRegex.findFirstIn(value).exists(name => name.length > 3 && name.length < 63), s"Bucket name with name '$value', should be between 3 and 63 characters long")
+  require(value.length > 3 && value.length < 63, s"Bucket name with name '$value', should be between 3 and 63 characters long, it is '${value.length}' characters long")
 }
-case class SamResourcePrefixName(value: String)
+//case class SamResourcePrefixName(value: String)
 case class SamStage(value: String) {
   require(!List("-", ".", " ", "/").exists(char => value.contains(char)), s"sam stage with value '$value', should not contain '.', '-', '/' or spaces")
 }
@@ -50,11 +49,11 @@ case class SamResources(
 object ProjectConfiguration extends AnyOps {
   def fromConfig(
                   projectName: String,
+                  organizationName: String,
                   projectVersion: String,
                   projectDescription: String,
                   deploymentBucketName: String,
                   samCFTemplateName: String,
-                  samResourcePrefixName: String,
                   samStage: String,
                   credentialsRegionAndUser: CredentialsRegionAndUser,
                   amazonUser: AmazonUser,
@@ -63,19 +62,19 @@ object ProjectConfiguration extends AnyOps {
     val arn = Arn.fromArnString(credentialsRegionAndUser.user.getArn.wrap[Arn])
     val accountId = arn.accountId.value
     val region = credentialsRegionAndUser.credentialsAndRegion.region.getName
-    val cfTemplateName = samCFTemplateName.replace(".", "-").replace(" ", "")
-    val s3BucketName = deploymentBucketName.replace(".", "-").replace(" ", "")
+    val cfTemplateName = samCFTemplateName.replace(".", "-").replace(" ", "").trim
+    val s3BucketName = deploymentBucketName.replace(".", "-").replace(" ", "").trim
     val streams: List[KinesisStream] = (samResources.streams ++ samResources.s3Firehoses.map(_.stream(projectName, samStage))).toList
-    val buckets: List[S3Bucket] = (samResources.buckets ++ samResources.s3Firehoses.map(_.bucket(projectName, samStage))).toList
+    val buckets: List[S3Bucket] = (samResources.buckets ++ samResources.s3Firehoses.map(_.bucket)).toList
     val roles: List[IamRole] = (samResources.iamRoles ++ samResources.s3Firehoses.map(_.role)).toList
     ProjectConfiguration(
       projectName,
+      organizationName,
       projectVersion,
       projectDescription,
       SamS3BucketName(s3BucketName),
       SamCFTemplateName(cfTemplateName),
       SamStage(samStage),
-      SamResourcePrefixName(samResourcePrefixName),
       credentialsRegionAndUser,
       amazonUser,
       samResources.authpool,
@@ -95,12 +94,12 @@ object ProjectConfiguration extends AnyOps {
 }
 case class ProjectConfiguration(
                                  projectName: String,
+                                 organizationName: String,
                                  projectVersion: String,
                                  projectDescription: String,
                                  samS3BucketName: SamS3BucketName,
                                  samCFTemplateName: SamCFTemplateName,
                                  samStage: SamStage,
-                                 samResourcePrefixName: SamResourcePrefixName,
                                  credentialsRegionAndUser: CredentialsRegionAndUser,
                                  amazonUser: AmazonUser,
                                  authpool: Option[Authpool] = Option.empty,

@@ -45,15 +45,16 @@ case class SamContext(
    * Determines whether a resource name is imported, if so
    * if returns the name to use for an imported resource, else
    * it will determine the name to use for a local resource
+   * // stage - projectName - name
    */
   def determineName(name: String): String = {
     if (name.startsWith("import")) {
       val parts = name.split(":")
-      val exportComponentName = parts.drop(1).head
-      val tableNameToImport = parts.drop(2).head
-      s"$exportComponentName-$stage-$tableNameToImport"
+      val projectName = parts.drop(1).head
+      val nameToImport = parts.drop(2).head
+      s"$stage-$projectName-$nameToImport"
     } else {
-      s"$projectName-$stage-$name"
+      s"$stage-$projectName-$name"
     }
   }
 

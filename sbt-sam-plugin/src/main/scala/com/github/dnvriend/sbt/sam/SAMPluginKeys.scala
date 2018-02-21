@@ -35,7 +35,6 @@ object SAMPluginKeys {
   lazy val samStageValue = SettingKey[String]("samStageValue") // The actual stage value
   lazy val samS3BucketName = SettingKey[String]("samS3BucketName") // The S3 deployment bucket name for the sam project
   lazy val samCFTemplateName = SettingKey[String]("samCFTemplateName") // The cloudformation template name for the sam project
-  lazy val samResourcePrefixName = SettingKey[String]("samResourcePrefixName") // The prefix name to use when creating AWS resources like Lambdas, DynamoDB tables, Kinesis topics and so on
 
   // sam worker tasks
   lazy val samProjectClassLoader = TaskKey[ClassLoader]("samProjectClassLoader") // sam's project classloader

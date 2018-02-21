@@ -1,10 +1,8 @@
 package com.github.dnvriend.sbt.sam.resource.firehose.s3.model
 
-import com.github.dnvriend.sbt.sam.cf.CloudFormation
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.role.model.{IamPolicyAllow, IamRole}
-import com.github.dnvriend.sbt.sam.task.CloudFormationTemplates
 
 /**
   * Defines an S3 Extended Kinesis Data Firehose Resource that consists of
@@ -25,15 +23,15 @@ case class S3Firehose(
                        export: Boolean = false,
                      ) {
 
-  def roleName: String = s"$name-role"
+  def roleName: String = name
 
   def roleLogicalName: String = s"${configName}Role"
 
-  def bucketName: String = s"$name-bucket"
+  def bucketName: String = s"$name-storage"
 
   def bucketLogicalName: String = s"${configName}Bucket"
 
-  def streamName: String = s"$name-stream"
+  def streamName: String = name
 
   def streamLogicalName: String = s"${configName}Stream"
 
@@ -44,7 +42,7 @@ case class S3Firehose(
   /**
     * Returns an S3Bucket resource
     */
-  def bucket(projectName: String, stage: String): S3Bucket = {
+  def bucket: S3Bucket = {
     S3Bucket(
       bucketName,
       "BucketOwnerFullControl",

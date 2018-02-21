@@ -15,8 +15,8 @@ trait GenIamRole extends GenGeneric {
       "s3:PutObject"
     ))
     resources <- Gen.containerOfN[List, String](5, Gen.oneOf(
-      "arn:aws:kinesis:eu-west-1:123456789:stream/sam-seed-test-button-clicked",
-      "arn:aws:s3:::firehose-bucket-name"
+      "arn:aws:kinesis:eu-west-1:123456789:stream/random-generated-resource",
+      "arn:aws:s3:::random-generated-resource"
     ))
   } yield IamPolicyAllow(
     name,
