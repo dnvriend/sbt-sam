@@ -342,6 +342,12 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.25 (2018-02-21)
+- Merged #99 Encryption at rest for DynamoDB tables
+- Merged #100 Encryption at rest for Kinesis Streams
+- Merged #101 naming scheme change for resources; this is a breaking change as the resource naming scheme has changed from `projectName-stage-resourceName`
+ `stage-projectName-resourceName`.
+
 ## 1.0.24 (2018-02-19)
 - Merged PR #97 'Fail build on CloudFormation error', thanks [Martijn van de Grift](https://github.com/martijnvdgrift)!
 
