@@ -173,7 +173,11 @@ object CFS3Bucket {
       Json.obj("AccessControl" -> accessControl.toString),
       Json.obj("BucketName" -> bucketName),
       Json.obj( "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)),
-      Json.obj("BucketEncryption" -> Json.obj("ServerSideEncryptionConfiguration" -> Json.arr(Json.obj("ServerSideEncryptionByDefault" -> Json.obj("SSEAlgorithm" -> "AES256"))))),
+      //
+      // cannot be enabled, cloudformation does not support creating/encrypting buckets in one go
+      // other strategies must be tried
+      //
+//      Json.obj("BucketEncryption" -> Json.obj("ServerSideEncryptionConfiguration" -> Json.arr(Json.obj("ServerSideEncryptionByDefault" -> Json.obj("SSEAlgorithm" -> "AES256"))))),
       Json.toJson(corsRules),
       Json.toJson(websiteConfiguration),
     ).fold(JsMonoids.jsObjectMerge)
@@ -219,7 +223,6 @@ final case class CFS3Bucket(
   require(bucketName.length > 3, s"Bucket names must be more than 3 characters long, bucket name is '$bucketName', and is ${bucketName.length} chars long")
   require(!bucketName.startsWith("."), s"Bucket names must not start with a dot '.', bucket name is '$bucketName'")
   require(!bucketName.endsWith("."), s"Bucket names must not end with a dot '.', bucket name is '$bucketName'")
-  require(!bucketName.forall(_.isLower), s"Bucket name characters must all be lowercase, bucket name is '$bucketName'")
 
   def ref: JsValue = CloudFormation.ref(logicalName)
 }

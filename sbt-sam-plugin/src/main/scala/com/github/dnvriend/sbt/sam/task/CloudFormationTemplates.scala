@@ -43,6 +43,11 @@ object CloudFormationTemplates {
 
   /**
     * Returns the basic cloud formation template to create the stack and deployment bucket
+    * The deployment bucket gets the following naming convention:
+    * [organizationName][stage][projectName]
+    * The cloudformation template that accompanies the bucket has the following name:
+    * [organizationName][stage][projectName]
+    * Thus is the same
     */
   def deploymentBucketTemplate(config: ProjectConfiguration): TemplateBody = {
     val template: CloudFormationTemplate = CloudFormationTemplate(
@@ -63,9 +68,23 @@ object CloudFormationTemplates {
 
   def scopeImportResource(importResource: String, stage: String): String = {
     val parts = importResource.split(":")
-    val exportComponentName = parts.head
-    val resourceNameToImport = parts.drop(1).head
-    s"$exportComponentName-$stage-$resourceNameToImport"
+    val projectName = parts.head
+    val name = parts.drop(1).head
+    s"$stage-$projectName-$name"
+  }
+
+  /**
+    * S3 Resources get the following naming convention
+    * [organisatie][stage][projectnaam]
+    */
+  def s3ResourceName(organizationName: String, stage: String, bucketName: String): String = {
+    val organizationNameReplaced: String = {
+      organizationName
+        .replace(".", "-")
+        .replace(" ", "")
+        .trim()
+    }
+    s"$organizationNameReplaced-$stage-$bucketName"
   }
 
   /**
@@ -79,7 +98,7 @@ object CloudFormationTemplates {
       val parts = resourceName.split(":")
       val exportComponentName = parts.drop(1).head
       val resourceNameToImport = parts.drop(2).head
-      Option(s"$exportComponentName-$stage-$resourceNameToImport")
+      Option(s"$stage-$exportComponentName-$resourceNameToImport")
     } else None
     ComponentNameOrImport(componentName, importName)
   }
@@ -93,13 +112,14 @@ object CloudFormationTemplates {
     * resource namespace.
     */
   def createResourceName(projectName: String, stage: String, resourceName: String): String = {
-    s"$projectName-$stage-$resourceName".toLowerCase.trim
+    s"$stage-$projectName-$resourceName".toLowerCase.trim
   }
 
   /**
     * Sbt SAM uses the SAM-Model, that needs a transform in order to use the SAM-DSL in CloudFormation templates.
     */
   def updateTemplate(config: ProjectConfiguration, jarName: String, latestVersion: String): TemplateBody = {
+    val organizationName: String = config.organizationName
     val projectName: String = config.projectName
     val projectVersion: String = config.projectVersion
     val region: String = config.credentialsRegionAndUser.credentialsAndRegion.region.getName
@@ -112,8 +132,8 @@ object CloudFormationTemplates {
         snsResources(projectName, stage, config.topics) ++
         dynamoDBResources(projectName, projectVersion, stage, config.tables) ++
         determineEventHandlerResources(projectName, projectVersion, stage, deploymentBucketName, jarName, latestVersion, config.lambdas) ++
-        bucketResources(projectName, projectVersion, stage, config.buckets) ++
-        s3FirehoseResources(projectName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
+        bucketResources(organizationName, projectName, projectVersion, stage, config.buckets) ++
+        s3FirehoseResources(projectName, organizationName, projectVersion, stage, accountId, region, config.s3Firehoses) ++
         iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
         apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool, config.authorizerType) ++
@@ -180,11 +200,11 @@ object CloudFormationTemplates {
   /**
     * Determine S3 bucket resource
     */
-  def bucketResource(projectName: String, projectVersion: String, stage: String, bucket: S3Bucket): Resource = {
+  def bucketResource(organizationName: String, projectName: String, projectVersion: String, stage: String, bucket: S3Bucket): Resource = {
     CFS3Bucket(
       bucket.configName,
       S3AccessControl.fromName(bucket.accessControl),
-      createResourceName(projectName, stage, bucket.name),
+      s3ResourceName(organizationName, stage, bucket.name),
       VersioningConfigurationOption.fromBoolean(bucket.versioningEnabled),
       ResourceTag.projectTags(projectName, projectVersion, stage),
       bucket.website.map(website => CFS3WebsiteConfiguration(website.indexDocument, website.errorDocument)),
@@ -195,8 +215,8 @@ object CloudFormationTemplates {
   /**
     * Determine S3 bucket resources
     */
-  def bucketResources(projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
-    buckets.map(bucket => bucketResource(projectName, projectVersion, stage, bucket))
+  def bucketResources(organizationName: String, projectName: String, projectVersion: String, stage: String, buckets: List[S3Bucket]): List[Resource] = {
+    buckets.map(bucket => bucketResource(organizationName, projectName, projectVersion, stage, bucket))
   }
 
   /**
@@ -223,6 +243,7 @@ object CloudFormationTemplates {
     * Determine S3 Kinesis Data Firehose Resource
     */
   def s3FirehoseResource(projectName: String,
+                         organizationName: String,
                          projectVersion: String,
                          stage: String,
                          accountId: String,
@@ -231,7 +252,7 @@ object CloudFormationTemplates {
 
     val firehoseName: String = createResourceName(projectName, stage, firehose.name)
     val firehoseRoleLogicalName: String = firehose.roleLogicalName
-    val firehoseBucketName: String = createResourceName(projectName, stage, firehose.bucketName)
+    val firehoseBucketName: String = s3ResourceName(organizationName, stage, firehose.bucketName)
     val firehoseBucketLogicalName: String = firehose.bucketLogicalName
     val firehoseKinesisStreamName: String = createResourceName(projectName, stage, firehose.streamName)
     val firehoseKinesisStreamLogicalName: String = firehose.streamLogicalName
@@ -257,12 +278,20 @@ object CloudFormationTemplates {
     * Determine S3 Kinesis Data Firehose resources
     */
   def s3FirehoseResources(projectName: String,
+                          organizationName: String,
                           projectVersion: String,
                           stage: String,
                           accountId: String,
                           region: String,
                           s3Firehoses: List[S3Firehose]): List[Resource] = {
-    s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName, projectVersion, stage, accountId, region, s3Firehose))
+    s3Firehoses.map(s3Firehose => s3FirehoseResource(projectName,
+      organizationName,
+      projectVersion,
+      stage,
+      accountId,
+      region,
+      s3Firehose)
+    )
   }
 
   /**

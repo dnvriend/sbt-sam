@@ -16,11 +16,11 @@ import play.api.libs.json.{ JsValue, Json }
 
 class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
   it should "be able to create a resource name" in {
-    val projectName = "test"
-    val stage = "dev"
-    val resourceName = "SAM"
+    val projectName = "projectname"
+    val stage = "stage"
+    val resourceName = "resourcename"
 
-    CloudFormationTemplates.createResourceName(projectName, stage, resourceName) shouldEqual "test-dev-sam"
+    CloudFormationTemplates.createResourceName(projectName, stage, resourceName) shouldEqual s"$stage-$projectName-$resourceName"
   }
 
   it should "create a deployment bucket template" in {
@@ -42,19 +42,19 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
   it should "generate an s3 firehose project configuration" in {
     val jarName = "jarName"
     val latestVersion = "latestVersion"
-    val stage = "dev"
+    val stage = "stage"
     val accountId = "1234567890"
     val region = "eu-west-1"
-    val projectName = "button-clicked-data-segment"
+    val projectName = "project"
+    val organizationName = "org.name"
     val projectVersion = "1.0.0-SNAPSHOT"
     val projectDescription = "data segment for button clicks"
-    val deploymentBucketName = "deployment-bucket"
+    val deploymentBucketName = "bucket"
     val cfTemplateName = "button-clicked-data-segment-cf-template"
-    val prefixName = s"$projectName-$stage"
     val credsAndUser = iterCredentialsAndUser.next()
     val amazonUser = iterAmazonUser.next()
 
-    val firehoseName = "button-clicked-firehose"
+    val firehoseName = "firehosename"
     val s3Firehose: S3Firehose = ResourceOperations
       .retrieveS3Firehose(
         s"""
@@ -74,17 +74,17 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val samResources = SamResources(
       streams = Set(s3Firehose.stream(projectName, stage)),
       iamRoles = Set(s3Firehose.role),
-      buckets = Set(s3Firehose.bucket(projectName, stage)),
+      buckets = Set(s3Firehose.bucket),
       s3Firehoses = Set(s3Firehose)
     )
 
     val pc = ProjectConfiguration.fromConfig(
       projectName,
+      organizationName,
       projectVersion,
       projectDescription,
       deploymentBucketName,
       cfTemplateName,
-      prefixName,
       stage,
       credsAndUser,
       amazonUser,
@@ -94,12 +94,13 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(pc, jarName, latestVersion)
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
-    println(templateJsonString)
+    val organizationNameReplaced = organizationName.replace(".", "-").replace(" ", "").trim
+    //    println(templateJsonString)
     val resources = (template \ "Resources").as[Map[String, JsValue]]
-    (resources("ButtonClickedFirehose") \ "Properties" \ "DeliveryStreamName").as[String] shouldBe s"$projectName-$stage-$firehoseName"
-    (resources("ButtonClickedFirehoseStream") \ "Properties" \ "Name").as[String] shouldBe s"$projectName-$stage-$firehoseName-stream"
-    (resources("ButtonClickedFirehoseBucket") \ "Properties" \ "BucketName").as[String] shouldBe s"$projectName-$stage-$firehoseName-bucket"
-    (resources("ButtonClickedFirehoseRole") \ "Properties" \ "RoleName").as[String] shouldBe s"$projectName-$stage-$firehoseName-role"
+    (resources("ButtonClickedFirehose") \ "Properties" \ "DeliveryStreamName").as[String] shouldBe s"$stage-$projectName-$firehoseName"
+    (resources("ButtonClickedFirehoseStream") \ "Properties" \ "Name").as[String] shouldBe s"$stage-$projectName-$firehoseName-stream"
+    (resources("ButtonClickedFirehoseBucket") \ "Properties" \ "BucketName").as[String] shouldBe s"$organizationNameReplaced-$stage-$firehoseName-storage"
+    (resources("ButtonClickedFirehoseRole") \ "Properties" \ "RoleName").as[String] shouldBe s"$stage-$projectName-$firehoseName-role"
   }
 
   it should "generate an update template" in {
@@ -122,13 +123,14 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val region = "eu-west-1"
     val stage = pc.samStage.value
     val projectName = pc.projectName
+    val organizationName = pc.organizationName
     val conf = pc.copy(
       authpool = Option(authPool),
       streams = pc.streams :+ stream :+ s3Firehose.stream(projectName, stage),
       topics = pc.topics :+ topic,
       tables = pc.tables :+ table,
       lambdas = pc.lambdas ++ List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
-      buckets = pc.buckets :+ bucket :+ s3Firehose.bucket(projectName, stage),
+      buckets = pc.buckets :+ bucket :+ s3Firehose.bucket,
       s3Firehoses = pc.s3Firehoses :+ s3Firehose,
       iamRoles = pc.iamRoles :+ role :+ s3Firehose.role
     )

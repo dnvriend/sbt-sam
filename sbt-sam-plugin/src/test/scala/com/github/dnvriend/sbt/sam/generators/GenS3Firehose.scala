@@ -5,7 +5,7 @@ import org.scalacheck.{ Arbitrary, Gen }
 
 trait GenS3Firehose extends GenGeneric {
   val genS3Firehose = for {
-    name <- Gen.const("s3-firehose-delivery-stream-name")
+    name <- Gen.const("firehose-delivery-stream")
     configName <- genResourceConfName
     compression <- Gen.oneOf("UNCOMPRESSED", "GZIP", "ZIP", "Snappy")
   } yield S3Firehose(
@@ -16,7 +16,6 @@ trait GenS3Firehose extends GenGeneric {
     24,
     300,
     5,
-    export = true
   )
 
   implicit val arbS3Firehose: Arbitrary[S3Firehose] = Arbitrary.apply(genS3Firehose)

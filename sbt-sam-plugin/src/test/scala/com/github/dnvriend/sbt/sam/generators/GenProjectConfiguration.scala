@@ -26,10 +26,6 @@ trait GenProjectConfiguration extends GenGeneric {
     value <- Gen.const("test")
   } yield SamStage(value)
 
-  val genSamResourcePrefixName = for {
-    value <- genAlphaNonEmpty
-  } yield SamResourcePrefixName(value)
-
   val genUser = for {
     path <- genAlphaNonEmpty
     userName <- genAlphaNonEmpty
@@ -115,23 +111,23 @@ trait GenProjectConfiguration extends GenGeneric {
   } yield AmazonUser(user, arn, dRegions)
 
   val genProjectConfiguration = for {
-    projectName <- Gen.const("projectName")
-    projectVersion <- Gen.const("projectVersion")
+    projectName <- Gen.const("intake-orders")
+    organizationName <- Gen.const("com.github.dnvriend")
+    projectVersion <- Gen.const("1.0.0-SNAPSHOT")
     projectDescription <- Gen.const("projectDescription")
     bucketName <- genSamS3BucketName
     templateName <- genSamCFTemplateName
     stage <- genSamStage
-    resourcePrefixName <- genSamResourcePrefixName
     credentialsAndUser <- genCredentialsRegionAndUser
     amazonUser <- genAmazonUser
   } yield ProjectConfiguration(
     projectName,
+    organizationName,
     projectVersion,
     projectDescription,
     bucketName,
     templateName,
     stage,
-    resourcePrefixName,
     credentialsAndUser,
     amazonUser,
   )

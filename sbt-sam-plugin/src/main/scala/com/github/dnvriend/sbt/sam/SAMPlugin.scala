@@ -47,7 +47,6 @@ object SAMPlugin extends AutoPlugin {
     },
     samS3BucketName := s"${organization.value}-${samStageValue.value}-${name.value}",
     samCFTemplateName := s"${organization.value}-${samStageValue.value}-${name.value}",
-    samResourcePrefixName := s"${name.value}-${samStageValue.value}",
     (assemblyJarName in assembly) := "codepackage.jar",
 
     samProjectClassLoader := {
@@ -151,11 +150,11 @@ object SAMPlugin extends AutoPlugin {
     samProjectConfiguration := {
       ProjectConfiguration.fromConfig(
         name.value,
+        organization.value,
         version.value,
         description.value,
         samS3BucketName.value,
         samCFTemplateName.value,
-        samResourcePrefixName.value,
         samStageValue.value,
         iamCredentialsRegionAndUser.value,
         iamUserInfo.value,

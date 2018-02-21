@@ -43,7 +43,7 @@ object Swagger {
       * Required: Provides metadata about the API. The metadata can be used by the clients if needed.
       */
     def info(projectName: String, stage: String): JsValue = {
-      val title = s"$projectName-$stage"
+      val title = s"$stage-$projectName"
       Json.obj(
         "info" -> Json.obj(
           "version" -> "2017-02-24T04:09:00Z",
