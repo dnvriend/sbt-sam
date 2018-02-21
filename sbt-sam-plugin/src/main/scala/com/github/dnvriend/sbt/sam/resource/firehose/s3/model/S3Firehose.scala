@@ -23,7 +23,7 @@ case class S3Firehose(
                        export: Boolean = false,
                      ) {
 
-  def roleName: String = name
+  def roleName: String = s"$name-role"
 
   def roleLogicalName: String = s"${configName}Role"
 
@@ -31,7 +31,7 @@ case class S3Firehose(
 
   def bucketLogicalName: String = s"${configName}Bucket"
 
-  def streamName: String = name
+  def streamName: String = s"$name-stream"
 
   def streamLogicalName: String = s"${configName}Stream"
 

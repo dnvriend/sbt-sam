@@ -173,7 +173,11 @@ object CFS3Bucket {
       Json.obj("AccessControl" -> accessControl.toString),
       Json.obj("BucketName" -> bucketName),
       Json.obj( "VersioningConfiguration" -> Json.obj("Status" -> versioningConfiguration.toString)),
-      Json.obj("BucketEncryption" -> Json.obj("ServerSideEncryptionConfiguration" -> Json.arr(Json.obj("ServerSideEncryptionByDefault" -> Json.obj("SSEAlgorithm" -> "AES256"))))),
+      //
+      // cannot be enabled, cloudformation does not support creating/encrypting buckets in one go
+      // other strategies must be tried
+      //
+//      Json.obj("BucketEncryption" -> Json.obj("ServerSideEncryptionConfiguration" -> Json.arr(Json.obj("ServerSideEncryptionByDefault" -> Json.obj("SSEAlgorithm" -> "AES256"))))),
       Json.toJson(corsRules),
       Json.toJson(websiteConfiguration),
     ).fold(JsMonoids.jsObjectMerge)

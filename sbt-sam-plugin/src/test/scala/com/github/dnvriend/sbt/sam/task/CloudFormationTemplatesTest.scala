@@ -15,29 +15,29 @@ import com.github.dnvriend.test.TestSpec
 import play.api.libs.json.{ JsValue, Json }
 
 class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
-  //  it should "be able to create a resource name" in {
-  //    val projectName = "projectname"
-  //    val stage = "stage"
-  //    val resourceName = "resourcename"
-  //
-  //    CloudFormationTemplates.createResourceName(projectName, stage, resourceName) shouldEqual s"$stage-$projectName-$resourceName"
-  //  }
-  //
-  //  it should "create a deployment bucket template" in {
-  //    forAll { (pc: ProjectConfiguration) =>
-  //      val template: TemplateBody = CloudFormationTemplates.deploymentBucketTemplate(pc)
-  //      val deploymentBucketTemplate: JsValue = Json.parse(template.value)
-  //      (deploymentBucketTemplate \ "AWSTemplateFormatVersion").as[String] shouldBe "2010-09-09"
-  //      (deploymentBucketTemplate \ "Description").toOption shouldBe 'defined
-  //      val resources = (deploymentBucketTemplate \ "Resources").as[Map[String, JsValue]]
-  //      resources should not be 'empty
-  //      resources.keys should contain("SbtSamDeploymentBucket")
-  //      val deploymentBucket = resources("SbtSamDeploymentBucket")
-  //      (deploymentBucket \ "Type").as[String] shouldBe "AWS::S3::Bucket"
-  //      (deploymentBucket \ "Properties" \ "AccessControl").as[String] shouldBe "BucketOwnerFullControl"
-  //      (deploymentBucket \ "Properties" \ "VersioningConfiguration" \ "Status").as[String] shouldBe "Enabled"
-  //    }
-  //  }
+  it should "be able to create a resource name" in {
+    val projectName = "projectname"
+    val stage = "stage"
+    val resourceName = "resourcename"
+
+    CloudFormationTemplates.createResourceName(projectName, stage, resourceName) shouldEqual s"$stage-$projectName-$resourceName"
+  }
+
+  it should "create a deployment bucket template" in {
+    forAll { (pc: ProjectConfiguration) =>
+      val template: TemplateBody = CloudFormationTemplates.deploymentBucketTemplate(pc)
+      val deploymentBucketTemplate: JsValue = Json.parse(template.value)
+      (deploymentBucketTemplate \ "AWSTemplateFormatVersion").as[String] shouldBe "2010-09-09"
+      (deploymentBucketTemplate \ "Description").toOption shouldBe 'defined
+      val resources = (deploymentBucketTemplate \ "Resources").as[Map[String, JsValue]]
+      resources should not be 'empty
+      resources.keys should contain("SbtSamDeploymentBucket")
+      val deploymentBucket = resources("SbtSamDeploymentBucket")
+      (deploymentBucket \ "Type").as[String] shouldBe "AWS::S3::Bucket"
+      (deploymentBucket \ "Properties" \ "AccessControl").as[String] shouldBe "BucketOwnerFullControl"
+      (deploymentBucket \ "Properties" \ "VersioningConfiguration" \ "Status").as[String] shouldBe "Enabled"
+    }
+  }
 
   it should "generate an s3 firehose project configuration" in {
     val jarName = "jarName"
@@ -95,51 +95,51 @@ class CloudFormationTemplatesTest extends TestSpec with Generators with AllOps {
     val template: JsValue = Json.parse(updateTemplate.value)
     val templateJsonString = Json.prettyPrint(template)
     val organizationNameReplaced = organizationName.replace(".", "-").replace(" ", "").trim
-//    println(templateJsonString)
+    //    println(templateJsonString)
     val resources = (template \ "Resources").as[Map[String, JsValue]]
     (resources("ButtonClickedFirehose") \ "Properties" \ "DeliveryStreamName").as[String] shouldBe s"$stage-$projectName-$firehoseName"
-    (resources("ButtonClickedFirehoseStream") \ "Properties" \ "Name").as[String] shouldBe s"$stage-$projectName-$firehoseName"
+    (resources("ButtonClickedFirehoseStream") \ "Properties" \ "Name").as[String] shouldBe s"$stage-$projectName-$firehoseName-stream"
     (resources("ButtonClickedFirehoseBucket") \ "Properties" \ "BucketName").as[String] shouldBe s"$organizationNameReplaced-$stage-$firehoseName-storage"
-    (resources("ButtonClickedFirehoseRole") \ "Properties" \ "RoleName").as[String] shouldBe s"$stage-$projectName-$firehoseName"
+    (resources("ButtonClickedFirehoseRole") \ "Properties" \ "RoleName").as[String] shouldBe s"$stage-$projectName-$firehoseName-role"
   }
 
-  //  it should "generate an update template" in {
-  //    val pc: ProjectConfiguration = iterProjectConfig.next()
-  //    val httpHandler: HttpHandler = iterHttpHandler.next()
-  //    val snsEventHandler: SNSEventHandler = iterSNSEventHandler.next()
-  //    val scheduledEventHandler: ScheduledEventHandler = iterScheduledEventHandler.next()
-  //    val kinesisEventHandler: KinesisEventHandler = iterKinesisEventHandler.next()
-  //    val dynamoHandler: DynamoHandler = iterDynamoHandler.next()
-  //    val stream: KinesisStream = iterKinesisStream.next()
-  //    val s3Firehose: S3Firehose = iterS3Firehose.next()
-  //    val table: TableWithIndex = iterTableWithIndex.next()
-  //    val topic: Topic = iterTopic.next()
-  //    val bucket: S3Bucket = iterS3Bucket.next()
-  //    val role: IamRole = iterIamRole.next()
-  //    val authPool: Authpool = iterAuthpool.next()
-  //    val jarName = "jarName"
-  //    val latestVersion = "latestVersion"
-  //    val accountId = "0123456789"
-  //    val region = "eu-west-1"
-  //    val stage = pc.samStage.value
-  //    val projectName = pc.projectName
-  //    val organizationName = pc.organizationName
-  //    val conf = pc.copy(
-  //      authpool = Option(authPool),
-  //      streams = pc.streams :+ stream :+ s3Firehose.stream(projectName, stage),
-  //      topics = pc.topics :+ topic,
-  //      tables = pc.tables :+ table,
-  //      lambdas = pc.lambdas ++ List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
-  //      buckets = pc.buckets :+ bucket :+ s3Firehose.bucket,
-  //      s3Firehoses = pc.s3Firehoses :+ s3Firehose,
-  //      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role
-  //    )
-  //    val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
-  //    val template: JsValue = Json.parse(updateTemplate.value)
-  //    val templateJsonString = Json.prettyPrint(template)
-  //    println(templateJsonString)
-  //    (template \ "Resources").toOption shouldBe 'defined
-  //    (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
-  //    val resources = (template \ "Resources").as[Map[String, JsValue]]
-  //  }
+  it should "generate an update template" in {
+    val pc: ProjectConfiguration = iterProjectConfig.next()
+    val httpHandler: HttpHandler = iterHttpHandler.next()
+    val snsEventHandler: SNSEventHandler = iterSNSEventHandler.next()
+    val scheduledEventHandler: ScheduledEventHandler = iterScheduledEventHandler.next()
+    val kinesisEventHandler: KinesisEventHandler = iterKinesisEventHandler.next()
+    val dynamoHandler: DynamoHandler = iterDynamoHandler.next()
+    val stream: KinesisStream = iterKinesisStream.next()
+    val s3Firehose: S3Firehose = iterS3Firehose.next()
+    val table: TableWithIndex = iterTableWithIndex.next()
+    val topic: Topic = iterTopic.next()
+    val bucket: S3Bucket = iterS3Bucket.next()
+    val role: IamRole = iterIamRole.next()
+    val authPool: Authpool = iterAuthpool.next()
+    val jarName = "jarName"
+    val latestVersion = "latestVersion"
+    val accountId = "0123456789"
+    val region = "eu-west-1"
+    val stage = pc.samStage.value
+    val projectName = pc.projectName
+    val organizationName = pc.organizationName
+    val conf = pc.copy(
+      authpool = Option(authPool),
+      streams = pc.streams :+ stream :+ s3Firehose.stream(projectName, stage),
+      topics = pc.topics :+ topic,
+      tables = pc.tables :+ table,
+      lambdas = pc.lambdas ++ List(httpHandler, snsEventHandler, scheduledEventHandler, kinesisEventHandler, dynamoHandler),
+      buckets = pc.buckets :+ bucket :+ s3Firehose.bucket,
+      s3Firehoses = pc.s3Firehoses :+ s3Firehose,
+      iamRoles = pc.iamRoles :+ role :+ s3Firehose.role
+    )
+    val updateTemplate: TemplateBody = CloudFormationTemplates.updateTemplate(conf, jarName, latestVersion)
+    val template: JsValue = Json.parse(updateTemplate.value)
+    val templateJsonString = Json.prettyPrint(template)
+    println(templateJsonString)
+    (template \ "Resources").toOption shouldBe 'defined
+    (template \ "Resources").asOpt[Map[String, JsValue]] shouldBe 'defined
+    val resources = (template \ "Resources").as[Map[String, JsValue]]
+  }
 }
