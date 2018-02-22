@@ -342,6 +342,9 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.26 (2018-02-22)
+- Removing check if bucket exists as it conflicts with the workflow
+
 ## 1.0.25 (2018-02-21)
 - Merged #99 Encryption at rest for DynamoDB tables
 - Merged #100 Encryption at rest for Kinesis Streams
