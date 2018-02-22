@@ -19,11 +19,10 @@ object CloudFormationStackCreate {
     s3Client: AmazonS3,
     log: Logger,
   ): Unit = {
-    val deploymentBucketName: String = config.samS3BucketName.value
-
-    if(s3Client.doesBucketExistV2(deploymentBucketName)) {
-      throw new RuntimeException(s"Deployment bucket '$deploymentBucketName' already exists, please change the samStage or organization/project name")
-    }
+//    val deploymentBucketName: String = config.samS3BucketName.value
+//    if(s3Client.doesBucketExistV2(deploymentBucketName)) {
+//      throw new RuntimeException(s"Deployment bucket '$deploymentBucketName' already exists, please change the samStage or organization/project name")
+//    }
 
     if (describeStackResponse.isEmpty) {
       log.info("Creating cloud formation stack")
