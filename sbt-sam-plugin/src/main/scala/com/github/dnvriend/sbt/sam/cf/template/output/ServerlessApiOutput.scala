@@ -7,7 +7,9 @@ import play.api.libs.json.{ Json, Writes }
 object ServerlessApiOutput {
   implicit val writes: Writes[ServerlessApiOutput] = Writes.apply(model => {
     import model._
-    val stageLogicalName = s"ServerlessRestApi${stage}Stage"
+    // The behavior of CloudFormation suddenly changed, the change set now
+    // creates a 'ServerlessRestApiProdStage' resource, and only exposes the 'Prod' stag
+    val stageLogicalName = s"ServerlessRestApiProdStage"
     Json.obj(
       "ServiceEndpoint" -> Json.obj(
         "Description" -> "URL of the service endpoint",

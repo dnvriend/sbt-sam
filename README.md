@@ -342,6 +342,13 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.27 (2018-03-02)
+- SAM generates an `AWS::ApiGateway::Stage` resource with a name where the `samStage` was part of the
+  encoded resource name. This name was the result of applying the `Serverless Transform`. To export the
+  base url of the Api gateway, sbt-sam looked up the name with the encoded stage. The new behavior of 
+  CloudFormation is to encode the stage `Prod` in the name, so sbt-sam now looks for this stage and exports that
+  url to other components.  
+
 ## 1.0.26 (2018-02-22)
 - Removing check if bucket exists as it conflicts with the workflow
 
