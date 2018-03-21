@@ -12,7 +12,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.firehose.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.iam.role.{CFIamRole, CFS3IamPolicy}
 import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
-import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.EventSource
+import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.{EventSource, NoEventSource}
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.apigw.ApiGatewayEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.cloudwatch.CloudWatchEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.dynamodb.DynamoDBEventSource
@@ -33,7 +33,6 @@ import com.github.dnvriend.sbt.sam.resource.kinesis.model.KinesisStream
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model.Topic
 import play.api.libs.json._
-
 import scalaz.Scalaz._
 import scalaz._
 
@@ -427,6 +426,8 @@ object CloudFormationTemplates {
       S3EventSource("S3EventSource", Option(conf.bucketResourceName), None, conf.events)
     case CloudWatchHandler(_, conf) =>
       CloudWatchEventSource("CloudWatchEventSource", conf.pattern)
+    case GenericHandler(conf) =>
+      NoEventSource()
   }
 
   /**

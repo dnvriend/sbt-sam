@@ -18,6 +18,7 @@ object EventSource {
     case event: KinesisEventSource    => KinesisEventSource.writes.writes(event)
     case event: DynamoDBEventSource   => DynamoDBEventSource.writes.writes(event)
     case event: CloudWatchEventSource => CloudWatchEventSource.writes.writes(event)
+    case event: NoEventSource         => NoEventSource.writes.writes(event)
   }
 }
 

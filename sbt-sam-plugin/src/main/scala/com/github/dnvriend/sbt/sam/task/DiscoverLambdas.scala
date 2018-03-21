@@ -24,7 +24,8 @@ object DiscoverLambdas {
         "com.github.dnvriend.lambda.ScheduledEventHandler",
         "com.github.dnvriend.lambda.SNSEventHandler",
         "com.github.dnvriend.lambda.S3EventHandler",
-        "com.github.dnvriend.lambda.CloudWatchHandler"
+        "com.github.dnvriend.lambda.CloudWatchHandler",
+        "com.github.dnvriend.lambda.GenericHandler",
       ).contains(superClassName)
   }
 

@@ -19,6 +19,7 @@ import com.amazonaws.services.s3.model.{ AccessControlList, Bucket }
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.Topic
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.SbtSamPluginBuildInfo
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.KinesisAnalytics
@@ -173,19 +174,19 @@ object CloudFormationStackInfo {
       def report(dbInstance: DBInstance): String = {
         import dbInstance._
         s"""
-             |  - DatabaseInstanceIdentifier: $getDBInstanceIdentifier
-             |  - DatabaseInstanceClass: $getDBInstanceClass
-             |  - DatabaseName: $getDBName
-             |  - AllocatedStorage: $getAllocatedStorage
-             |  - Endpoint: ${getEndpoint.getAddress}
-             |  - Engine: $getEngine
-             |  - EngineVersion: $getEngineVersion
-             |  - Port: ${getEndpoint.getPort}
-             |  - Publicly Accessible: $getPubliclyAccessible
-             |  - Status: $getDBInstanceStatus
-             |  - SecurityGroup: $getDBSecurityGroups
-             |  - StorageType: $getStorageType
-             |  - VPCSecurityGroup: $getVpcSecurityGroups
+           |  - DatabaseInstanceIdentifier: $getDBInstanceIdentifier
+           |  - DatabaseInstanceClass: $getDBInstanceClass
+           |  - DatabaseName: $getDBName
+           |  - AllocatedStorage: $getAllocatedStorage
+           |  - Endpoint: ${getEndpoint.getAddress}
+           |  - Engine: $getEngine
+           |  - EngineVersion: $getEngineVersion
+           |  - Port: ${getEndpoint.getPort}
+           |  - Publicly Accessible: $getPubliclyAccessible
+           |  - Status: $getDBInstanceStatus
+           |  - SecurityGroup: $getDBSecurityGroups
+           |  - StorageType: $getStorageType
+           |  - VPCSecurityGroup: $getVpcSecurityGroups
          """.stripMargin
       }
 
@@ -424,6 +425,18 @@ object CloudFormationStackInfo {
             s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName} -> (${handler.cloudWatchConf.pattern}): ${Console.RESET}$info"
         }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No CloudWatch event handlers configured")
       }
+
+      val genericHandlers: String = {
+        config.lambdas.collect({ case h: GenericHandler => h }).map { handler =>
+          val fqcn: String = handler.lambdaConfig.fqcn
+          (handler, AwsLambdaOperations.findFunction(fqcn, projectName, stage, lambdaClient))
+        }.map {
+          case (handler, optionalInfo) =>
+            val info = optionalInfo.fold(Console.YELLOW + "not yet deployed")(report)
+            s"* ${Console.GREEN}${handler.lambdaConfig.simpleClassName}: ${Console.RESET}$info"
+        }.toNel.map(_.intercalate("\n")).getOrElse(Console.YELLOW + "No Generic event handlers configured")
+      }
+
       s"""Lambdas:
          |Api Http Event Handlers:
          |$httpHandlers
@@ -436,9 +449,11 @@ object CloudFormationStackInfo {
          |SNS Event Handlers:
          |$snsEventHandlers
          |S3 Event Handlers:
-         | $s3EventHandlers
-         | CloudWatch Event Handlers:
-         | $cloudWatchEventHandlers""".stripMargin
+         |$s3EventHandlers
+         |CloudWatch Event Handlers:
+         |$cloudWatchEventHandlers
+         |Generic Event Handlers:
+         |$genericHandlers""".stripMargin
     }
 
     val sqlApplicationsSummary: String = {
@@ -469,6 +484,13 @@ object CloudFormationStackInfo {
       }.getOrElse(Console.YELLOW + "No service endpoint found")
     }
 
+    val sbtSamSummary: String = {
+      val bi = SbtSamPluginBuildInfo
+      s"""sbt-sam information:
+         |- version: ${bi.version}
+         |- builtAt: ${bi.builtAtString}""".stripMargin
+    }
+
     val accountSummary: String = {
       val creds = config.credentialsRegionAndUser
       s"""* Region: ${Console.GREEN}'${creds.credentialsAndRegion.region.getName}'
@@ -484,6 +506,7 @@ object CloudFormationStackInfo {
          |====================
          |Stack State:
          |====================
+         |$sbtSamSummary
          |$stackSummary
          |Account:
          |$accountSummary

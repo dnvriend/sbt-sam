@@ -121,6 +121,7 @@ case class ProjectConfiguration(
   def snsEventHandlers: List[SNSEventHandler] = lambdas.collect({case h: SNSEventHandler => h})
   def dynamoHandlers: List[DynamoHandler] = lambdas.collect({case h: DynamoHandler => h})
   def kinesisEventHandlers: List[KinesisEventHandler] = lambdas.collect({case h: KinesisEventHandler => h})
+  def genericHandlers: List[GenericHandler] = lambdas.collect({case h: GenericHandler => h})
   def userArn: Arn = Arn.fromArnString(credentialsRegionAndUser.user.getArn.wrap[Arn])
   def accountId: String = userArn.accountId.value
   def getRegion: Regions = credentialsRegionAndUser.credentialsAndRegion.region

@@ -108,6 +108,8 @@ case class CloudWatchHandler(
                             cloudWatchConf: CloudWatchConf
                             ) extends LambdaHandler
 
+case class GenericHandler(lambdaConfig: LambdaConfig) extends LambdaHandler
+
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
           stage: String, config: Config): Set[LambdaHandler] = {
@@ -155,7 +157,13 @@ object ClassifyLambdas {
         case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToCloudWatchHandler(cl, fqcn, simpleName, anno, stage))
       }
 
-    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers)
+    val genericHandlers: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("GenericConf"))
+      .map(cl => (cl, cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("GenericConf"))))
+      .flatMap {
+        case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToGenericHandler(cl, fqcn, simpleName, anno, stage))
+      }
+
+    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers ++ genericHandlers)
       .map(determineAdditionalConfig(config, _))
   }
 
@@ -167,6 +175,7 @@ object ClassifyLambdas {
     case h: KinesisEventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
     case h: S3EventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
     case h: CloudWatchHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: GenericHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
   }
 
   def addAdditionalConfig(config: Config, lambdaconfig: LambdaConfig): LambdaConfig = {
@@ -312,6 +321,15 @@ object ClassifyLambdas {
       CloudWatchConf(pattern)
     )
   }
+
+  def mapAnnoToGenericHandler(cl: Class[_], className: String, simpleName: String, anno: Annotation, stage: String): GenericHandler = {
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+
+    GenericHandler(LambdaConfig(cl, className, simpleName, memorySize, timeout, description))
+  }
+
 
   implicit class ClassOps(className: String) {
     def withoutDollarSigns: String = className.replace("$", "")
