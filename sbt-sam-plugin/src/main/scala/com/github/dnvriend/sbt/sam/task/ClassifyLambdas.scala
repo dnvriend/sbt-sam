@@ -23,6 +23,7 @@ case class LambdaConfig(
                          memorySize: Int = 1024,
                          timeout: Int = 300,
                          description: String = "",
+                         reservedConcurrentExecutions: Option[Int] = None,
                          managedPolicies: List[String] = List.empty,
                          vpcConfig: Option[VPCConfig] = None,
                          envVars: Map[String, String] = Map.empty
@@ -236,9 +237,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     DynamoHandler(
-      LambdaConfig(cl, fqcn, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, fqcn, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       DynamoConf(tableName, batchSize, startingPosition, enabled)
     )
   }
@@ -250,9 +252,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     HttpHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       HttpConf(path, method, authorization)
     )
   }
@@ -262,9 +265,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     ScheduledEventHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       ScheduleConf(schedule)
     )
   }
@@ -274,9 +278,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     SNSEventHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       SNSConf(topic)
     )
   }
@@ -288,9 +293,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     KinesisEventHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       KinesisConf(stream, startingPosition, batchSize)
     )
   }
@@ -301,11 +307,12 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
     val events = anno.annotationType().getMethod("events").invoke(anno).asInstanceOf[Array[String]].toList
     val s3Events = S3Events.fromList(events)
 
     S3EventHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       S3Conf(bucketResourceName, filter, s3Events)
     )
   }
@@ -315,9 +322,10 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
     CloudWatchHandler(
-      LambdaConfig(cl, className, simpleName, memorySize, timeout, description),
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
       CloudWatchConf(pattern)
     )
   }
@@ -326,8 +334,9 @@ object ClassifyLambdas {
     val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
     val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
     val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
 
-    GenericHandler(LambdaConfig(cl, className, simpleName, memorySize, timeout, description))
+    GenericHandler(LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions))
   }
 
 

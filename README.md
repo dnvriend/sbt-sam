@@ -342,6 +342,10 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.28 (2018-03-23)
+- Support for generic lambdas by using the `GenericHandler` trait and annotating it with a `@GenericConf` configuration.
+- Added support for 
+
 ## 1.0.27 (2018-03-02)
 - SAM generates an `AWS::ApiGateway::Stage` resource with a name where the `samStage` was part of the
   encoded resource name. This name was the result of applying the `Serverless Transform`. To export the

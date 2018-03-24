@@ -452,6 +452,7 @@ object CloudFormationTemplates {
       jarName,
       latestVersion,
       conf.description,
+      conf.reservedConcurrentExecutions,
       conf.memorySize,
       conf.timeout,
       conf.managedPolicies,
