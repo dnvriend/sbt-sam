@@ -202,11 +202,13 @@ object ClassifyLambdas {
         case p@"AWSKeyManagementServicePowerUser" => p
         case p@"AWSLambdaVPCAccessExecutionRole" => p
         case p@"AWSLambdaFullAccess" => p
+        case p@"ComprehendFullAccess" => p
         case p@"CloudWatchFullAccess" => p
         case p@"CloudWatchLogsFullAccess" => p
       }
 
     annotationNames.toNel.map(_.toList).getOrElse(List(
+      "AmazonKinesisFullAccess",
       "AmazonDynamoDBFullAccess",
       "CloudWatchLogsFullAccess",
       "AmazonS3FullAccess"
