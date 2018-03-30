@@ -342,14 +342,12 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
-## 1.0.28 (NOT-YET-RELEASED)
+## 1.0.28 (2018-03-30)
 - Support for generic lambdas by using the `GenericHandler` trait and annotating it with a `@GenericConf` configuration.
   Generic Lambdas are lambdas that are not subscribed to a specific event generator like eg. Kinesis or DynamoDB streams, but
   must be deployed to AWS and can be invoked by sending a message to the ARN of the lambda like eg. by means of AWS RDS Aurora for MySQL,
 - Added support for Lambda `ReservedConcurrentExecutions` by means of configuration annotations,
-- Added AWS Glue Database support by means of configuration,
-- Added AWS Glue Crawler support by means of configuration,
-- Added AWS Athena NamedQuery definition support by means of sql files,
+- Added `ComprehendFullAccess` managed policy annotation, to allow a lambda access to [AWS Comprehend](https://aws.amazon.com/comprehend/) where applicable, eg. to do sentiment analysis on English text.
 
 ## 1.0.27 (2018-03-02)
 - SAM generates an `AWS::ApiGateway::Stage` resource with a name where the `samStage` was part of the
