@@ -205,6 +205,7 @@ object ClassifyLambdas {
         case p@"ComprehendFullAccess" => p
         case p@"CloudWatchFullAccess" => p
         case p@"CloudWatchLogsFullAccess" => p
+        case p@"SecretsManagerReadWrite" => p
       }
 
     annotationNames.toNel.map(_.toList).getOrElse(List(
