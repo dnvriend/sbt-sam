@@ -56,7 +56,7 @@ object SecretsManager {
   }
 
   def getSecretAsMap(secretId: String, client: AWSSecretsManager): Option[Map[String, String]] = {
-    getSecretString(secretId, client).map(Json.par`se).map(_.as[Map[String, String]])
+    getSecretString(secretId, client).map(Json.parse).map(_.as[Map[String, String]])
   }
 
 }

@@ -26,6 +26,7 @@ object DiscoverLambdas {
         "com.github.dnvriend.lambda.S3EventHandler",
         "com.github.dnvriend.lambda.CloudWatchHandler",
         "com.github.dnvriend.lambda.GenericHandler",
+        "com.amazonaws.services.lambda.runtime.RequestStreamHandler",
       ).contains(superClassName)
   }
 
