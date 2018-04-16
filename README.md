@@ -342,6 +342,10 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.29 (2018-04-16)
+- Support for Java-based lambdas that implement `com.amazonaws.services.lambda.runtime.RequestStreamHandler`.
+- Support for the [AWS Secret Manager](https://aws.amazon.com/secrets-manager/) with `com.github.dnvriend.secrets.SecretsManager`.
+
 ## 1.0.28 (2018-03-30)
 - Support for generic lambdas by using the `GenericHandler` trait and annotating it with a `@GenericConf` configuration.
   Generic Lambdas are lambdas that are not subscribed to a specific event generator like eg. Kinesis or DynamoDB streams, but
