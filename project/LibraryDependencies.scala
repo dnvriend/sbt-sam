@@ -2,7 +2,7 @@ import sbt._
 
 object LibraryDependencies {
   // versions
-  val awsSdkVersion = "1.11.311"
+  val awsSdkVersion = "1.11.313"
 
   // libraries
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
@@ -28,7 +28,7 @@ object LibraryDependencies {
   val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.3.0"
   val libAwsRequestSigner: ModuleID = "io.ticofab" %% "aws-request-signer" % "0.5.2"
   val libLogback: ModuleID = "ch.qos.logback" % "logback-classic" % "1.2.3"
-  val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0"
+  val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
   val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % "2.5.11"
   val libAkkaStream: ModuleID = "com.typesafe.akka" %% "akka-stream" % "2.5.11"
 
