@@ -12,7 +12,7 @@ object GlobalSettings extends AutoPlugin {
   override def requires = plugins.JvmPlugin && SbtScalariform && HeaderPlugin
 
   override def globalSettings = Seq(
-    scalaVersion := "2.12.5",
+    scalaVersion := "2.12.6",
     organization := "com.github.dnvriend",
     description := "A plugin for creating enterprise cloud application leveraging serverless compute and managed resources",
     startYear := Some(2017),

@@ -2,7 +2,8 @@ import sbt._
 
 object LibraryDependencies {
   // versions
-  val awsSdkVersion = "1.11.313"
+  val awsSdkVersion = "1.11.321"
+  val akkaVersion = "2.5.12"
 
   // libraries
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
@@ -10,6 +11,7 @@ object LibraryDependencies {
   val libAwsSnsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-sns" % awsSdkVersion
   val libAwsS3Sdk: ModuleID = "com.amazonaws" % "aws-java-sdk-s3" % awsSdkVersion
   val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % awsSdkVersion
+  val libAwsEcsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-ecs" % awsSdkVersion
   val libSecretsManagerSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-secretsmanager" % awsSdkVersion
   val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
@@ -18,22 +20,22 @@ object LibraryDependencies {
   val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.59"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.3"
   val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.9.1"
-  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.21"
+  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.22"
   val libAvro4s: ModuleID = "com.github.dnvriend" %% "avro4s-core" % "1.8.3"
   val libAvro: ModuleID = "org.apache.avro" % "avro" % "1.8.2"
   val libAvroCompiler: ModuleID = "org.apache.avro" % "avro-compiler" % "1.8.2"
   val libPlayJson: ModuleID = "com.typesafe.play" %% "play-json" % "2.6.9"
   val libShapeless: ModuleID = "com.chuusai" %% "shapeless" % "2.3.2"
   val libSbtIO: ModuleID = "org.scala-sbt" %% "io" % "1.1.1"
-  val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.3.0"
+  val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.4.0"
   val libAwsRequestSigner: ModuleID = "io.ticofab" %% "aws-request-signer" % "0.5.2"
   val libLogback: ModuleID = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
-  val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % "2.5.11"
-  val libAkkaStream: ModuleID = "com.typesafe.akka" %% "akka-stream" % "2.5.11"
+  val libAkkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % akkaVersion
+  val libAkkaStream: ModuleID = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 
   // testing libs //
-  val libScalaCheckTest: ModuleID = "org.scalacheck" %% "scalacheck" % "1.13.5"
+  val libScalaCheckTest: ModuleID = "org.scalacheck" %% "scalacheck" % "1.14.0"
   val libScalazScalaTest: ModuleID = "org.typelevel" %% "scalaz-scalatest" % "1.1.2"
   val libScalaTest: ModuleID = "org.scalatest" %% "scalatest" % "3.0.5"
 

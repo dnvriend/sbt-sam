@@ -206,6 +206,8 @@ object ClassifyLambdas {
         case p@"CloudWatchFullAccess" => p
         case p@"CloudWatchLogsFullAccess" => p
         case p@"SecretsManagerReadWrite" => p
+        case p@"AmazonECS_FullAccess" => p
+        case p@"AmazonECSTaskExecutionRolePolicy" => p
       }
 
     annotationNames.toNel.map(_.toList).getOrElse(List(
