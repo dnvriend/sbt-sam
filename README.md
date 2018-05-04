@@ -342,6 +342,9 @@ The 'default cli config' file:
 - [Lambda Environment Variables](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
 
 ## Changelog
+## 1.0.30 (2018-05-04)
+- Support for launching ECS jobs using the `com.github.dnvriend.ecs.ECS` service, combine it with [AWS Fargate](https://aws.amazon.com/fargate/) to run compute jobs that cannot run on Lambda because of resource or library constraints.
+
 ## 1.0.29 (2018-04-16)
 - Support for Java-based lambdas that implement `com.amazonaws.services.lambda.runtime.RequestStreamHandler`.
 - Support for the [AWS Secret Manager](https://aws.amazon.com/secrets-manager/) with `com.github.dnvriend.secrets.SecretsManager`.
