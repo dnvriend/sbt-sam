@@ -22,6 +22,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.schedule.ScheduledEv
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.event.sns.SnsEventSource
 import com.github.dnvriend.sbt.sam.cf.resource.s3._
 import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
+import com.github.dnvriend.sbt.sam.cf.resource.statemachine.StateMachine
 import com.github.dnvriend.sbt.sam.cf.template._
 import com.github.dnvriend.sbt.sam.cf.template.output.{GenericOutput, ServerlessApiOutput}
 import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerType
@@ -136,7 +137,8 @@ object CloudFormationTemplates {
         iamRolesResources(projectName, projectVersion, stage, accountId, config.iamRoles) ++
         userpoolResource(projectName, stage, config.authpool) ++
         apiGatewayResource(projectName, stage, config.httpHandlers, config.authpool, config.importAuthPool, config.authorizerType) ++
-        rdsResource(projectName, projectVersion, stage, config.rdsInstances)
+        rdsResource(projectName, projectVersion, stage, config.rdsInstances) ++
+        stateMachineResource(projectName, projectVersion, stage, config.stateMachines)
     }
 
     val template: CloudFormationTemplate = CloudFormationTemplate(
@@ -313,6 +315,21 @@ object CloudFormationTemplates {
     }
   }
 
+  def stateMachineResource(projectName: String, projectVersion: String, stage: String, stateMachines: List[DiscoveredStateMachine]): List[Resource] = {
+    stateMachines.map { sm =>
+      StateMachine(
+        sm.name,
+        sm.name,
+        CloudFormation.substValues(
+          sm.stateMachineDefinition,
+          sm.taskLogicalResourceId
+            .map(id => id -> CloudFormation.getAtt(id, "Arn"))
+            .toMap
+        )
+      )
+    }
+  }
+
   /**
     * Determine the DynamoDB CloudFormation resource
     */
@@ -426,7 +443,9 @@ object CloudFormationTemplates {
       S3EventSource("S3EventSource", Option(conf.bucketResourceName), None, conf.events)
     case CloudWatchHandler(_, conf) =>
       CloudWatchEventSource("CloudWatchEventSource", conf.pattern)
-    case GenericHandler(conf) =>
+    case GenericHandler(_) =>
+      NoEventSource()
+    case StepFunctionTaskHandler(_, _) =>
       NoEventSource()
   }
 

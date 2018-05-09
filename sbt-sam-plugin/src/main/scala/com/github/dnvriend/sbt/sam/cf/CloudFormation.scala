@@ -64,6 +64,14 @@ object CloudFormation {
   def subst(input: String): JsObject = Json.obj("Fn::Sub" -> input)
 
   /**
+   * Substitutes variables in an input string with their associated values at runtime.
+   * Variables can be template parameter names, resource logical IDs or resource attributes.
+   */
+  def substValues(input: String, values: Map[String, JsValue]): JsObject = Json.obj(
+    "Fn::Sub" -> Json.arr(input, Json.toJson(values))
+  )
+
+  /**
    * Returns the AWS account id eg '123456789012'
    */
   def accountId: JsObject = subst("${AWS::AccountId}")

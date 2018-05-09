@@ -12,11 +12,12 @@ object LibraryDependencies {
   val libAwsS3Sdk: ModuleID = "com.amazonaws" % "aws-java-sdk-s3" % awsSdkVersion
   val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % awsSdkVersion
   val libAwsEcsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-ecs" % awsSdkVersion
-  val libSecretsManagerSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-secretsmanager" % awsSdkVersion
-  val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
+  val libAwsSecretsManagerSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-secretsmanager" % awsSdkVersion
+  val libAwsStepfunctionsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-stepfunctions" % awsSdkVersion
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
   val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.1.0"
-  val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.2"
+  val libAwsEncryptionSdk: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.2"
+  val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
   val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.59"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.3"
   val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.9.1"

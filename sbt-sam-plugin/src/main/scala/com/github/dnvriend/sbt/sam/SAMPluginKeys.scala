@@ -16,17 +16,17 @@ package com.github.dnvriend.sbt.sam
 
 import com.amazonaws.services.cloudformation.model.Stack
 import com.github.dnvriend.sbt.aws.task._
+import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
+import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerType
 import com.github.dnvriend.sbt.sam.resource.bucket.model.S3Bucket
 import com.github.dnvriend.sbt.sam.resource.cognito.model.{ Authpool, ImportAuthPool }
 import com.github.dnvriend.sbt.sam.resource.dynamodb.model._
 import com.github.dnvriend.sbt.sam.resource.firehose.s3.model.S3Firehose
 import com.github.dnvriend.sbt.sam.resource.kinesis.model._
-import com.github.dnvriend.sbt.sam.cf.rds.RDSInstance
-import com.github.dnvriend.sbt.sam.resource.authorizer.AuthorizerType
 import com.github.dnvriend.sbt.sam.resource.role.model.IamRole
 import com.github.dnvriend.sbt.sam.resource.sns.model._
 import com.github.dnvriend.sbt.sam.task.ClassifySqlFiles.SqlApplication
-import com.github.dnvriend.sbt.sam.task.{ LambdaHandler, ProjectClass, ProjectConfiguration, ProjectLambda }
+import com.github.dnvriend.sbt.sam.task._
 import sbt._
 
 object SAMPluginKeys {
@@ -42,6 +42,7 @@ object SAMPluginKeys {
   lazy val discoveredClasses = TaskKey[Set[ProjectClass]]("discoveredClasses") // returns a set of discovered classes
   lazy val discoveredLambdas = TaskKey[Set[ProjectLambda]]("discoveredLambdas") // returns a set of discovered unclassified lambdas
   lazy val classifiedLambdas = TaskKey[Set[LambdaHandler]]("classifiedLambdas") // returns a set of classified lambdas
+  lazy val discoveredStateMachines = TaskKey[List[DiscoveredStateMachine]]("discoveredStateMachines") // returns a set of state machines
   lazy val discoveredSqlFiles = TaskKey[Set[File]]("discoveredSqlFiles") //TODO: not yet necessary but for future use for analytical engines with sql frontends
   lazy val classifiedSqlFiles = taskKey[List[SqlApplication]]("classifiedSqlFiles") // returns a set of classified sql files
   lazy val discoveredResources = TaskKey[Set[Class[_]]]("discoveredResources") // Returns a set of discovered aws resources

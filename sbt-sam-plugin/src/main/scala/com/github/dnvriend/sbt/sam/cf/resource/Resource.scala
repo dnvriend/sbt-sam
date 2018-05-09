@@ -12,6 +12,7 @@ import com.github.dnvriend.sbt.sam.cf.resource.kinesis.CFKinesisStream
 import com.github.dnvriend.sbt.sam.cf.resource.lambda.ServerlessFunction
 import com.github.dnvriend.sbt.sam.cf.resource.s3.CFS3Bucket
 import com.github.dnvriend.sbt.sam.cf.resource.sns.CFTopic
+import com.github.dnvriend.sbt.sam.cf.resource.statemachine.StateMachine
 import play.api.libs.json.Writes
 
 object Resource {
@@ -30,6 +31,7 @@ object Resource {
     case resource: CFLogStream        => CFLogStream.writes.writes(resource)
     case resource: CFLogGroup         => CFLogGroup.writes.writes(resource)
     case resource: RDSInstance        => RDSInstance.writes.writes(resource)
+    case resource: StateMachine       => StateMachine.writes.writes(resource)
   }
 }
 trait Resource

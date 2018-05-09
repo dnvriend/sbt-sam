@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface S3Conf {
   String bucketResourceName() default "";
+  Class stateMachine();
   String[] events() default {};
   String filter() default "";
   int memorySize() default 1024;

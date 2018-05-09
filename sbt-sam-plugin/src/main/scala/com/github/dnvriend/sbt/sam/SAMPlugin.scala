@@ -78,6 +78,10 @@ object SAMPlugin extends AutoPlugin {
     classifiedLambdas := (classifiedLambdas triggeredBy discoveredLambdas).value,
     classifiedLambdas := (classifiedLambdas keepAs classifiedLambdas).value,
 
+    discoveredStateMachines := DiscoverStateMachines.run(classifiedLambdas.value),
+    discoveredStateMachines := (discoveredStateMachines triggeredBy classifiedLambdas).value,
+    discoveredStateMachines := (discoveredStateMachines keepAs discoveredStateMachines).value,
+
     discoveredSqlFiles := {
       ((Keys.unmanagedSources in Compile).value ** "*.sql").get.toSet
     },
@@ -171,6 +175,7 @@ object SAMPlugin extends AutoPlugin {
           iamRolesResources.value,
           classifiedSqlFiles.value,
           rdsResources.value,
+          discoveredStateMachines.value,
         )
       )
     },

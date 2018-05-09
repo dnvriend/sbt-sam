@@ -12,7 +12,7 @@ object SamSerializationSettings extends AutoPlugin {
     libraryDependencies += libScalajHttp,
     libraryDependencies += libGuava,
     libraryDependencies += LibraryDependencies.libSecurityBouncyCastle % Provided,
-    libraryDependencies += LibraryDependencies.libAwsEncryptionSDK % Provided,
+    libraryDependencies += LibraryDependencies.libAwsEncryptionSdk % Provided,
     libraryDependencies += LibraryDependencies.libAwsJavaSdk % Provided,
   )
 }

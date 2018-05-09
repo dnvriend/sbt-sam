@@ -43,7 +43,8 @@ case class SamResources(
                          s3Firehoses: Set[S3Firehose] = Set.empty,
                          iamRoles: Set[IamRole] = Set.empty,
                          sqlApplications: List[SqlApplication] = List.empty,
-                         rdsInstances: Set[RDSInstance] = Set.empty
+                         rdsInstances: Set[RDSInstance] = Set.empty,
+                         stateMachines: List[DiscoveredStateMachine] = List.empty,
                         )
 
 object ProjectConfiguration extends AnyOps {
@@ -89,6 +90,7 @@ object ProjectConfiguration extends AnyOps {
       roles,
       samResources.sqlApplications,
       samResources.rdsInstances.toList,
+      samResources.stateMachines,
     )
   }
 }
@@ -113,7 +115,8 @@ case class ProjectConfiguration(
                                  s3Firehoses: List[S3Firehose] = List.empty,
                                  iamRoles: List[IamRole] = List.empty,
                                  sqlApplications: List[SqlApplication] = List.empty,
-                                 rdsInstances: List[RDSInstance] = List.empty
+                                 rdsInstances: List[RDSInstance] = List.empty,
+                                 stateMachines: List[DiscoveredStateMachine] = List.empty,
 ) extends AnyOps {
   def httpHandlers: List[HttpHandler] = lambdas.collect({case h: HttpHandler => h})
   def existHttpHandlers: Boolean = httpHandlers.nonEmpty

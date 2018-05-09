@@ -111,6 +111,17 @@ case class CloudWatchHandler(
 
 case class GenericHandler(lambdaConfig: LambdaConfig) extends LambdaHandler
 
+
+case class StepFunctionTaskConf(
+                            stateName: String,
+                            stateMachine: Class[_]
+)
+
+case class StepFunctionTaskHandler(
+                                    lambdaConfig: LambdaConfig,
+                                    stepFunctionTaskConf: StepFunctionTaskConf
+                                  ) extends LambdaHandler
+
 object ClassifyLambdas {
   def run(lambdas: Set[ProjectLambda],
           stage: String, config: Config): Set[LambdaHandler] = {
@@ -164,7 +175,13 @@ object ClassifyLambdas {
         case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToGenericHandler(cl, fqcn, simpleName, anno, stage))
       }
 
-    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers ++ genericHandlers)
+    val stepFunctionTasks: Set[LambdaHandler] = lambdas.map(_.projectClass.cl).filter(annotationPredicate("StepFunctionConf"))
+      .map(cl => (cl, cl.getName.withoutDollarSigns, cl.getSimpleName.withoutDollarSigns, cl.getDeclaredAnnotations.find(_.annotationType().getName.contains("StepFunctionConf"))))
+      .flatMap {
+        case (cl, fqcn, simpleName, annotations) => annotations.map(anno => mapAnnoToStepFunctionTask(cl, fqcn, simpleName, anno, stage))
+      }
+
+    (dynamoHandlers ++ httpHandlers ++ scheduledEventHandlers ++ snsEventHandlers ++ kinesisEventHandlers ++ s3EventHandlers ++ cloudWatchEventHandlers ++ genericHandlers ++ stepFunctionTasks)
       .map(determineAdditionalConfig(config, _))
   }
 
@@ -177,6 +194,7 @@ object ClassifyLambdas {
     case h: S3EventHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
     case h: CloudWatchHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
     case h: GenericHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
+    case h: StepFunctionTaskHandler => h.copy(lambdaConfig = addAdditionalConfig(config, h.lambdaConfig))
   }
 
   def addAdditionalConfig(config: Config, lambdaconfig: LambdaConfig): LambdaConfig = {
@@ -344,6 +362,19 @@ object ClassifyLambdas {
     GenericHandler(LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions))
   }
 
+  def mapAnnoToStepFunctionTask(cl: Class[_], className: String, simpleName: String, anno: Annotation, stage: String): StepFunctionTaskHandler = {
+    val stateName = anno.annotationType().getMethod("stateName").invoke(anno).asInstanceOf[String]
+    val stateMachine = anno.annotationType().getMethod("stateMachine").invoke(anno).asInstanceOf[Class[_]]
+    val memorySize = anno.annotationType().getMethod("memorySize").invoke(anno).asInstanceOf[Int]
+    val timeout = anno.annotationType().getMethod("timeout").invoke(anno).asInstanceOf[Int]
+    val description = anno.annotationType().getMethod("description").invoke(anno).asInstanceOf[String]
+    val reservedConcurrentExecutions = Option(anno.annotationType().getMethod("reservedConcurrentExecutions").invoke(anno).asInstanceOf[Int]).find(_ >= 0)
+
+    StepFunctionTaskHandler(
+      LambdaConfig(cl, className, simpleName, memorySize, timeout, description, reservedConcurrentExecutions),
+      StepFunctionTaskConf(stateName, stateMachine)
+    )
+  }
 
   implicit class ClassOps(className: String) {
     def withoutDollarSigns: String = className.replace("$", "")
