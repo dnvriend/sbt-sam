@@ -23,8 +23,8 @@ case class SNS(
 
 object SNSEvent {
   implicit val reads: Reads[SNSEvent] = Json.reads
-  def parse(input: InputStream): List[SNSEvent] = {
-    (Json.parse(input) \ "Records").as[List[SNSEvent]]
+  def parse(input: InputStream): SNSEvent = {
+    (Json.parse(input) \ "Records").as[List[SNSEvent]].head
   }
 }
 case class SNSEvent(

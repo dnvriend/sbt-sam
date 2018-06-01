@@ -19,15 +19,17 @@ import java.io.{ InputStream, OutputStream }
 import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 import play.api.libs.json.{ JsString, JsValue, Json }
 
-trait ApiGatewayHandler extends RequestStreamHandler {
+trait ApiGatewayHandler extends RequestStreamHandler with XRayTracer {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    val request: HttpRequest = HttpRequest.parse(input)
-    val response: HttpResponse = handle(request, SamContext(context))
-    val jsBody: JsValue = JsString(Json.toJson(response.body).toString)
-    val jsResponse: JsValue = Json.toJson(response.copy(body = jsBody))
-    val bytes: Array[Byte] = Json.toBytes(jsResponse)
-    output.write(bytes)
-    output.close()
+    val request = withSubsegment("parseRequest", _ => HttpRequest.parse(input))
+    val response = withSubsegment("handleRequest", ss => handle(request, SamContext(context)))
+    withSubsegment("createResponse", _ => {
+      val jsBody: JsValue = JsString(Json.toJson(response.body).toString)
+      val jsResponse: JsValue = Json.toJson(response.copy(body = jsBody))
+      val bytes: Array[Byte] = Json.toBytes(jsResponse)
+      output.write(bytes)
+      output.close()
+    })
   }
 
   /**

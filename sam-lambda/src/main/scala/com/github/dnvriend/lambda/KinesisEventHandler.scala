@@ -7,9 +7,10 @@ import com.amazonaws.services.lambda.runtime.{ Context, RequestStreamHandler }
 /**
  * Handles kinesis events
  */
-trait KinesisEventHandler extends RequestStreamHandler {
+trait KinesisEventHandler extends RequestStreamHandler with XRayTracer {
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
-    handle(KinesisEvent.parse(input), SamContext(context))
+    val events = withSubsegment("parseEvents", _ => KinesisEvent.parse(input))
+    withSubsegment("handleEvents", _ => handle(events, SamContext(context)))
   }
   def handle(events: List[KinesisEvent], ctx: SamContext): Unit
 }
