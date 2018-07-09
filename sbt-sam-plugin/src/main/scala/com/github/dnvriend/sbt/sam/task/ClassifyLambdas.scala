@@ -203,6 +203,7 @@ object ClassifyLambdas {
         case p@"AWSLambdaVPCAccessExecutionRole" => p
         case p@"AWSLambdaFullAccess" => p
         case p@"ComprehendFullAccess" => p
+        case p@"ComprehendReadOnly" => p
         case p@"CloudWatchFullAccess" => p
         case p@"CloudWatchLogsFullAccess" => p
         case p@"SecretsManagerReadWrite" => p
