@@ -2,8 +2,8 @@ import sbt._
 
 object LibraryDependencies {
   // versions
-  val awsSdkVersion = "1.11.321"
-  val akkaVersion = "2.5.12"
+  val awsSdkVersion = "1.11.362"
+  val akkaVersion = "2.5.13"
 
   // libraries
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
@@ -13,14 +13,15 @@ object LibraryDependencies {
   val libKinesisSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-kinesis" % awsSdkVersion
   val libAwsEcsSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-ecs" % awsSdkVersion
   val libSecretsManagerSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-secretsmanager" % awsSdkVersion
+  val libAwsComprehendSdk: ModuleID = "com.amazonaws" % "aws-java-sdk-comprehend" % awsSdkVersion
   val libGuava: ModuleID = "com.google.guava" % "guava" % "23.0"
   val libAwsLambdaJavaCore: ModuleID = "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
-  val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.1.0"
+  val libAwsLambdaJavaEvents: ModuleID = "com.amazonaws" % "aws-lambda-java-events" % "2.2.2"
   val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.2"
   val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.59"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.3"
   val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.9.1"
-  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.22"
+  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.25"
   val libAvro4s: ModuleID = "com.github.dnvriend" %% "avro4s-core" % "1.8.3"
   val libAvro: ModuleID = "org.apache.avro" % "avro" % "1.8.2"
   val libAvroCompiler: ModuleID = "org.apache.avro" % "avro-compiler" % "1.8.2"
