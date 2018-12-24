@@ -2,8 +2,8 @@ import sbt._
 
 object LibraryDependencies {
   // versions
-  val awsSdkVersion = "1.11.362"
-  val akkaVersion = "2.5.13"
+  val awsSdkVersion = "1.11.419"
+  val akkaVersion = "2.5.17"
 
   // libraries
   val libAwsJavaSdk: ModuleID = "com.amazonaws" % "aws-java-sdk" % awsSdkVersion
@@ -20,15 +20,15 @@ object LibraryDependencies {
   val libAwsEncryptionSDK: ModuleID = "com.amazonaws" % "aws-encryption-sdk-java" % "1.3.2"
   val libSecurityBouncyCastle: ModuleID = "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.59"
   val libTypesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.3"
-  val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.9.1"
-  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.25"
+  val libPureConfig: ModuleID = "com.github.pureconfig" %% "pureconfig" % "0.9.2"
+  val libScalaz: ModuleID = "org.scalaz" %% "scalaz-core" % "7.2.26"
   val libAvro4s: ModuleID = "com.github.dnvriend" %% "avro4s-core" % "1.8.3"
   val libAvro: ModuleID = "org.apache.avro" % "avro" % "1.8.2"
   val libAvroCompiler: ModuleID = "org.apache.avro" % "avro-compiler" % "1.8.2"
-  val libPlayJson: ModuleID = "com.typesafe.play" %% "play-json" % "2.6.9"
+  val libPlayJson: ModuleID = "com.typesafe.play" %% "play-json" % "2.6.10"
   val libShapeless: ModuleID = "com.chuusai" %% "shapeless" % "2.3.2"
-  val libSbtIO: ModuleID = "org.scala-sbt" %% "io" % "1.1.1"
-  val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.4.0"
+  val libSbtIO: ModuleID = "org.scala-sbt" %% "io" % "1.2.1"
+  val libScalajHttp: ModuleID = "org.scalaj" %% "scalaj-http" % "2.4.1"
   val libAwsRequestSigner: ModuleID = "io.ticofab" %% "aws-request-signer" % "0.5.2"
   val libLogback: ModuleID = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val libScalaLogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
@@ -41,5 +41,5 @@ object LibraryDependencies {
   val libScalaTest: ModuleID = "org.scalatest" %% "scalatest" % "3.0.5"
 
   // sbt plugins //
-  val libSbtAssembly: ModuleID = "com.eed3si9n" % "sbt-assembly" % "0.14.6"
+  val libSbtAssembly: ModuleID = "com.eed3si9n" % "sbt-assembly" % "0.14.7"
 }

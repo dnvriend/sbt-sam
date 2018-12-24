@@ -14,7 +14,7 @@ object SamSchemaPluginKeys {
   lazy val schemaDependencies = settingKey[Seq[ModuleID]]("A list of schemas to depend upon")
 
   // worker tasks
-  lazy val discoveredClasses = taskKey[Set[File]]("The set of compiled classes")
+  lazy val discoveredClassesSchemaPlugin = taskKey[Set[File]]("The set of compiled classes")
   lazy val discoveredSchemasFQCN = taskKey[Set[String]]("The set of fully qualified class names of the detected schemas")
   lazy val discoveredSchemas = taskKey[List[SamSchema]]("The set of discovered sam schemas")
   lazy val schemaClassLoader = taskKey[ClassLoader]("Classloader to use when loading schema classes")

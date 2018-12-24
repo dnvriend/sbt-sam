@@ -9,7 +9,7 @@ object SamOpsSettings extends AutoPlugin {
 
   override def projectSettings =
     GlobalSettings.commonSettings ++ Seq(
-      crossScalaVersions := Seq("2.11.12", "2.12.5"),
+      crossScalaVersions := Seq("2.11.12", "2.12.7"),
       libraryDependencies += libScalajHttp,
       libraryDependencies += libSbtIO,
     )

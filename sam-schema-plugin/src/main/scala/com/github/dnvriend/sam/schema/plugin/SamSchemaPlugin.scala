@@ -24,10 +24,10 @@ object SamSchemaPlugin extends AutoPlugin {
     createPluginWorkDir := FileSystemServices.createWorkDirInTargetDir(target.value),
     createPluginWorkDir := (createPluginWorkDir triggeredBy (compile in Compile)).value,
 
-    discoveredClasses := ((compile in Compile) map DiscoverClassesService.run keepAs discoveredClasses triggeredBy (compile in Compile)).value,
+    discoveredClassesSchemaPlugin := ((compile in Compile) map DiscoverClassesService.run keepAs discoveredClassesSchemaPlugin triggeredBy (compile in Compile)).value,
     discoveredSchemasFQCN := {
       val baseDir: File = (classDirectory in Compile).value
-      val classes: Set[File] = discoveredClasses.value
+      val classes: Set[File] = discoveredClassesSchemaPlugin.value
       val cl: ClassLoader = schemaClassLoader.value
       val schemas: Set[String] = GetAnnotatedClassesService.run(baseDir, classes, cl)
       schemas
@@ -46,7 +46,7 @@ object SamSchemaPlugin extends AutoPlugin {
     },
 
     createAndCompileScript := Def.sequential(createPluginWorkDir, createScript, compileScript).value,
-    createAndCompileScript := (createAndCompileScript triggeredBy discoveredClasses).value,
+    createAndCompileScript := (createAndCompileScript triggeredBy discoveredClassesSchemaPlugin).value,
 
     createScript := ScriptService.createScriptFile(createPluginWorkDir.value, discoveredSchemasFQCN.value.toList),
     compileScript := {
